@@ -2,6 +2,10 @@
 
 Documento de planejamento do frontend do app de finanças pessoais **FIN**. Reúne as decisões de produto, a arquitetura, o contrato com o backend, o design system, a especificação das telas e a ordem de implementação.
 
+> **Fonte Oficial da Verdade:** A documentação técnica detalhada e modular para desenvolvimento com agentes de IA e desenvolvedores está dividida em:
+> - [`docs/`](./docs/README.md): Arquitetura, Design System, Estado & Dados, Rotas/Layouts, Especificação de Telas e Guia Sequencial.
+> - [`api/`](./api/README.md): Contratos oficiais de integração RESTful do backend (rotas, payloads, respostas e erros).
+
 > **Tema padrão: claro.** O tema escuro é opcional e alternável pelo usuário. Todos os tokens existem nos dois temas, mas o app abre em claro.
 >
 > Escopo atual: tela **Início** (dashboard), em duas etapas. As demais telas (Transações, Contas, Cartões, Metas, Relatórios, Simulações, Configurações) estão previstas na arquitetura e na navegação.
