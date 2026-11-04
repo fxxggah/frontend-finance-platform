@@ -3,35 +3,141 @@
 @import 'shadcn/tailwind.css';
 
 @theme inline {
-  --font-sans: var(--font-inter);
-  --color-background: var(--bg);
-  --color-foreground: var(--text);
-  --color-card: var(--surface);
-  --color-card-foreground: var(--text);
-  --color-muted: var(--surface-soft);
-  --color-muted-foreground: var(--text-muted);
-  --color-primary: var(--primary);
-  --color-primary-foreground: #ffffff;
-  --color-border: var(--border);
-  --color-input: var(--border);
-  --color-ring: var(--primary);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  /* Tokens de Cores Semânticos */
+  --color-bg: var(--color-bg);
+  --color-surface: var(--color-surface);
+  --color-surface-soft: var(--color-surface-soft);
+  --color-border: var(--color-border);
+  --color-text: var(--color-text);
+  --color-text-muted: var(--color-text-muted);
+  --color-primary: var(--color-primary);
+  --color-primary-soft: var(--color-primary-soft);
+  --color-accent: var(--color-accent);
+  --color-income: var(--color-income);
+  --color-income-soft: var(--color-income-soft);
+  --color-expense: var(--color-expense);
+  --color-expense-soft: var(--color-expense-soft);
+  --color-warning: var(--color-warning);
+  --color-warning-soft: var(--color-warning-soft);
+  --color-sidebar: var(--color-sidebar);
+  --color-sidebar-text: var(--color-sidebar-text);
+
+  /* Gradientes & Sombras */
+  --background-image-gradient-hero: var(--gradient-hero);
+  --shadow-default: var(--shadow-default);
+  --shadow-card: var(--shadow-default);
+
+  /* Raios de Borda (Design System) */
+  --radius-xl: 0.75rem;
   --radius-2xl: 1rem;
-  --radius-3xl: 1.5rem;
+  --radius-3xl: 2rem;
+
+  /* Mapeamento para Primitivos & shadcn */
+  --color-background: var(--color-bg);
+  --color-foreground: var(--color-text);
+  --color-card: var(--color-surface);
+  --color-card-foreground: var(--color-text);
+  --color-muted: var(--color-surface-soft);
+  --color-muted-foreground: var(--color-text-muted);
+  --color-input: var(--color-border);
+  --color-ring: var(--color-primary);
 }
 
 :root {
   color-scheme: light;
-  --bg: #EDEFFA;
-  --surface: #FFFFFF;
-  --surface-soft: #F6F7FD;
-  --border: #E3E6F5;
-  --text: #14172E;
-  --text-muted: #6B7194;
-  --primary: #5B3DF5;
+
+  /* Tema Claro (Padrão) */
+  --color-bg: #EDEFFA;
+  --color-surface: #FFFFFF;
+  --color-surface-soft: #F6F7FD;
+  --color-border: #E3E6F5;
+  --color-text: #14172E;
+  --color-text-muted: #6B7194;
+  --color-primary: #5B3DF5;
+  --color-primary-soft: #EFEAFF;
+  --color-accent: #4F7BFF;
+  --color-income: #0E9F6E;
+  --color-income-soft: #E6F8F0;
+  --color-expense: #E11D48;
+  --color-expense-soft: #FFE9EE;
+  --color-warning: #F59E0B;
+  --color-warning-soft: #FFF3DD;
+  --color-sidebar: #0E1230;
+  --color-sidebar-text: #C9CDEB;
+  --gradient-hero: linear-gradient(135deg, #3B1FA8 0%, #5B3DF5 55%, #4F7BFF 100%);
+  --shadow-default: 0 8px 30px -12px rgba(20, 23, 46, 0.18);
+
+  /* Aliases para compatibilidade */
+  --bg: var(--color-bg);
+  --surface: var(--color-surface);
+  --surface-soft: var(--color-surface-soft);
+  --border: var(--color-border);
+  --text: var(--color-text);
+  --text-muted: var(--color-text-muted);
+  --primary: var(--color-primary);
 }
-[data-theme='dark'] { color-scheme: dark; --bg: #0B0E24; --surface: #141834; --surface-soft: #1B2043; --border: rgba(255,255,255,.08); --text: #F4F5FF; --text-muted: #9AA0C7; --primary: #8D7BFF; }
-* { @apply border-border outline-ring/50; }
-html { background: var(--bg); }
-body { @apply bg-background text-foreground; font-family: var(--font-inter), sans-serif; }
-button { cursor: pointer; }
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; } }
+
+[data-theme='dark'],
+.dark {
+  color-scheme: dark;
+
+  /* Tema Escuro */
+  --color-bg: #0B0E24;
+  --color-surface: #141834;
+  --color-surface-soft: #1B2043;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-text: #F4F5FF;
+  --color-text-muted: #9AA0C7;
+  --color-primary: #7C62FF;
+  --color-primary-soft: #262354;
+  --color-accent: #6B8EFF;
+  --color-income: #31C48D;
+  --color-income-soft: #0E3D30;
+  --color-expense: #F05252;
+  --color-expense-soft: #451622;
+  --color-warning: #FBBF24;
+  --color-warning-soft: #47320D;
+  --color-sidebar: #0E1230;
+  --color-sidebar-text: #C9CDEB;
+  --gradient-hero: linear-gradient(135deg, #2D157F 0%, #4D33D0 55%, #3C63DB 100%);
+  --shadow-default: 0 8px 30px -12px rgba(0, 0, 0, 0.45);
+
+  /* Aliases para compatibilidade */
+  --bg: var(--color-bg);
+  --surface: var(--color-surface);
+  --surface-soft: var(--color-surface-soft);
+  --border: var(--color-border);
+  --text: var(--color-text);
+  --text-muted: var(--color-text-muted);
+  --primary: var(--color-primary);
+}
+
+* {
+  @apply border-border outline-ring/50;
+}
+
+html {
+  background: var(--color-bg);
+}
+
+body {
+  @apply bg-bg text-text;
+  font-family: var(--font-inter), sans-serif;
+  min-height: 100vh;
+}
+
+button {
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

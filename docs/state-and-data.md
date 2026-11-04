@@ -126,7 +126,7 @@ export const useUiStore = create<UiState>()(
 
 Para testes consistentes sem backend, os dados mockados seguem a persona e métricas pré-estabelecidas:
 
-- **Usuária Padrão:** Marina Souza (`marina@exemplo.com`, ID: `1`).
+- **Usuária Padrão:** Hellen Carol (`Hellen@exemplo.com`, ID: `1`).
 - **Data de Referência Fixa:** `TODAY = "2026-10-31"`.
 - **Contas Bancárias:**
   - `Conta Principal` (BANK): R$ 12.480,30, `#5B3DF5`, ícone `landmark`.

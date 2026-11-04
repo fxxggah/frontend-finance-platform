@@ -1,42 +1,856 @@
-export interface DashboardSummary {
-  period: 'DAY' | 'WEEK' | 'FORTNIGHT' | 'MONTH' | 'QUARTER' | 'SEMESTER' | 'YEAR' | 'CUSTOM'
-  from: string
-  to: string
-  totalIncome: number
-  totalExpense: number
-  balance: number
-  previous: { from: string; to: string; incomeChangePct: number | null; expenseChangePct: number | null }
+import type {
+  Account,
+  AccountsResponse,
+  Category,
+  CreditCard,
+  DashboardSummary,
+  EvolutionPoint,
+  EvolutionResponse,
+  ExpenseByCategory,
+  Goal,
+  Transaction,
+  Transfer,
+  User,
+} from "@/types";
+
+export const TODAY = "2026-10-31";
+
+export interface AccountsOverview {
+  totalBalance: number;
+  creditCardDebt: number;
 }
 
-export interface AccountsOverview { totalBalance: number; creditCardDebt: number }
-export interface User { name: string; pictureUrl: string | null }
+// 1. Usuária autenticada
+export const currentUser: User = {
+  id: 1,
+  name: "Hellen Carol",
+  email: "hellen@exemplo.com",
+  pictureUrl: null,
+};
 
+// 2. Contas
+export const mockAccounts: Account[] = [
+  {
+    id: 1,
+    name: "Conta Principal",
+    type: "BANK",
+    balance: 12480.3,
+    color: "#5B3DF5",
+    icon: "landmark",
+    archived: false,
+  },
+  {
+    id: 2,
+    name: "Carteira",
+    type: "CASH",
+    balance: 320.6,
+    color: "#0E9F6E",
+    icon: "wallet",
+    archived: false,
+  },
+  {
+    id: 3,
+    name: "Reserva Digital",
+    type: "DIGITAL_WALLET",
+    balance: 5942.0,
+    color: "#4F7BFF",
+    icon: "smartphone",
+    archived: false,
+  },
+];
+
+export const accountsOverview: AccountsOverview = {
+  totalBalance: 18742.9,
+  creditCardDebt: 2315.4,
+};
+
+export const mockAccountsResponse: AccountsResponse = {
+  accounts: mockAccounts,
+  totalBalance: 18742.9,
+  creditCardDebt: 2315.4,
+};
+
+// 3. Cartões de Crédito
+export const mockCreditCards: CreditCard[] = [
+  {
+    id: 1,
+    name: "Cartão Violeta",
+    creditLimit: 6000.0,
+    usedLimit: 4115.4,
+    availableLimit: 1884.6,
+    closingDay: 25,
+    dueDay: 2,
+    color: "#5B3DF5",
+    icon: "credit-card",
+    archived: false,
+    currentInvoice: {
+      reference: "2026-11",
+      total: 630.0,
+      status: "OPEN",
+      dueDate: "2026-12-02",
+    },
+  },
+];
+
+// 4. Categorias Padrão
+export const mockCategories: Category[] = [
+  // Despesas
+  { id: 1, name: "Alimentação", type: "EXPENSE", color: "#10B981", icon: "utensils" },
+  { id: 2, name: "Transporte", type: "EXPENSE", color: "#F59E0B", icon: "car" },
+  { id: 3, name: "Moradia", type: "EXPENSE", color: "#5B3DF5", icon: "home" },
+  { id: 4, name: "Saúde", type: "EXPENSE", color: "#4F7BFF", icon: "heart-pulse" },
+  { id: 5, name: "Educação", type: "EXPENSE", color: "#F97316", icon: "graduation-cap" },
+  { id: 6, name: "Lazer", type: "EXPENSE", color: "#EC4899", icon: "gamepad-2" },
+  { id: 7, name: "Compras", type: "EXPENSE", color: "#A855F7", icon: "shopping-bag" },
+  { id: 8, name: "Outros", type: "EXPENSE", color: "#94A3B8", icon: "more-horizontal" },
+  // Receitas
+  { id: 9, name: "Salário", type: "INCOME", color: "#0E9F6E", icon: "wallet" },
+  { id: 10, name: "Freelance", type: "INCOME", color: "#0E9F6E", icon: "briefcase-business" },
+  { id: 11, name: "Investimentos", type: "INCOME", color: "#3B82F6", icon: "trending-up" },
+  { id: 12, name: "Outros", type: "INCOME", color: "#64748B", icon: "plus-circle" },
+];
+
+const catMap = Object.fromEntries(mockCategories.map((c) => [c.id, c]));
+
+// 5. Transações Realistas (40 transações no total, de 01/08/2026 a 31/10/2026)
+// Outubro de 2026 soma exatamente:
+// Receitas: 8.450,00 (Salário 7200 + Freelance 1250)
+// Despesas: 4.826,35 (Moradia 1650 + Alimentação 1120.50 + Transporte 640 + Lazer 520.35 + Saúde 380 + Educação 290 + Compras 225.50)
+export const mockTransactions: Transaction[] = [
+  // --- OUTUBRO 2026 (Transações 1 a 19) ---
+  {
+    id: 1,
+    type: "EXPENSE",
+    amount: 312.48,
+    date: "2026-10-31",
+    description: "Supermercado do bairro",
+    notes: "Compras da semana",
+    category: catMap[1], // Alimentação
+    account: { id: 1, name: "Conta Principal" },
+    creditCard: null,
+    invoiceReference: null,
+    installment: null,
+  },
+  {
+    id: 2,
+    type: "EXPENSE",
+    amount: 180.0,
+    date: "2026-10-30",
+    description: "Combustível Posto Shell",
+    notes: null,
+    category: catMap[2], // Transporte
+    account: null,
+    creditCard: { id: 1, name: "Cartão Violeta" },
+    invoiceReference: "2026-11",
+    installment: null,
+  },
+  {
+    id: 3,
+    type: "EXPENSE",
+    amount: 170.35,
+    date: "2026-10-26",
+    description: "Cinema e lanche",
+    notes: "Ingressos e pipoca",
+    category: catMap[6], // Lazer
+    account: null,
+    creditCard: { id: 1, name: "Cartão Violeta" },
+    invoiceReference: "2026-11",
+    installment: null,
+  },
+  {
+    id: 4,
+    type: "EXPENSE",
+    amount: 119.9,
+    date: "2026-10-25",
+    description: "Mensalidade Academia",
+    notes: "Débito em conta",
+    category: catMap[4], // Saúde
+    account: { id: 1, name: "Conta Principal" },
+    creditCard: null,
+    invoiceReference: null,
+    installment: null,
+  },
+  {
+    id: 5,
+    type: "EXPENSE",
+    amount: 158.02,
+    date: "2026-10-24",
+    description: "Restaurante Família",
+    notes: null,
+    category: catMap[1], // Alimentação
+    account: null,
+    creditCard: { id: 1, name: "Cartão Violeta" },
+    invoiceReference: "2026-10",
+    installment: null,
+  },
+  {
+    id: 6,
+    type: "EXPENSE",
+    amount: 225.5,
+    date: "2026-10-22",
+    description: "Vestuário e Livraria",
+    notes: null,
+    category: catMap[7], // Compras
+    account: null,
+    creditCard: { id: 1, name: "Cartão Violeta" },
+    invoiceReference: "2026-10",
+    installment: null,
+  },
+  {
+    id: 7,
+    type: "EXPENSE",
+    amount: 110.0,
+    date: "2026-10-19",
+    description: "Feira de Orgânicos",
+    notes: "Dinheiro vivo",
+    category: catMap[1], // Alimentação
+    account: { id: 2, name: "Carteira" },
+    creditCard: null,
+    invoiceReference: null,
+    installment: null,
+  },
+  {
+    id: 8,
+    type: "INCOME",
+    amount: 1250.0,
+    date: "2026-10-18",
+    description: "Projeto freelance",
+    notes: "Design UI/UX Landing Page",
+    category: catMap[10], // Freelance
+    account: { id: 1, name: "Conta Principal" },
+    creditCard: null,
+    invoiceReference: null,
+    installment: null,
+  },
+  {
+    id: 9,
+    type: "EXPENSE",
+    amount: 40.0,
+    date: "2026-10-15",
+    description: "Padaria e café",
+    notes: null,
+    category: catMap[1], // Alimentação
+    account: { id: 2, name: "Carteira" },
+    creditCard: null,
+    invoiceReference: null,
+    installment: null,
+  },
+  {
+    id: 10,
+    type: "EXPENSE",
+    amount: 350.0,
+    date: "2026-10-14",
+    description: "Assinaturas e Games",
+    notes: null,
+    category: catMap[6], // Lazer
+    account: null,
+    creditCard: { id: 1, name: "Cartão Violeta" },
+    invoiceReference: "2026-10",
+    installment: null,
+  },
+  {
+    id: 11,
+    type: "EXPENSE",
+    amount: 260.0,
+    date: "2026-10-12",
+    description: "Manutenção Carro e IPVA",
+    notes: "Troca de óleo e filtro",
+    category: catMap[2], // Transporte
+    account: { id: 1, name: "Conta Principal" },
+    creditCard: null,
+    invoiceReference: null,
+    installment: null,
+  },
+  {
+    id: 12,
+    type: "EXPENSE",
+    amount: 260.1,
+    date: "2026-10-09",
+    description: "Farmácia Panvel",
+    notes: "Vitaminas e medicamentos",
+    category: catMap[4], // Saúde
+    account: null,
+    creditCard: { id: 1, name: "Cartão Violeta" },
+    invoiceReference: "2026-10",
+    installment: null,
+  },
+  {
+    id: 13,
+    type: "EXPENSE",
+    amount: 500.0,
+    date: "2026-10-08",
+    description: "Supermercado Mensal",
+    notes: "Estoque de mantimentos",
+    category: catMap[1], // Alimentação
+    account: { id: 1, name: "Conta Principal" },
+    creditCard: null,
+    invoiceReference: null,
+    installment: null,
+  },
+  {
+    id: 14,
+    type: "INCOME",
+    amount: 7200.0,
+    date: "2026-10-05",
+    description: "Salário Mensal",
+    notes: "Folha de pagamento da empresa",
+    category: catMap[9], // Salário
+    account: { id: 1, name: "Conta Principal" },
+    creditCard: null,
+    invoiceReference: null,
+    installment: null,
+  },
+  {
+    id: 15,
+    type: "EXPENSE",
+    amount: 1650.0,
+    date: "2026-10-05",
+    description: "Aluguel e Condomínio",
+    notes: "Boleto imobiliária",
+    category: catMap[3], // Moradia
+    account: { id: 1, name: "Conta Principal" },
+    creditCard: null,
+    invoiceReference: null,
+    installment: null,
+  },
+  {
+    id: 16,
+    type: "EXPENSE",
+    amount: 290.0,
+    date: "2026-10-04",
+    description: "Plataforma de Cursos",
+    notes: "Assinatura anual parcelada",
+    category: catMap[5], // Educação
+    account: null,
+    creditCard: { id: 1, name: "Cartão Violeta" },
+    invoiceReference: "2026-10",
+    installment: { groupId: "inst-1", number: 4, total: 12 },
+  },
+  {
+    id: 17,
+    type: "EXPENSE",
+    amount: 200.0,
+    date: "2026-10-03",
+    description: "Mobilidade Urbana (Uber)",
+    notes: "Corridas do mês",
+    category: catMap[2], // Transporte
+    account: null,
+    creditCard: { id: 1, name: "Cartão Violeta" },
+    invoiceReference: "2026-10",
+    installment: null,
+  },
+
+  // --- SETEMBRO 2026 (Transações 18 a 28) ---
+  {
+    id: 18,
+    type: "EXPENSE",
+    amount: 450.0,
+    date: "2026-09-28",
+    description: "Notebook (parcela 3/10)",
+    notes: null,
+    category: catMap[5], // Educação
+    account: null,
+    creditCard: { id: 1, name: "Cartão Violeta" },
+    invoiceReference: "2026-09",
+    installment: { groupId: "inst-2", number: 3, total: 10 },
+  },
+  {
+    id: 19,
+    type: "EXPENSE",
+    amount: 320.0,
+    date: "2026-09-26",
+    description: "Supermercado Semanal",
+    notes: null,
+    category: catMap[1],
+    account: { id: 1, name: "Conta Principal" },
+    creditCard: null,
+    invoiceReference: null,
+    installment: null,
+  },
+  {
+    id: 20,
+    type: "EXPENSE",
+    amount: 119.9,
+    date: "2026-09-25",
+    description: "Mensalidade Academia",
+    notes: null,
+    category: catMap[4],
+    account: { id: 1, name: "Conta Principal" },
+    creditCard: null,
+    invoiceReference: null,
+    installment: null,
+  },
+  {
+    id: 21,
+    type: "INCOME",
+    amount: 900.0,
+    date: "2026-09-20",
+    description: "Consultoria pontual",
+    notes: null,
+    category: catMap[10],
+    account: { id: 1, name: "Conta Principal" },
+    creditCard: null,
+    invoiceReference: null,
+    installment: null,
+  },
+  {
+    id: 22,
+    type: "EXPENSE",
+    amount: 190.0,
+    date: "2026-09-18",
+    description: "Jantar com amigos",
+    notes: null,
+    category: catMap[6],
+    account: null,
+    creditCard: { id: 1, name: "Cartão Violeta" },
+    invoiceReference: "2026-09",
+    installment: null,
+  },
+  {
+    id: 23,
+    type: "EXPENSE",
+    amount: 1650.0,
+    date: "2026-09-05",
+    description: "Aluguel e Condomínio",
+    notes: null,
+    category: catMap[3],
+    account: { id: 1, name: "Conta Principal" },
+    creditCard: null,
+    invoiceReference: null,
+    installment: null,
+  },
+  {
+    id: 24,
+    type: "INCOME",
+    amount: 7200.0,
+    date: "2026-09-05",
+    description: "Salário Mensal",
+    notes: null,
+    category: catMap[9],
+    account: { id: 1, name: "Conta Principal" },
+    creditCard: null,
+    invoiceReference: null,
+    installment: null,
+  },
+  {
+    id: 25,
+    type: "EXPENSE",
+    amount: 290.0,
+    date: "2026-09-04",
+    description: "Plataforma de Cursos",
+    notes: null,
+    category: catMap[5],
+    account: null,
+    creditCard: { id: 1, name: "Cartão Violeta" },
+    invoiceReference: "2026-09",
+    installment: { groupId: "inst-1", number: 3, total: 12 },
+  },
+  {
+    id: 26,
+    type: "EXPENSE",
+    amount: 150.0,
+    date: "2026-09-03",
+    description: "Combustível",
+    notes: null,
+    category: catMap[2],
+    account: null,
+    creditCard: { id: 1, name: "Cartão Violeta" },
+    invoiceReference: "2026-09",
+    installment: null,
+  },
+  {
+    id: 27,
+    type: "EXPENSE",
+    amount: 85.0,
+    date: "2026-09-02",
+    description: "Livraria Cultura",
+    notes: null,
+    category: catMap[7],
+    account: { id: 2, name: "Carteira" },
+    creditCard: null,
+    invoiceReference: null,
+    installment: null,
+  },
+
+  // --- AGOSTO 2026 (Transações 28 a 40) ---
+  {
+    id: 28,
+    type: "EXPENSE",
+    amount: 450.0,
+    date: "2026-08-28",
+    description: "Notebook (parcela 2/10)",
+    notes: null,
+    category: catMap[5],
+    account: null,
+    creditCard: { id: 1, name: "Cartão Violeta" },
+    invoiceReference: "2026-08",
+    installment: { groupId: "inst-2", number: 2, total: 10 },
+  },
+  {
+    id: 29,
+    type: "EXPENSE",
+    amount: 119.9,
+    date: "2026-08-25",
+    description: "Mensalidade Academia",
+    notes: null,
+    category: catMap[4],
+    account: { id: 1, name: "Conta Principal" },
+    creditCard: null,
+    invoiceReference: null,
+    installment: null,
+  },
+  {
+    id: 30,
+    type: "EXPENSE",
+    amount: 380.0,
+    date: "2026-08-22",
+    description: "Compras Shopping",
+    notes: null,
+    category: catMap[7],
+    account: null,
+    creditCard: { id: 1, name: "Cartão Violeta" },
+    invoiceReference: "2026-08",
+    installment: null,
+  },
+  {
+    id: 31,
+    type: "INCOME",
+    amount: 1500.0,
+    date: "2026-08-20",
+    description: "Consultoria Frontend",
+    notes: null,
+    category: catMap[10],
+    account: { id: 1, name: "Conta Principal" },
+    creditCard: null,
+    invoiceReference: null,
+    installment: null,
+  },
+  {
+    id: 32,
+    type: "EXPENSE",
+    amount: 210.0,
+    date: "2026-08-16",
+    description: "Supermercado Semanal",
+    notes: null,
+    category: catMap[1],
+    account: { id: 1, name: "Conta Principal" },
+    creditCard: null,
+    invoiceReference: null,
+    installment: null,
+  },
+  {
+    id: 33,
+    type: "EXPENSE",
+    amount: 1650.0,
+    date: "2026-08-05",
+    description: "Aluguel e Condomínio",
+    notes: null,
+    category: catMap[3],
+    account: { id: 1, name: "Conta Principal" },
+    creditCard: null,
+    invoiceReference: null,
+    installment: null,
+  },
+  {
+    id: 34,
+    type: "INCOME",
+    amount: 7200.0,
+    date: "2026-08-05",
+    description: "Salário Mensal",
+    notes: null,
+    category: catMap[9],
+    account: { id: 1, name: "Conta Principal" },
+    creditCard: null,
+    invoiceReference: null,
+    installment: null,
+  },
+  {
+    id: 35,
+    type: "EXPENSE",
+    amount: 290.0,
+    date: "2026-08-04",
+    description: "Plataforma de Cursos",
+    notes: null,
+    category: catMap[5],
+    account: null,
+    creditCard: { id: 1, name: "Cartão Violeta" },
+    invoiceReference: "2026-08",
+    installment: { groupId: "inst-1", number: 2, total: 12 },
+  },
+  {
+    id: 36,
+    type: "EXPENSE",
+    amount: 160.0,
+    date: "2026-08-03",
+    description: "Combustível",
+    notes: null,
+    category: catMap[2],
+    account: null,
+    creditCard: { id: 1, name: "Cartão Violeta" },
+    invoiceReference: "2026-08",
+    installment: null,
+  },
+  {
+    id: 37,
+    type: "EXPENSE",
+    amount: 95.0,
+    date: "2026-08-02",
+    description: "Farmácia",
+    notes: null,
+    category: catMap[4],
+    account: { id: 2, name: "Carteira" },
+    creditCard: null,
+    invoiceReference: null,
+    installment: null,
+  },
+  {
+    id: 38,
+    type: "EXPENSE",
+    amount: 140.0,
+    date: "2026-08-02",
+    description: "Restaurante e café",
+    notes: null,
+    category: catMap[1],
+    account: { id: 1, name: "Conta Principal" },
+    creditCard: null,
+    invoiceReference: null,
+    installment: null,
+  },
+  {
+    id: 39,
+    type: "INCOME",
+    amount: 320.0,
+    date: "2026-08-01",
+    description: "Rendimento CDB",
+    notes: null,
+    category: catMap[11], // Investimentos
+    account: { id: 3, name: "Reserva Digital" },
+    creditCard: null,
+    invoiceReference: null,
+    installment: null,
+  },
+  {
+    id: 40,
+    type: "EXPENSE",
+    amount: 80.0,
+    date: "2026-08-01",
+    description: "Estacionamento e Lavagem",
+    notes: null,
+    category: catMap[2],
+    account: { id: 2, name: "Carteira" },
+    creditCard: null,
+    invoiceReference: null,
+    installment: null,
+  },
+];
+
+export const transactions = mockTransactions;
+
+// 6. Metas Iniciais
+export const mockGoals: Goal[] = [
+  {
+    id: 1,
+    type: "SAVINGS",
+    name: "Entrada do apartamento",
+    description: "Guardar para entrada de imóvel próprio",
+    icon: "home",
+    color: "#5B3DF5",
+    targetAmount: 60000.0,
+    currentAmount: 18500.0,
+    percentage: 30.8,
+    state: "IN_PROGRESS",
+    status: "ACTIVE",
+    category: { id: 3, name: "Moradia" },
+    startDate: "2025-01-01",
+    endDate: "2028-12-31",
+    monthlyNeeded: 1429.0,
+    supportText: "Guardar R$ 1.429,00 por mês para chegar a tempo",
+  },
+  {
+    id: 2,
+    type: "SAVINGS",
+    name: "PS5",
+    description: "Console novo e jogos",
+    icon: "gamepad-2",
+    color: "#EC4899",
+    targetAmount: 4500.0,
+    currentAmount: 2100.0,
+    percentage: 46.7,
+    state: "IN_PROGRESS",
+    status: "ACTIVE",
+    category: { id: 6, name: "Lazer" },
+    startDate: "2026-06-01",
+    endDate: null,
+    monthlyNeeded: null,
+    supportText: "Economia contínua sem prazo fixo",
+  },
+  {
+    id: 3,
+    type: "EXPENSE",
+    name: "Alimentação em outubro",
+    description: "Limite de gastos mensais com alimentação",
+    icon: "utensils",
+    color: "#10B981",
+    targetAmount: 1200.0,
+    currentAmount: 1120.5,
+    percentage: 93.4,
+    state: "WARNING",
+    status: "ACTIVE",
+    category: { id: 1, name: "Alimentação" },
+    startDate: "2026-10-01",
+    endDate: "2026-10-31",
+    monthlyNeeded: null,
+    supportText: "Restam R$ 79,50 do limite",
+  },
+  {
+    id: 4,
+    type: "INCOME",
+    name: "Renda extra do mês",
+    description: "Meta de faturamento em freelances e consultorias",
+    icon: "briefcase-business",
+    color: "#0E9F6E",
+    targetAmount: 2000.0,
+    currentAmount: 1250.0,
+    percentage: 62.5,
+    state: "IN_PROGRESS",
+    status: "ACTIVE",
+    category: { id: 10, name: "Freelance" },
+    startDate: "2026-10-01",
+    endDate: "2026-10-31",
+    monthlyNeeded: null,
+    supportText: "R$ 750,00 restantes para bater a meta",
+  },
+];
+
+export const goals = mockGoals;
+
+// 7. Transferências entre contas
+export const mockTransfers: Transfer[] = [
+  {
+    id: 1,
+    fromAccount: { id: 1, name: "Conta Principal" },
+    toAccount: { id: 3, name: "Reserva Digital" },
+    amount: 1500.0,
+    date: "2026-10-06",
+    description: "Aporte na reserva de emergência",
+  },
+  {
+    id: 2,
+    fromAccount: { id: 1, name: "Conta Principal" },
+    toAccount: { id: 2, name: "Carteira" },
+    amount: 300.0,
+    date: "2026-10-10",
+    description: "Saque para despesas miúdas",
+  },
+];
+
+// 8. Resumo do Dashboard (Outubro de 2026)
 export const dashboardSummary: DashboardSummary = {
-  period: 'MONTH', from: '2026-10-01', to: '2026-10-31', totalIncome: 8450, totalExpense: 4826.35, balance: 3623.65,
-  previous: { from: '2026-09-01', to: '2026-09-30', incomeChangePct: 4.2, expenseChangePct: -3.1 },
-}
-export const accountsOverview: AccountsOverview = { totalBalance: 18742.9, creditCardDebt: 2315.4 }
-export const currentUser: User = { name: 'Marina Souza', pictureUrl: null }
+  period: "MONTH",
+  from: "2026-10-01",
+  to: "2026-10-31",
+  totalIncome: 8450.0,
+  totalExpense: 4826.35,
+  balance: 3623.65,
+  previous: {
+    from: "2026-09-01",
+    to: "2026-09-30",
+    incomeChangePct: 4.2,
+    expenseChangePct: -3.1,
+  },
+};
 
-export interface Goal { id: number; type: 'SAVINGS' | 'INCOME' | 'EXPENSE'; name: string; icon: string; color: string; targetAmount: number; currentAmount: number; percentage: number; state: 'IN_PROGRESS' | 'WARNING' | 'EXCEEDED' | 'ACHIEVED' | 'EXPIRED'; endDate: string | null; monthlyNeeded: number | null; supportText?: string }
-export interface Transaction { id: number; type: 'INCOME' | 'EXPENSE'; amount: number; date: string; description: string; category: { id: number; name: string; icon: string; color: string }; account: { id: number; name: string } | null; creditCard: { id: number; name: string } | null; installment: { number: number; total: number } | null }
+// 9. Despesas por Categoria (Outubro 2026)
+export const expenseCategories: ExpenseByCategory[] = [
+  {
+    categoryId: 3,
+    name: "Moradia",
+    color: "#5B3DF5",
+    icon: "home",
+    total: 1650.0,
+    percentage: 34.19,
+    count: 1,
+  },
+  {
+    categoryId: 1,
+    name: "Alimentação",
+    color: "#10B981",
+    icon: "utensils",
+    total: 1120.5,
+    percentage: 23.22,
+    count: 5,
+  },
+  {
+    categoryId: 2,
+    name: "Transporte",
+    color: "#F59E0B",
+    icon: "car",
+    total: 640.0,
+    percentage: 13.26,
+    count: 3,
+  },
+  {
+    categoryId: 6,
+    name: "Lazer",
+    color: "#EC4899",
+    icon: "gamepad-2",
+    total: 520.35,
+    percentage: 10.78,
+    count: 2,
+  },
+  {
+    categoryId: 4,
+    name: "Saúde",
+    color: "#4F7BFF",
+    icon: "heart-pulse",
+    total: 380.0,
+    percentage: 7.87,
+    count: 2,
+  },
+  {
+    categoryId: 5,
+    name: "Educação",
+    color: "#F97316",
+    icon: "graduation-cap",
+    total: 290.0,
+    percentage: 6.01,
+    count: 1,
+  },
+  {
+    categoryId: 7,
+    name: "Compras",
+    color: "#A855F7",
+    icon: "shopping-bag",
+    total: 225.5,
+    percentage: 4.67,
+    count: 1,
+  },
+];
 
-export const goals: Goal[] = [
-  { id: 1, type: 'SAVINGS', name: 'Entrada do apartamento', icon: 'home', color: '#5B3DF5', targetAmount: 60000, currentAmount: 18500, percentage: 30.8, state: 'IN_PROGRESS', endDate: '2028-12-31', monthlyNeeded: 1429, supportText: 'Guardar R$ 1.429,00 por mês para chegar a tempo' },
-  { id: 2, type: 'SAVINGS', name: 'PS5', icon: 'gamepad-2', color: '#EC4899', targetAmount: 4500, currentAmount: 2100, percentage: 46.7, state: 'IN_PROGRESS', endDate: null, monthlyNeeded: null },
-  { id: 3, type: 'EXPENSE', name: 'Alimentação em outubro', icon: 'utensils', color: '#10B981', targetAmount: 1200, currentAmount: 1120.5, percentage: 93.4, state: 'WARNING', endDate: '2026-10-31', monthlyNeeded: null, supportText: 'Restam R$ 79,50 do limite' },
-]
-const categories = {
-  moradia: { id: 1, name: 'Moradia', icon: 'home', color: '#5B3DF5' }, alimentacao: { id: 2, name: 'Alimentação', icon: 'utensils', color: '#10B981' }, transporte: { id: 3, name: 'Transporte', icon: 'car', color: '#F59E0B' }, lazer: { id: 4, name: 'Lazer', icon: 'gamepad-2', color: '#EC4899' }, saude: { id: 5, name: 'Saúde', icon: 'heart-pulse', color: '#4F7BFF' }, educacao: { id: 6, name: 'Educação', icon: 'graduation-cap', color: '#F97316' }, outros: { id: 7, name: 'Outros', icon: 'shopping-bag', color: '#94A3B8' }, freelance: { id: 8, name: 'Freelance', icon: 'briefcase-business', color: '#0E9F6E' },
-}
-export const expenseCategories = [
-  { ...categories.moradia, value: 1650, percentage: 34.19 }, { ...categories.alimentacao, value: 1120.5, percentage: 23.22 }, { ...categories.transporte, value: 640, percentage: 13.26 }, { ...categories.lazer, value: 520.35, percentage: 10.78 }, { ...categories.saude, value: 380, percentage: 7.87 }, { ...categories.educacao, value: 290, percentage: 6.01 }, { ...categories.outros, value: 225.5, percentage: 4.67 },
-]
-export const transactions: Transaction[] = [
-  { id: 1, type: 'EXPENSE', amount: 312.48, date: '2026-10-31', description: 'Supermercado do bairro', category: categories.alimentacao, account: { id: 1, name: 'Conta Principal' }, creditCard: null, installment: null },
-  { id: 2, type: 'EXPENSE', amount: 180, date: '2026-10-30', description: 'Combustível', category: categories.transporte, account: null, creditCard: { id: 1, name: 'Cartão Violeta' }, installment: null },
-  { id: 3, type: 'EXPENSE', amount: 450, date: '2026-10-28', description: 'Notebook (parcela)', category: categories.educacao, account: null, creditCard: { id: 1, name: 'Cartão Violeta' }, installment: { number: 3, total: 10 } },
-  { id: 4, type: 'EXPENSE', amount: 119.9, date: '2026-10-25', description: 'Academia', category: categories.saude, account: { id: 1, name: 'Conta Principal' }, creditCard: null, installment: null },
-  { id: 5, type: 'INCOME', amount: 1250, date: '2026-10-18', description: 'Projeto freelance', category: categories.freelance, account: { id: 1, name: 'Conta Principal' }, creditCard: null, installment: null },
-]
-export const cashFlow = Array.from({ length: 31 }, (_, index) => { const day = index + 1; const income = day >= 5 ? 7200 : 0; const freelance = day >= 18 ? 1250 : 0; const expense = 4826.35 * (day / 31); return { date: `2026-10-${String(day).padStart(2, '0')}`, income: income + freelance, expense, balance: income + freelance - expense } })
+// 10. Evolução diária (Cash Flow) de Outubro
+export const cashFlow = Array.from({ length: 31 }, (_, index) => {
+  const day = index + 1;
+  const dayStr = `2026-10-${String(day).padStart(2, "0")}`;
+  const income = day >= 18 ? 8450 : day >= 5 ? 7200 : 0;
+  const expense = Number(((4826.35 * day) / 31).toFixed(2));
+  return {
+    date: dayStr,
+    income,
+    expense,
+    balance: Number((income - expense).toFixed(2)),
+  };
+});
+
+export const evolutionResponse: EvolutionResponse = {
+  granularity: "DAY",
+  points: cashFlow.map((item) => ({
+    label: item.date.slice(8, 10),
+    from: item.date,
+    to: item.date,
+    income: item.income,
+    expense: item.expense,
+    balance: item.balance,
+  })),
+};
+
+export type { Goal, Transaction };

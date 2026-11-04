@@ -401,7 +401,7 @@ Cores de série em ordem fixa, para o usuário aprender a leitura:
   - Topo: wordmark "FIN" em texto com símbolo geométrico em gradiente violeta-azul (sem imagem).
   - Itens: Início, Transações, Contas, Cartões, Metas, Relatórios, Configurações. Ativo: pílula em gradiente violeta, ícone e texto brancos.
   - Base: card "Defina um objetivo" com botão "Nova meta".
-- **Topbar:** saudação "Boa tarde, Marina!" com subtítulo "Veja como estão suas finanças", seletor de período, botão de tema e sino com contador.
+- **Topbar:** saudação "Boa tarde, Hellen!" com subtítulo "Veja como estão suas finanças", seletor de período, botão de tema e sino com contador.
 
 ### 9.2 Mobile (< 1024px)
 
@@ -574,7 +574,7 @@ interface Transaction {
 | `previous.expenseChangePct` | −3,1 |
 | `totalBalance` | 18.742,90 |
 | `creditCardDebt` | 2.315,40 |
-| Usuária | Marina Souza |
+| Usuária | Hellen Carol |
 
 ---
 

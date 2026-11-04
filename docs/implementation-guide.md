@@ -39,7 +39,7 @@ Este documento define a ordem exata de criação dos arquivos e módulos para co
 - Interceptar status `401 Unauthorized` para executar a rotação do token via `POST /api/v1/auth/refresh` e repetir a requisição.
 
 ### 2.3 `lib/mock-data.ts`
-- Criar a base de dados determinística para a usuária Marina Souza com `TODAY = "2026-10-31"`.
+- Criar a base de dados determinística para a usuária Hellen Carol com `TODAY = "2026-10-31"`.
 - Incluir contas (Conta Principal, Carteira, Reserva Digital e Poupança arquivada), faturas de cartão de 2026-08 a 2026-12 e lançamentos do mês de Outubro/2026.
 
 ### 2.4 `lib/api/endpoints/*.ts`
