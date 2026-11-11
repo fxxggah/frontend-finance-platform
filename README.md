@@ -12,7 +12,7 @@ Documento de planejamento do frontend do app de finanças pessoais **FIN**. Reú
 
 ---
 
-## 1. Decisões de produto
+## 1. Decisões de produto 
 
 | Item | Decisão |
 |---|---|
