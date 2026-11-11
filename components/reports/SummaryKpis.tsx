@@ -7,15 +7,18 @@ import { ProgressBar } from '@/components/ui/progress-bar';
 import { CategoryIcon } from '@/components/icons/CategoryIcon';
 import { formatMoney } from '@/lib/format/money';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { DashboardSummary, ExpenseByCategory } from '@/types';
 
 interface SummaryKpisProps {
   summary?: DashboardSummary | null;
   topCategory?: ExpenseByCategory | null;
   periodQuery: string; // Ex: "?period=MONTH&date=2026-10-31"
+  isLoading?: boolean;
 }
 
-export function SummaryKpis({ summary, topCategory, periodQuery }: SummaryKpisProps) {
+export function SummaryKpis({ summary, topCategory, periodQuery, isLoading }: SummaryKpisProps) {
+  if (isLoading || !summary) return <Skeleton className="h-80 rounded-2xl" />;
   const totalIncome = summary?.totalIncome ?? 0;
   const totalExpense = summary?.totalExpense ?? 0;
   const balance = summary?.balance ?? 0;

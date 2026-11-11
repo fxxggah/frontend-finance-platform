@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { Bell, Sun, Moon } from "lucide-react";
-import { currentUser } from "@/lib/mock-data";
+import { useCurrentUser } from "@/hooks/use-current-user";
+import { UserAvatar } from "./UserAvatar";
 
 export function HeaderMobile() {
+  const { data: currentUser, isPending } = useCurrentUser();
   const [greeting, setGreeting] = useState("Olá");
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
@@ -38,8 +40,6 @@ export function HeaderMobile() {
     }
   }
 
-  const firstName = currentUser.name.split(" ")[0];
-
   return (
     <header className="lg:hidden relative overflow-hidden bg-gradient-hero text-white rounded-b-[2rem] px-5 pt-6 pb-8 shadow-lg shadow-primary/20">
       {/* Detalhe estético em overlay radial */}
@@ -52,14 +52,14 @@ export function HeaderMobile() {
         {/* Identificação e Saudação */}
         <div className="flex items-center gap-3">
           <div className="flex size-11 items-center justify-center rounded-2xl bg-white/15 text-sm font-bold text-white shadow-sm border border-white/20">
-            {firstName.charAt(0)}
+            <UserAvatar user={currentUser} />
           </div>
           <div>
             <span className="text-xs font-medium text-white/80">
               {greeting},
             </span>
             <h1 className="text-base font-bold tracking-tight text-white leading-tight">
-              {currentUser.name}
+              {currentUser?.name ?? (isPending ? 'Carregando perfil...' : 'Perfil indisponível')}
             </h1>
           </div>
         </div>
@@ -87,10 +87,6 @@ export function HeaderMobile() {
             className="relative flex size-11 items-center justify-center rounded-2xl bg-white/15 text-white border border-white/20 transition-all active:scale-95"
           >
             <Bell className="size-4" aria-hidden="true" />
-            <span className="absolute top-2 right-2 flex size-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75" />
-              <span className="relative inline-flex size-2 rounded-full bg-accent" />
-            </span>
           </button>
         </div>
       </div>

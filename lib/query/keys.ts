@@ -32,12 +32,13 @@ export const queryKeys = {
       ["credit-cards", cardId, "invoices", ym] as const,
   },
   dashboard: {
+    all: ["dashboard"] as const,
     summary: (period = "MONTH", date?: string, filters?: Record<string, unknown>) =>
       ["dashboard", "summary", { period, date, ...filters }] as const,
-    expensesByCategory: (period = "MONTH", date?: string) =>
-      ["dashboard", "expenses-by-category", { period, date }] as const,
-    evolution: (period = "MONTH", date?: string) =>
-      ["dashboard", "evolution", { period, date }] as const,
+    expensesByCategory: (period = "MONTH", date?: string, filters?: Record<string, unknown>) =>
+      ["dashboard", "expenses-by-category", { period, date, ...filters }] as const,
+    evolution: (period = "MONTH", date?: string, filters?: Record<string, unknown>) =>
+      ["dashboard", "evolution", { period, date, ...filters }] as const,
     recent: (limit = 5) => ["dashboard", "recent", limit] as const,
   },
   goals: {

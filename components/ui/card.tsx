@@ -12,7 +12,7 @@ const cardVariants = cva('transition-shadow duration-200', {
       /** Cartão hero com gradiente de marca */
       brand: [
         'rounded-3xl text-white border-transparent',
-        'bg-[linear-gradient(135deg,#3B1FA8_0%,#5B3DF5_55%,#4F7BFF_100%)]',
+        'bg-gradient-hero',
         'shadow-[0_16px_40px_-16px_rgba(91,61,245,0.55)]',
         // overlay translúcido para textura
         'relative overflow-hidden',

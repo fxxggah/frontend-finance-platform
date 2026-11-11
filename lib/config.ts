@@ -3,14 +3,14 @@
  */
 
 // Flag central de alternância entre mocks e backend real.
-// Em produção ou dev real, a variável NEXT_PUBLIC_USE_MOCK="false" desativa os mocks.
+// Somente o valor literal "true" habilita mocks; ausente ou "false" usa a API real.
 export const USE_MOCK: boolean = process.env.NEXT_PUBLIC_USE_MOCK === "true";
 
 // URL base da API REST backend (Spring Boot)
-const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const rawApiUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080").replace(/\/+$/, "");
 export const API_BASE_URL: string = rawApiUrl.endsWith("/api/v1")
   ? rawApiUrl
-  : `${rawApiUrl.replace(/\/+$/, "")}/api/v1`;
+  : `${rawApiUrl}/api/v1`;
 
 /**
  * Simula a latência de rede realista para o modo de desenvolvimento com mocks (300ms a 600ms).

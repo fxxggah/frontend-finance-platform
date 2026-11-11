@@ -1,195 +1,96 @@
-export type TransactionType = "INCOME" | "EXPENSE";
-export type AccountType = "BANK" | "CASH" | "DIGITAL_WALLET" | "OTHER";
-export type GoalType = "SAVINGS" | "INCOME" | "EXPENSE";
-export type GoalStatus = "ACTIVE" | "CANCELLED";
-export type GoalState = "IN_PROGRESS" | "WARNING" | "EXCEEDED" | "ACHIEVED" | "EXPIRED";
-export type InvoiceStatus = "OPEN" | "CLOSED" | "PARTIALLY_PAID" | "PAID" | "OVERDUE";
-export type Period = "DAY" | "WEEK" | "FORTNIGHT" | "MONTH" | "QUARTER" | "SEMESTER" | "YEAR" | "CUSTOM";
-export type Granularity = "DAY" | "WEEK" | "MONTH";
+import type { components, paths } from './api.generated';
 
-export interface User {
-  id: number;
-  name: string;
-  email: string;
-  pictureUrl: string | null;
-}
+type Schemas = components['schemas'];
+type Complete<T> = T extends (infer Item)[] ? Complete<Item>[]
+  : T extends object ? { [K in keyof T]-?: Complete<NonNullable<T[K]>> } : T;
+type Model<Name extends keyof Schemas> = Complete<Schemas[Name]>;
+type Nullable<T, Keys extends keyof T> = Omit<T, Keys> & { [K in Keys]: T[K] | null };
 
-export interface Account {
-  id: number;
-  name: string;
-  type: AccountType;
-  balance: number;
-  color: string;
-  icon: string;
-  archived: boolean;
-}
-
-export interface AccountsResponse {
-  accounts: Account[];
-  totalBalance: number;
-  creditCardDebt: number;
-}
-
-export interface Category {
-  id: number;
-  name: string;
-  type: TransactionType;
-  color: string;
-  icon: string;
-}
-
-export interface Transaction {
-  id: number;
-  type: TransactionType;
-  amount: number;
-  date: string;
-  description: string;
-  notes: string | null;
-  category: Category;
-  account: { id: number; name: string } | null;
-  creditCard: { id: number; name: string } | null;
-  invoiceReference: string | null;
-  installment: { groupId?: string; number: number; total: number } | null;
-}
-
-export interface Page<T> {
-  content: T[];
-  page: number;
-  size: number;
-  totalElements: number;
-  totalPages: number;
-}
-
-export interface Transfer {
-  id: number;
-  fromAccount: { id: number; name: string };
-  toAccount: { id: number; name: string };
-  amount: number;
-  date: string;
-  description: string | null;
-}
-
-export interface CreditCard {
-  id: number;
-  name: string;
-  creditLimit: number;
-  usedLimit: number;
-  availableLimit: number;
-  closingDay: number;
-  dueDay: number;
-  color: string;
-  icon: string;
-  archived: boolean;
-  currentInvoice: {
-    reference: string;
-    total: number;
-    status: InvoiceStatus;
-    dueDate: string;
-  };
-}
-
-export interface InvoiceSummary {
-  reference: string;
-  closingDate: string;
-  dueDate: string;
-  total: number;
-  paid: number;
-  status: InvoiceStatus;
-}
-
+// Modelos de apresentação derivados do OpenAPI. Os DTOs do Spring não anotam
+// required/nullable nas respostas; campos opcionais de domínio podem vir null.
+export type User = Nullable<Model<'UserResponse'>, 'pictureUrl'>;
+export type Account = Model<'AccountResponse'>;
+export type AccountType = Account['type'];
+export type AccountsResponse = Model<'AccountListResponse'>;
+export type Category = Model<'CategoryResponse'>;
+export type TransactionType = Category['type'];
+export type Transaction = Omit<Nullable<Model<'TransactionResponse'>,
+  'notes' | 'account' | 'creditCard' | 'invoiceReference' | 'installment'>, 'installment'> & {
+  installment: (Omit<Model<'InstallmentInfo'>, 'groupId'> & { groupId?: string }) | null;
+};
+export type RecentTransaction = Nullable<Model<'TransactionRecentDTO'>, 'accountName' | 'creditCardName'>;
+export type Page<T> = Omit<Model<'PageResponseTransactionResponse'>, 'content'> & { content: T[] };
+export type Transfer = Omit<Nullable<Model<'TransferResponse'>, 'description'>, 'fromAccount' | 'toAccount'> & {
+  fromAccount: Pick<Model<'AccountSummary'>, 'id' | 'name'>;
+  toAccount: Pick<Model<'AccountSummary'>, 'id' | 'name'>;
+};
+export type InvoiceSummary = Model<'InvoiceResponse'>;
+export type InvoiceStatus = InvoiceSummary['status'];
+export type CreditCard = Omit<Model<'CreditCardResponse'>, 'currentInvoice'> & {
+  currentInvoice: InvoiceSummary | null;
+};
+// Não há consulta de pagamentos no OpenAPI atual; undefined sinaliza indisponibilidade.
 export interface InvoicePayment {
   id: number;
-  account: { id: number; name: string };
+  account: Pick<Account, 'id' | 'name'>;
   amount: number;
   date: string;
 }
-
-export interface InvoiceDetail extends InvoiceSummary {
-  transactions: Transaction[];
-  payments: InvoicePayment[];
-}
-
-export interface Goal {
-  id: number;
-  type: GoalType;
-  name: string;
-  description: string | null;
-  icon: string;
-  color: string;
-  targetAmount: number;
-  currentAmount: number;
-  percentage: number;
-  state: GoalState;
-  status: GoalStatus;
-  category: { id: number; name: string } | null;
-  startDate: string | null;
-  endDate: string | null;
-  monthlyNeeded: number | null;
+export type InvoiceDetail = InvoiceSummary & { transactions: Transaction[]; payments?: InvoicePayment[] };
+export type Goal = Omit<Nullable<Model<'GoalResponse'>,
+  'description' | 'startDate' | 'endDate' | 'monthlyNeeded' | 'category'>, 'category'> & {
+  category: Pick<Model<'CategorySimpleDto'>, 'id' | 'name'> | null;
   supportText?: string;
-}
+};
+export type GoalType = Goal['type'];
+export type GoalStatus = Goal['status'];
+export type GoalState = Goal['state'];
+export type GoalContribution = Nullable<Model<'GoalContributionResponse'>, 'notes'>;
+export type DashboardSummary = Omit<Model<'DashboardSummaryDTO'>, 'previous'> & {
+  previous: Nullable<Model<'PreviousSummaryDTO'>, 'incomeChangePct' | 'expenseChangePct'>;
+};
+export type Period = Extract<DashboardSummary['period'], 'DAY' | 'WEEK' | 'MONTH' | 'YEAR' | 'CUSTOM'>;
+export type ExpenseByCategory = Model<'CategoryExpenseDTO'>;
+export type EvolutionResponse = Model<'EvolutionDTO'>;
+export type EvolutionPoint = EvolutionResponse['points'][number];
+export type Granularity = EvolutionResponse['granularity'];
+export type DashboardFilters = Omit<NonNullable<paths['/api/v1/dashboard/summary']['get']['parameters']['query']>, 'period'> & { period?: Period };
+export type TransactionFilterParams = Omit<NonNullable<paths['/api/v1/transactions']['get']['parameters']['query']>, 'sort'> & { sort?: string };
+export type TransferFilterParams = Omit<NonNullable<paths['/api/v1/transfers']['get']['parameters']['query']>, 'sort'> & { sort?: string };
 
-export interface GoalContribution {
-  id: number;
-  amount: number;
-  date: string;
-  notes: string | null;
-}
+export type GoogleLoginRequest = Schemas['GoogleLoginRequest'];
+export type AuthResponse = Omit<Model<'AuthResponse'>, 'user'> & { user: User };
+export type TokenResponse = Model<'TokenResponse'>;
+export type TransactionRequest = Omit<Schemas['TransactionRequest'], 'notes'> & { notes?: string | null };
+export type TransferRequest = Omit<Schemas['TransferRequest'], 'description'> & { description?: string | null };
+export type AccountRequest = Schemas['AccountRequest'];
+export type AccountDeleteResponse = Model<'AccountDeleteResponse'>;
+export type CreditCardRequest = Schemas['CreditCardRequest'];
+export type InvoicePaymentRequest = Schemas['InvoicePaymentRequest'];
+export type GoalContributionRequest = Schemas['GoalContributionRequest'];
+export type GoalRequest = Omit<Schemas['GoalRequest'], 'categoryId' | 'description' | 'startDate' | 'endDate'> & {
+  categoryId?: number | null;
+  description?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+};
+export type CategoryRequest = Schemas['CategoryRequest'];
+export type CategoryUpdateRequest = Schemas['CategoryUpdateRequest'];
+export type InvestmentSimulationRequest = Schemas['InvestmentSimulationRequest'];
+export type DebtSimulationRequest = Schemas['DebtPayoffSimulationRequest'];
+export type InvestmentSimulationResponse = Model<'InvestmentSimulationResponse'>;
+export type DebtSimulationResponse = Model<'DebtPayoffSimulationResponse'>;
 
-export interface DashboardSummary {
-  period: Period;
-  from: string;
-  to: string;
-  totalIncome: number;
-  totalExpense: number;
-  balance: number;
-  previous: {
-    from: string;
-    to: string;
-    incomeChangePct: number | null;
-    expenseChangePct: number | null;
-  };
-}
-
-export interface ExpenseByCategory {
-  categoryId: number;
-  name: string;
-  color: string;
-  icon: string;
-  total: number;
-  percentage: number;
-  count: number;
-}
-
-export interface EvolutionPoint {
-  label: string;
-  from: string;
-  to: string;
-  income: number;
-  expense: number;
-  balance: number;
-}
-
-export interface EvolutionResponse {
-  granularity: Granularity;
-  points: EvolutionPoint[];
-}
-
-export interface InvestmentResult {
-  totalInvested: number;
-  totalInterest: number;
-  finalAmount: number;
+// Nomes de apresentação usados pelas tabelas e gráficos de simulação.
+export type InvestmentResult = Pick<InvestmentSimulationResponse, 'totalInvested' | 'totalInterest' | 'finalAmount'> & {
   monthlyBreakdown: {
     month: number;
     invested: number;
     interest: number;
     balance: number;
   }[];
-}
-
-export interface DebtResult {
-  months: number;
-  totalPaid: number;
-  totalInterest: number;
+};
+export type DebtResult = Pick<DebtSimulationResponse, 'months' | 'totalPaid' | 'totalInterest'> & {
   schedule: {
     month: number;
     payment: number;
@@ -197,113 +98,6 @@ export interface DebtResult {
     principal: number;
     balance: number;
   }[];
-}
-
-/* --- DTOs de Requisição (Request Payloads) --- */
-
-export interface GoogleLoginRequest {
-  idToken: string;
-}
-
-export interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
-  user: User;
-}
-
-export interface TransactionRequest {
-  type: TransactionType;
-  amount: number;
-  categoryId: number;
-  date: string;
-  description?: string;
-  notes?: string | null;
-  accountId?: number;
-  creditCardId?: number;
-  installments?: number;
-}
-
-export interface TransactionFilterParams {
-  period?: Period;
-  date?: string;
-  type?: TransactionType;
-  categoryId?: number;
-  accountId?: number;
-  creditCardId?: number;
-  search?: string;
-  page?: number;
-  size?: number;
-  sort?: string;
-}
-
-export interface TransferRequest {
-  fromAccountId: number;
-  toAccountId: number;
-  amount: number;
-  date: string;
-  description?: string | null;
-}
-
-export interface TransferFilterParams {
-  from?: string;
-  to?: string;
-  accountId?: number;
-  page?: number;
-  size?: number;
-}
-
-export interface AccountRequest {
-  name: string;
-  type: AccountType;
-  balance?: number;
-  initialBalance?: number;
-  color?: string;
-  icon?: string;
-}
-
-export interface AccountDeleteResponse {
-  archived: boolean;
-}
-
-export interface CreditCardRequest {
-  name: string;
-  creditLimit: number;
-  closingDay: number;
-  dueDay: number;
-  color?: string;
-  icon?: string;
-}
-
-export interface InvoicePaymentRequest {
-  accountId: number;
-  amount: number;
-  date: string;
-}
-
-export interface GoalContributionRequest {
-  amount: number;
-  date: string;
-  notes?: string;
-}
-
-export interface GoalRequest {
-  type: GoalType;
-  name: string;
-  targetAmount: number;
-  categoryId?: number | null;
-  description?: string | null;
-  color?: string;
-  icon?: string;
-  startDate?: string | null;
-  endDate?: string | null;
-}
-
-export interface CategoryRequest {
-  name: string;
-  type: TransactionType;
-  color: string;
-  icon: string;
-}
+};
 
 

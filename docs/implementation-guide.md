@@ -2,6 +2,10 @@
 
 Este documento define a ordem exata de criação dos arquivos e módulos para construir o frontend do **FIN**, garantindo que as dependências base (tipos, tokens, serviços e primitivos) estejam prontas antes das telas e componentes.
 
+**Fase atual:** integração real das telas das fases 4–7 com a infraestrutura da
+fase 2. Configuração, geração OpenAPI, consultas, sessão e limitações atuais estão
+em [api-integration.md](./api-integration.md).
+
 ---
 
 ## FASE 1: Configuração Base, Tokens e Tipagem

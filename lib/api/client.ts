@@ -1,14 +1,16 @@
 import { API_BASE_URL } from "@/lib/config";
 import { ApiError, type ProblemDetail } from "./errors";
+import type { paths } from "@/types/api.generated";
 
-// Armazenamento em memória do token de acesso (volátil, seguro contra XSS)
+type RoutePath<T extends string> = T extends `${infer Head}{${string}}${infer Tail}`
+  ? `${Head}${string}${RoutePath<Tail>}` : T;
+type ApiPath = { [K in keyof paths]: K extends `/api/v1${infer Path}` ? RoutePath<Path> : never }[keyof paths];
+
 let inMemoryAccessToken: string | null = null;
-
-export function getAccessToken(): string | null {
-  return inMemoryAccessToken;
-}
-
+let sessionGeneration = 0;
+export function getAccessToken(): string | null { return inMemoryAccessToken; }
 export function setAccessToken(token: string | null): void {
+  if (token === null) sessionGeneration += 1;
   inMemoryAccessToken = token;
 }
 
@@ -17,114 +19,93 @@ export interface RequestOptions extends RequestInit {
   _retry?: boolean;
 }
 
-/**
- * Constrói URL completa com path e query parameters sanitizados.
- */
-function buildUrl(path: string, params?: Record<string, string | number | boolean | undefined | null>): string {
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  const url = new URL(`${API_BASE_URL}${normalizedPath}`);
-
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
-        url.searchParams.append(key, String(value));
-      }
-    });
-  }
-
-  return url.toString();
+async function responseError(response: Response): Promise<ApiError> {
+  const body: Partial<ProblemDetail> = await response.json().catch(() => ({}));
+  return new ApiError({
+    ...body,
+    status: response.status,
+    title: body.title || "Erro na requisição",
+    detail: body.detail || response.statusText || "Não foi possível comunicar com o servidor.",
+    errors: body.errors || [],
+  });
 }
 
-let refreshPromise: Promise<boolean> | null = null;
+async function fetchApi(input: RequestInfo | URL, init: RequestInit): Promise<Response> {
+  try {
+    return await fetch(input, init);
+  } catch (error) {
+    if (init.signal?.aborted) throw error;
+    throw new ApiError({ status: 0, title: "Erro de conexão", detail: "Não foi possível conectar ao servidor. Tente novamente." });
+  }
+}
 
-async function attemptTokenRefresh(): Promise<boolean> {
+function redirectToLogin(): void {
+  setAccessToken(null);
+  if (typeof window !== "undefined" && window.location.pathname !== "/login") {
+    window.location.assign("/login");
+  }
+}
+
+let refreshPromise: Promise<void> | null = null;
+
+async function refreshAccessToken(): Promise<void> {
   if (!refreshPromise) {
+    const generation = sessionGeneration;
     refreshPromise = (async () => {
-      try {
-        const response = await fetch("/api/auth/refresh", { method: "POST" });
-        if (!response.ok) return false;
-        const data: { accessToken?: string } = await response.json();
-        if (!data.accessToken) return false;
-        setAccessToken(data.accessToken);
-        return true;
-      } catch {
-        return false;
+      const response = await fetchApi("/api/auth/refresh", {
+        method: "POST",
+        credentials: "same-origin",
+        cache: "no-store",
+      });
+      if (!response.ok) {
+        if (response.status === 401) redirectToLogin();
+        throw await responseError(response);
       }
+      const data: { accessToken?: string } = await response.json();
+      if (!data.accessToken) throw new ApiError({
+        status: 502, title: "Sessão inválida", detail: "O servidor não retornou um token de acesso.",
+      });
+      if (generation !== sessionGeneration) throw new ApiError({
+        status: 401, title: "Sessão encerrada", detail: "A sessão foi encerrada durante a renovação.",
+      });
+      setAccessToken(data.accessToken);
     })().finally(() => { refreshPromise = null; });
   }
   return refreshPromise;
 }
 
-/**
- * Cliente HTTP desacoplado para comunicação com a API REST do FIN.
- */
-export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
+/** Chamadas privadas usam o access token em memória, recuperado do cookie httpOnly pelo BFF. */
+export async function apiFetch<T>(path: ApiPath, options: RequestOptions = {}): Promise<T> {
   const { params, _retry, ...fetchInit } = options;
-  const fullUrl = buildUrl(path, params);
-
-  const headers = new Headers(fetchInit.headers);
-  if (!headers.has("Content-Type") && !(fetchInit.body instanceof FormData)) {
-    headers.set("Content-Type", "application/json");
-  }
-
-  const isPublicAuth = path === "/auth/google";
-  if (!isPublicAuth && !getAccessToken() && typeof window !== "undefined") {
-    await attemptTokenRefresh();
-  }
-  const token = getAccessToken();
-  if (token && !headers.has("Authorization")) {
-    headers.set("Authorization", `Bearer ${token}`);
-  }
-
-  const response = await fetch(fullUrl, {
-    ...fetchInit,
-    headers,
-    credentials: "include",
+  const url = new URL(`${API_BASE_URL}${path}`);
+  Object.entries(params ?? {}).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") url.searchParams.set(key, String(value));
   });
 
-  // Intercepta 401 para tentativa única de refresh
-  if (response.status === 401 && !_retry && !isPublicAuth && typeof window !== "undefined") {
-    // Uma resposta 401 pode vir de um token antigo enviado em paralelo.
-    if (token !== getAccessToken() && getAccessToken()) {
+  const isPublicAuth = path.startsWith("/auth/");
+  if (!isPublicAuth && !getAccessToken() && typeof window !== "undefined") await refreshAccessToken();
+
+  const headers = new Headers(fetchInit.headers);
+  headers.set("Accept", "application/json");
+  if (fetchInit.body && !headers.has("Content-Type") && !(fetchInit.body instanceof FormData)) {
+    headers.set("Content-Type", "application/json");
+  }
+  const token = getAccessToken();
+  if (!isPublicAuth && token) headers.set("Authorization", `Bearer ${token}`);
+
+  const response = await fetchApi(url, { ...fetchInit, headers, cache: "no-store" });
+  if (response.status === 401 && !isPublicAuth && typeof window !== "undefined") {
+    if (!_retry) {
+      if (token === getAccessToken() || !getAccessToken()) await refreshAccessToken();
       return apiFetch<T>(path, { ...options, _retry: true });
     }
-    const refreshed = await attemptTokenRefresh();
-    if (refreshed) {
-      return apiFetch<T>(path, { ...options, _retry: true });
-    }
-    setAccessToken(null);
-    if (window.location.pathname !== "/login") window.location.assign("/login");
+    await fetch("/api/auth/logout", { method: "POST" }).catch(() => undefined);
+    redirectToLogin();
   }
+  if (!response.ok) throw await responseError(response);
 
-  // Tratamento de erros estruturados (RFC 7807)
-  if (!response.ok) {
-    let problem: ProblemDetail;
-    try {
-      const errorJson = await response.json();
-      problem = {
-        title: errorJson.title || "Erro na requisição",
-        status: errorJson.status || response.status,
-        detail: errorJson.detail || errorJson.message || response.statusText,
-        type: errorJson.type,
-        instance: errorJson.instance,
-        errors: errorJson.errors || [],
-      };
-    } catch {
-      problem = {
-        title: "Erro de comunicação",
-        status: response.status,
-        detail: response.statusText || `Falha na requisição HTTP (${response.status})`,
-      };
-    }
-
-    throw new ApiError(problem);
-  }
-
-  // Se resposta sem conteúdo (ex: 204 No Content)
-  if (response.status === 204 || response.headers.get("content-length") === "0") {
-    return undefined as unknown as T;
-  }
-
-  return (await response.json()) as T;
+  // O Spring também retorna 200/201 sem corpo em algumas mutações.
+  const body = await response.text();
+  return body ? JSON.parse(body) as T : undefined as T;
 }
 

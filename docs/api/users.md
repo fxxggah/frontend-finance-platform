@@ -59,7 +59,7 @@ Exemplo:
 Exclui permanentemente o usuário e todos os seus registros associados (contas bancárias, transações, transferências, cartões de crédito, metas e faturas) em cascata.
 
 > [!CAUTION]
-> Esta operação é irreversível. O frontend deve apresentar um modal de confirmação explícito antes de invocar este endpoint e, após o retorno `204`, deslogar o usuário e redirecioná-lo para a tela inicial.
+> Esta operação é irreversível. O frontend deve apresentar um modal de confirmação explícito antes de invocar este endpoint e, após o retorno de sucesso, deslogar o usuário e redirecioná-lo para a tela inicial.
 
 - **Método HTTP:** `DELETE`
 - **Rota:** `/api/v1/users/me`
@@ -71,7 +71,7 @@ Não há Path Params nem Query Params.
 ### Request Body
 Não se aplica (`DELETE`).
 
-### Response Body (`204 No Content`)
+### Response Body (`200 OK`)
 Não há conteúdo no corpo da resposta (`null`/vazio).
 
 ### Tratamento de Erros

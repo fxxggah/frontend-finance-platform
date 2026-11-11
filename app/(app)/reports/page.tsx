@@ -19,15 +19,9 @@ import { useAccounts } from '@/hooks/use-accounts';
 import { useCreditCards } from '@/hooks/use-credit-cards';
 import { usePeriodParams } from '@/hooks/use-period-params';
 import { useDevState } from '@/hooks/use-dev-state';
+import { getToday } from '@/lib/format/date';
 import { generateInsights } from '@/lib/insights';
-import type { Period } from '@/types';
-
-const PERIOD_BUTTONS: { key: Period; label: string }[] = [
-  { key: 'DAY', label: 'Dia' },
-  { key: 'WEEK', label: 'Semana' },
-  { key: 'MONTH', label: 'Mês' },
-  { key: 'YEAR', label: 'Ano' },
-];
+import { PERIOD_OPTIONS } from '@/lib/periods';
 
 export default function ReportsPage() {
   const searchParams = useSearchParams();
@@ -39,6 +33,17 @@ export default function ReportsPage() {
   // Filtro opcional agrupado por Conta ou Cartão
   const [selectedEntity, setSelectedEntity] = useState<string>(''); // formato: "account:1" ou "card:2"
 
+  const filters = {
+    from, to,
+    accountId: selectedEntity.startsWith('account:') ? Number(selectedEntity.split(':')[1]) : undefined,
+    creditCardId: selectedEntity.startsWith('card:') ? Number(selectedEntity.split(':')[1]) : undefined,
+  };
+  const transactionQuery = new URLSearchParams(
+    Object.entries({ period, date, ...filters })
+      .filter(([, value]) => value !== undefined)
+      .map(([key, value]) => [key, String(value)])
+  ).toString();
+
   const { data: accountsData } = useAccounts(false);
   const { data: cardsData } = useCreditCards(false);
 
@@ -47,21 +52,21 @@ export default function ReportsPage() {
     isLoading: summaryLoading,
     isError: summaryError,
     refetch: refetchSummary,
-  } = useDashboardSummary(period, date);
+  } = useDashboardSummary(period, date, filters);
 
   const {
     data: categoriesData,
     isLoading: catLoading,
     isError: catError,
     refetch: refetchCat,
-  } = useExpensesByCategory(period, date);
+  } = useExpensesByCategory(period, date, filters);
 
   const {
     data: evolution,
     isLoading: evoLoading,
     isError: evoError,
     refetch: refetchEvo,
-  } = useEvolution(period, date);
+  } = useEvolution(period, date, filters);
 
   const showLoading =
     devState === 'loading' ||
@@ -137,15 +142,16 @@ export default function ReportsPage() {
 
         <div className="flex flex-wrap items-center gap-3">
           {/* Seletor de Período Rápido */}
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-surface border border-border">
-            {PERIOD_BUTTONS.map((p) => {
-              const isActive = period === p.key;
+          <div className="flex flex-wrap items-center gap-1 p-1 rounded-xl bg-surface border border-border">
+            {PERIOD_OPTIONS.map((p) => {
+              const isActive = period === p.value;
               return (
                 <button
-                  key={p.key}
+                  key={p.value}
                   type="button"
-                  onClick={() => setPeriod({ period: p.key })}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                  onClick={() => setPeriod({ period: p.value })}
+                  aria-pressed={isActive}
+                  className={`min-h-11 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
                     isActive
                       ? 'bg-primary text-white shadow-sm'
                       : 'text-text-muted hover:text-text'
@@ -200,6 +206,19 @@ export default function ReportsPage() {
         </div>
       </div>
 
+      {period === 'CUSTOM' && <div className="grid gap-3 sm:grid-cols-2">
+        <label className="text-sm text-text-muted">De
+          <input type="date" value={from ?? date} max={to ?? date} onChange={event => {
+            if (event.target.value) setPeriod({ from: event.target.value });
+          }} className="mt-1 min-h-11 w-full rounded-xl border border-border bg-surface px-3 text-text" />
+        </label>
+        <label className="text-sm text-text-muted">Até
+          <input type="date" value={to ?? date} min={from ?? date} onChange={event => {
+            if (event.target.value) setPeriod({ to: event.target.value });
+          }} className="mt-1 min-h-11 w-full rounded-xl border border-border bg-surface px-3 text-text" />
+        </label>
+      </div>}
+
       {/* Aviso de intervalo superior a 24 meses */}
       {isOver24Months && (
         <div className="flex items-start gap-3 rounded-2xl bg-warning-soft border border-warning/30 p-4 text-xs text-warning leading-relaxed">
@@ -220,7 +239,7 @@ export default function ReportsPage() {
           title="Nenhuma movimentação neste período"
           description="Não encontramos receitas ou despesas registradas para este filtro temporal. Experimente selecionar outro período no topo da página."
           actionLabel="Ver mês atual"
-          onAction={() => setPeriod({ period: 'MONTH', date: '2026-10-31' })}
+          onAction={() => setPeriod({ period: 'MONTH', date: getToday() })}
         />
       ) : (
         <>
@@ -236,9 +255,10 @@ export default function ReportsPage() {
 
             <div className="lg:col-span-1">
               <SummaryKpis
+                isLoading={showLoading}
                 summary={summary}
                 topCategory={topCategory}
-                periodQuery={`?period=${period}&date=${date}`}
+                periodQuery={`?${transactionQuery}`}
               />
             </div>
           </div>

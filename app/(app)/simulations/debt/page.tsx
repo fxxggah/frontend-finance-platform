@@ -9,7 +9,8 @@ import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { formatMoney } from '@/lib/format/money';
-import { calculateDebtPayoff, InsufficientPaymentError } from '@/lib/simulations';
+import { useDebtSimulation } from '@/hooks/use-simulations';
+import { ApiError } from '@/lib/api/errors';
 import type { DebtResult } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -17,14 +18,13 @@ import { cn } from '@/lib/utils';
 
 const debtSchema = z.object({
   debtAmount: z
-    .number({ invalid_type_error: 'Informe um valor válido' })
+    .number({ error: 'Informe um valor válido' })
     .positive('O saldo devedor deve ser maior que zero'),
   monthlyInterestRate: z
-    .number({ invalid_type_error: 'Informe um valor válido' })
-    .positive('A taxa de juros deve ser maior que zero')
-    .max(100, 'A taxa não pode ultrapassar 100%'),
+    .number({ error: 'Informe um valor válido' })
+    .min(0, 'A taxa não pode ser negativa'),
   monthlyPayment: z
-    .number({ invalid_type_error: 'Informe um valor válido' })
+    .number({ error: 'Informe um valor válido' })
     .positive('O pagamento mensal deve ser maior que zero'),
 });
 
@@ -157,12 +157,14 @@ function AmortizationTable({ schedule }: { schedule: DebtResult['schedule'] }) {
 // ─── Página principal ─────────────────────────────────────────────────────────
 
 export default function DebtSimulatorPage() {
-  const [result, setResult] = useState<DebtResult | null>(null);
+  const mutation = useDebtSimulation();
+  const result = mutation.data;
   const [calcError, setCalcError] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<DebtForm>({
     resolver: zodResolver(debtSchema),
@@ -173,18 +175,21 @@ export default function DebtSimulatorPage() {
     },
   });
 
-  function onSubmit(data: DebtForm) {
+  async function onSubmit(data: DebtForm) {
     setCalcError(null);
-    setResult(null);
+    mutation.reset();
     try {
-      const res = calculateDebtPayoff(data);
-      setResult(res);
-    } catch (err) {
-      if (err instanceof InsufficientPaymentError) {
-        setCalcError(err.message);
-      } else {
-        setCalcError('Ocorreu um erro inesperado no cálculo. Verifique os valores.');
+      await mutation.mutateAsync({
+        debtAmount: data.debtAmount, monthlyRate: data.monthlyInterestRate, monthlyPayment: data.monthlyPayment,
+      });
+    } catch (error) {
+      if (error instanceof ApiError) {
+        for (const field of error.errors) {
+          const key = field.field === 'monthlyRate' ? 'monthlyInterestRate' : field.field;
+          if (key in data) setError(key as keyof DebtForm, { message: field.message });
+        }
       }
+      setCalcError(error instanceof Error ? error.message : 'Não foi possível realizar a simulação.');
     }
   }
 
@@ -219,8 +224,7 @@ export default function DebtSimulatorPage() {
             <Input
               label="Taxa de juros mensal (%)"
               type="number"
-              min={0.01}
-              max={100}
+              min={0}
               step={0.01}
               placeholder="2,50"
               error={errors.monthlyInterestRate?.message}
@@ -248,7 +252,7 @@ export default function DebtSimulatorPage() {
             </div>
           )}
 
-          <Button type="submit" variant="primary" size="md" className="w-full sm:w-auto">
+          <Button type="submit" variant="primary" size="md" isLoading={mutation.isPending} className="w-full sm:w-auto">
             <Calculator size={16} />
             Calcular
           </Button>

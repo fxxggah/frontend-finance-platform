@@ -8,6 +8,7 @@ Este documento padroniza a linguagem visual do **FIN**, detalhando a configuraç
 
 - **Tema Padrão:** Tema **CLARO suave** (não branco puro estourado), com paleta elegante baseada em violeta e azul profundo.
 - **Tema Escuro:** Alternável via atributo `data-theme="dark"` no elemento `<html>`, com preferência salva em `localStorage` e carregada via script inline para evitar FOUC (*flash of unstyled content*).
+- **Gradiente de marca:** `bg-gradient-hero` usa um gradiente fixo definido em `@theme`, idêntico nos temas claro e escuro; o cartão Hero e o botão central da navegação usam essa classe.
 - **Superfícies:** Visual limpo com cartões com bordas sutis e sombras difusas. O uso de **Glassmorphism** é estritamente restrito à pílula de atalhos e à navegação inferior mobile, preservando a legibilidade e a performance geral.
 - **Tipografia:** Fonte **Inter** (`next/font/google`), com uso mandatário de números tabulares (`tabular-nums`) para todos os valores numéricos e monetários.
 
@@ -37,7 +38,7 @@ Configurados em `app/globals.css`. **Nunca use valores hexadecimais arbitrários
 | `--color-warning` | `text-warning` | `#F59E0B` | `#FBBF24` | Alertas, metas em atenção |
 | `--color-warning-soft`| `bg-warning-soft` | `#FFF3DD` | `#47320D` | Fundo de alertas |
 | `--color-sidebar` | `bg-sidebar` | `#0E1230` | `#0E1230` | Fundo fixo da barra lateral (Dark Navy) |
-| `--gradient-hero` | `bg-gradient-hero` | `linear-gradient(135deg, #3B1FA8 0%, #5B3DF5 55%, #4F7BFF 100%)` | Cartão principal de saldo (Hero) |
+| `--background-image-gradient-hero` | `bg-gradient-hero` | `linear-gradient(135deg, #3B1FA8 0%, #5B3DF5 55%, #4F7BFF 100%)` | Mesmo gradiente nos dois temas; cartão principal de saldo (Hero) |
 
 ---
 
@@ -57,7 +58,7 @@ Para manter a consistência orgânica e suave:
 
 O efeito vidro (`backdrop-blur-md` com fundo translúcido `rgba(255, 255, 255, 0.85)`) é **permitido exclusivamente** em dois elementos:
 
-1. **Pílula de Atalhos Rápidos:** Sobreposta na borda inferior do cartão Hero de saldo.
+1. **Pílula de Atalhos Rápidos:** Abaixo do cartão Hero de saldo, separada por 16px, sem cobrir seu conteúdo.
 2. **Barra de Navegação Inferior Mobile:** Fixada no rodapé da viewport em telas `< 1024px`.
 
 *Todo o restante da interface (tabelas, listas, modais, formulários) deve utilizar superfícies opacas e sólidas para manter a velocidade de renderização em dispositivos móveis e acessibilidade de leitura.*

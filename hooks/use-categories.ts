@@ -8,7 +8,7 @@ import {
   updateCategory,
   deleteCategory,
 } from '@/lib/api/endpoints/categories';
-import type { CategoryRequest, TransactionType } from '@/types';
+import type { CategoryRequest, CategoryUpdateRequest, TransactionType } from '@/types';
 
 /** Hook para listar categorias, opcionalmente filtradas por tipo. */
 export function useCategories(type?: TransactionType) {
@@ -34,7 +34,7 @@ export function useCreateCategory() {
 export function useUpdateCategory() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: CategoryRequest }) => updateCategory(id, data),
+    mutationFn: ({ id, data }: { id: number; data: CategoryUpdateRequest }) => updateCategory(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.categories.all });
     },

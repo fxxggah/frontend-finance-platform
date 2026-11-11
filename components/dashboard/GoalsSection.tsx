@@ -18,25 +18,25 @@ const STATE_LABEL: Record<string, string> = {
 };
 
 const STATE_COLOR: Record<string, string> = {
-  IN_PROGRESS: '#5B3DF5',
-  WARNING: '#F59E0B',
-  EXCEEDED: '#E11D48',
-  ACHIEVED: '#10B981',
-  EXPIRED: '#94A3B8',
+  IN_PROGRESS: 'var(--color-primary)',
+  WARNING: 'var(--color-warning)',
+  EXCEEDED: 'var(--color-expense)',
+  ACHIEVED: 'var(--color-income)',
+  EXPIRED: 'var(--color-text-muted)',
 };
 
 function GoalCard({ goal }: { goal: Goal }) {
-  const tone = STATE_COLOR[goal.state] ?? '#94A3B8';
+  const tone = STATE_COLOR[goal.state] ?? 'var(--color-text-muted)';
   return (
-    <Card className="min-w-[280px] snap-start p-5">
+    <Card className="min-w-[260px] snap-start lg:min-w-0 p-5">
       <div className="flex items-start justify-between">
         <CategoryIcon name={goal.icon} className="size-5" />
-        <Badge style={{ color: tone, backgroundColor: `${tone}18` }}>
+        <Badge style={{ color: tone, backgroundColor: 'var(--color-surface-soft)' }}>
           {STATE_LABEL[goal.state] ?? goal.state}
         </Badge>
       </div>
       <h3 className="mt-4 font-bold text-text">{goal.name}</h3>
-      <p className="mt-1 text-sm text-text-muted">
+      <p className="mt-1 tabular-nums text-sm text-text-muted">
         {formatMoney(goal.currentAmount)}{' '}
         <span className="text-xs">
           / {goal.type === 'EXPENSE' ? 'limite' : 'alvo'} {formatMoney(goal.targetAmount)}

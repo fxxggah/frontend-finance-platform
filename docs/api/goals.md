@@ -192,7 +192,7 @@ Cria uma meta de economia ou um limite orçamentário.
 }
 ```
 
-### Response Body (`201 Created`)
+### Response Body (`200 OK`)
 Retorna o objeto `GoalResponse` criado.
 
 ### Tratamento de Erros
@@ -253,7 +253,7 @@ Remove a meta e suas contribuições associadas permanentemente.
 - **Rota:** `/api/v1/goals/{id}`
 - **Autenticação Necessária:** Sim (`Bearer Token`)
 
-### Response Body (`204 No Content`)
+### Response Body (`200 OK`)
 Vazio.
 
 ---
@@ -308,7 +308,7 @@ Registra um aporte (positivo) ou retirada (negativo) em uma meta de poupança at
 }
 ```
 
-### Response Body (`201 Created`)
+### Response Body (`200 OK`)
 Retorna o objeto `GoalResponse` com os novos valores acumulados e percentual recalculado.
 
 ### Tratamento de Erros
@@ -325,6 +325,6 @@ Exclui o registro de uma contribuição e recalcula o progresso da meta.
 - **Rota:** `/api/v1/goals/{id}/contributions/{contributionId}`
 - **Autenticação Necessária:** Sim (`Bearer Token`)
 
-### Response Body (`204 No Content`)
+### Response Body (`200 OK`)
 Vazio.
 

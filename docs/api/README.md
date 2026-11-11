@@ -2,6 +2,10 @@
 
 Esta pasta reúne a documentação técnica oficial de integração da API RESTful do aplicativo **FIN**. Estes documentos servem como fonte de verdade para o desenvolvimento do frontend (Next.js App Router, TypeScript, Tailwind CSS, TanStack Query e Zustand).
 
+Em divergências, prevalece o OpenAPI de `/v3/api-docs` do backend em execução.
+`pnpm api:types` atualiza `openapi.json` e `types/api.generated.ts`. As adaptações
+e limitações conhecidas estão em [api-integration.md](../api-integration.md).
+
 ---
 
 ## 1. Convenções Globais

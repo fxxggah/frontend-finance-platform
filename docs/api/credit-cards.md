@@ -6,6 +6,10 @@ Todas as rotas exigem autenticação via cabeçalho `Authorization: Bearer <acce
 
 ---
 
+O OpenAPI atual não possui GET de cartão por ID, detalhe de fatura ou histórico de
+pagamentos. A lista de cartões retorna somente ativos e não aceita `includeArchived`.
+Consulte [as adaptações de integração](../api-integration.md).
+
 ## Tipos e Enums
 
 ```typescript
@@ -185,8 +189,8 @@ Remove ou arquiva o cartão de crédito.
 ### Request Body
 Não se aplica (`DELETE`).
 
-### Response Body (`204 No Content` ou `200 OK`)
-Confirmação da exclusão/arquivamento.
+### Response Body (`200 OK`)
+Sem corpo de resposta. A operação arquiva o cartão.
 
 ### Tratamento de Erros
 - **`401 Unauthorized`**: Não autenticado.

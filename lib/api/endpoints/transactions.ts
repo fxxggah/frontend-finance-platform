@@ -29,15 +29,12 @@ export async function listTransactions(
     if (filters.creditCardId) {
       filtered = filtered.filter((t) => t.creditCard?.id === filters.creditCardId);
     }
-    if (filters.search) {
-      const q = filters.search.toLowerCase();
+    if (filters.q) {
+      const q = filters.q.toLowerCase();
       filtered = filtered.filter((t) => t.description.toLowerCase().includes(q));
     }
-    if (filters.date) {
-      // Filtra por mês/ano correspondente se date fornecido
-      const prefix = filters.date.slice(0, 7);
-      filtered = filtered.filter((t) => t.date.startsWith(prefix));
-    }
+    if (filters.from) filtered = filtered.filter(t => t.date >= filters.from!);
+    if (filters.to) filtered = filtered.filter(t => t.date <= filters.to!);
 
     const page = filters.page ?? 0;
     const size = filters.size ?? 20;
@@ -69,7 +66,7 @@ export async function createTransaction(data: TransactionRequest): Promise<Trans
     const newTx: Transaction = {
       id: Date.now(),
       type: data.type,
-      amount: data.amount,
+      amount: data.amount ?? 0,
       date: data.date,
       description: data.description || "Sem descrição",
       notes: data.notes || null,
@@ -98,7 +95,7 @@ export async function createTransaction(data: TransactionRequest): Promise<Trans
  */
 export async function updateTransaction(
   id: number,
-  data: Partial<TransactionRequest>
+  data: TransactionRequest
 ): Promise<Transaction> {
   if (USE_MOCK) {
     await simulateNetworkDelay(400);

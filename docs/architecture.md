@@ -241,7 +241,7 @@ Para permitir o desenvolvimento frontend ágil mesmo sem o backend rodando:
 
 ```typescript
 // lib/config.ts
-export const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === 'true' || true;
+export const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === 'true';
 ```
 
 Todos os serviços em `lib/api/endpoints/*.ts` implementam o desvio transparente:
@@ -262,4 +262,8 @@ export async function getAccounts(): Promise<AccountsResponse> {
 }
 ```
 Isso garante que as telas e hooks nunca saibam se os dados são reais ou mockados.
+
+O OpenAPI do backend em execução prevalece sobre exemplos deste documento.
+Execute `pnpm api:types` para atualizar o snapshot e os tipos gerados. Consulte
+[api-integration.md](./api-integration.md) para o fluxo atual e as limitações do backend.
 

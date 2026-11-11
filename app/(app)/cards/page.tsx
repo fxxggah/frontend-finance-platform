@@ -149,7 +149,7 @@ export default function CreditCardsPage() {
                 </div>
 
                 {/* Resumo da Fatura Atual */}
-                <div className="rounded-2xl border border-border/80 p-4 space-y-3">
+                {card.currentInvoice ? <div className="rounded-2xl border border-border/80 p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">
@@ -172,7 +172,7 @@ export default function CreditCardsPage() {
                       <ChevronRight size={14} />
                     </Link>
                   </div>
-                </div>
+                </div> : <p className="text-sm text-text-muted">Nenhuma fatura atual disponível.</p>}
 
                 {/* Ações do Cartão */}
                 <div className="flex items-center justify-between pt-2 border-t border-border">

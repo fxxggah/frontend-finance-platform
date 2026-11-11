@@ -8,6 +8,7 @@ import { loginWithGoogle } from "@/lib/api/endpoints/auth";
 import { setAccessToken } from "@/lib/api/client";
 import { USE_MOCK } from "@/lib/config";
 import { ApiError } from "@/lib/api/errors";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface GoogleCredentialResponse { credential?: string }
 interface GoogleIdentity {
@@ -22,6 +23,7 @@ const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
 export default function LoginPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const pendingRef = useRef(false);
   const [scriptReady, setScriptReady] = useState(false);
@@ -38,12 +40,14 @@ export default function LoginPage() {
       const response = await fetch("/api/auth/session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken: auth.refreshToken, user: auth.user }),
+        body: JSON.stringify({ refreshToken: auth.refreshToken }),
       });
       if (!response.ok) throw new Error("Não foi possível criar sua sessão. Tente novamente.");
       const session: { accessToken?: string } = await response.json();
       if (!session.accessToken) throw new Error("A sessão retornou dados incompletos.");
       setAccessToken(session.accessToken);
+      await queryClient.cancelQueries();
+      queryClient.clear();
       router.replace("/dashboard");
       router.refresh();
     } catch (error) {
@@ -56,7 +60,7 @@ export default function LoginPage() {
       setIsLoading(false);
       pendingRef.current = false;
     }
-  }, [router]);
+  }, [router, queryClient]);
 
   useEffect(() => {
     if (USE_MOCK || !scriptReady || !GOOGLE_CLIENT_ID || !googleButtonRef.current || !window.google) return;

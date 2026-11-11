@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { useAccounts } from '@/hooks/use-accounts';
 import { useCreateTransfer } from '@/hooks/use-transfers';
+import { getToday } from '@/lib/format/date';
 import { ApiError } from '@/lib/api/errors';
 
 const schema = z
@@ -56,7 +57,7 @@ export function TransferForm({ open, onOpenChange, initialFromAccountId }: Trans
       fromAccountId: initialFromAccountId ? String(initialFromAccountId) : '',
       toAccountId: '',
       amount: '',
-      date: new Date().toISOString().slice(0, 10),
+      date: getToday(),
       description: '',
     },
   });
@@ -67,7 +68,7 @@ export function TransferForm({ open, onOpenChange, initialFromAccountId }: Trans
         fromAccountId: '',
         toAccountId: '',
         amount: '',
-        date: new Date().toISOString().slice(0, 10),
+        date: getToday(),
         description: '',
       });
     } else if (initialFromAccountId) {
@@ -75,7 +76,7 @@ export function TransferForm({ open, onOpenChange, initialFromAccountId }: Trans
         fromAccountId: String(initialFromAccountId),
         toAccountId: '',
         amount: '',
-        date: new Date().toISOString().slice(0, 10),
+        date: getToday(),
         description: '',
       });
     }

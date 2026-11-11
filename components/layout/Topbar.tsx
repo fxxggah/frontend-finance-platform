@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Sun, Moon, Bell, LogOut, User as UserIcon } from "lucide-react";
-import { currentUser } from "@/lib/mock-data";
-import { logout } from "@/lib/api/endpoints/auth";
+import { useCurrentUser, useLogout } from "@/hooks/use-current-user";
+import { UserAvatar } from "./UserAvatar";
 
 export function Topbar() {
   const router = useRouter();
+  const { data: currentUser, isPending, isError } = useCurrentUser();
+  const logout = useLogout();
   const [greeting, setGreeting] = useState("Olá");
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -50,14 +52,14 @@ export function Topbar() {
   }
 
   // Primeiro nome para saudação limpa
-  const firstName = currentUser.name.split(" ")[0];
+  const firstName = currentUser?.name.trim().split(/\s+/)[0];
 
   return (
     <header className="sticky top-0 z-20 hidden lg:flex h-20 w-full items-center justify-between border-b border-border bg-surface px-8">
       {/* Saudação dinâmica com o nome */}
       <div>
         <h2 className="text-lg font-bold tracking-tight text-text">
-          {greeting}, {firstName}!
+          {greeting}{firstName ? `, ${firstName}!` : '!'}
         </h2>
         <p className="text-xs text-text-muted">
           Tenha uma visão clara do seu patrimônio e despesas hoje.
@@ -87,10 +89,6 @@ export function Topbar() {
           className="relative flex size-10 items-center justify-center rounded-2xl border border-border bg-surface text-text-muted transition-all hover:bg-surface-soft hover:text-text active:scale-95"
         >
           <Bell className="size-4.5" aria-hidden="true" />
-          <span className="absolute 1 top-2 right-2 flex size-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
-            <span className="relative inline-flex size-2 rounded-full bg-primary" />
-          </span>
         </button>
 
         {/* Divisor Vertical */}
@@ -106,10 +104,10 @@ export function Topbar() {
             className="flex items-center gap-3 rounded-2xl p-1.5 transition-all hover:bg-surface-soft focus:outline-none"
           >
             <div className="flex size-9 items-center justify-center rounded-xl bg-gradient-hero text-xs font-bold text-white shadow-sm">
-              {firstName.charAt(0)}
+              <UserAvatar user={currentUser} />
             </div>
             <div className="text-left text-xs font-medium text-text pr-1">
-              <span>{currentUser.name}</span>
+              <span>{currentUser?.name ?? (isPending ? 'Carregando perfil...' : isError ? 'Perfil indisponível' : 'Meu perfil')}</span>
             </div>
           </button>
 

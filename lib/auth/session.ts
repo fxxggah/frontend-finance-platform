@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
 import { API_BASE_URL, USE_MOCK } from "@/lib/config";
 
-interface TokenResponse {
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
-}
+import { ApiError } from "@/lib/api/errors";
+import type { TokenResponse } from "@/types";
 
 const COOKIE_NAME = "fin_session";
 const MAX_AGE = 7 * 24 * 60 * 60;
@@ -41,7 +38,7 @@ export async function refreshSession(refreshToken: string): Promise<TokenRespons
     body: JSON.stringify({ refreshToken }),
     cache: "no-store",
   });
-  if (!response.ok) throw new Error("Sessão inválida");
+  if (!response.ok) throw new ApiError({ status: response.status, title: "Falha na renovação", detail: "Não foi possível renovar a sessão." });
   const tokens: TokenResponse = await response.json();
   if (!tokens.accessToken || !tokens.refreshToken) throw new Error("Resposta inválida");
   return tokens;

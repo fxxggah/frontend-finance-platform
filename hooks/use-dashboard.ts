@@ -8,16 +8,19 @@ import {
   getEvolution,
   getRecentTransactions,
 } from '@/lib/api/endpoints/dashboard';
+import type { DashboardFilters, Period } from '@/types';
+
+type Filters = Omit<DashboardFilters, 'period' | 'date'>;
 
 const STALE_TIME = 30 * 1000; // 30 segundos
 
 /**
  * Totalizadores do período: receitas, despesas, saldo e comparação com período anterior.
  */
-export function useDashboardSummary(period = 'MONTH', date?: string) {
+export function useDashboardSummary(period: Period = 'MONTH', date?: string, filters: Filters = {}) {
   return useQuery({
-    queryKey: queryKeys.dashboard.summary(period, date),
-    queryFn: () => getSummary(period, date),
+    queryKey: queryKeys.dashboard.summary(period, date, filters),
+    queryFn: () => getSummary(period, date, filters),
     staleTime: STALE_TIME,
   });
 }
@@ -25,10 +28,10 @@ export function useDashboardSummary(period = 'MONTH', date?: string) {
 /**
  * Despesas agrupadas por categoria com percentuais.
  */
-export function useExpensesByCategory(period = 'MONTH', date?: string) {
+export function useExpensesByCategory(period: Period = 'MONTH', date?: string, filters: Filters = {}) {
   return useQuery({
-    queryKey: queryKeys.dashboard.expensesByCategory(period, date),
-    queryFn: () => getExpensesByCategory(period, date),
+    queryKey: queryKeys.dashboard.expensesByCategory(period, date, filters),
+    queryFn: () => getExpensesByCategory(period, date, filters),
     staleTime: STALE_TIME,
   });
 }
@@ -36,10 +39,10 @@ export function useExpensesByCategory(period = 'MONTH', date?: string) {
 /**
  * Série temporal da evolução de receitas e despesas ao longo do período.
  */
-export function useEvolution(period = 'MONTH', date?: string) {
+export function useEvolution(period: Period = 'MONTH', date?: string, filters: Filters = {}) {
   return useQuery({
-    queryKey: queryKeys.dashboard.evolution(period, date),
-    queryFn: () => getEvolution(period, date),
+    queryKey: queryKeys.dashboard.evolution(period, date, filters),
+    queryFn: () => getEvolution(period, date, filters),
     staleTime: STALE_TIME,
   });
 }

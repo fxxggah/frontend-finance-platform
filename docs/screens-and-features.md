@@ -34,7 +34,7 @@ A tela principal do usuário reúne visão consolidada, atalhos rápidos e métr
     - 💳 "Faturas a vencer": Total comprometido em cartões.
 
 ### 2.2 Pílula de Atalhos Rápidos (Quick Actions)
-- **Visual:** Estilo vidro (`backdrop-blur-md`, `bg-surface/85`, `rounded-2xl`, sobreposta suavemente à borda inferior do cartão Hero).
+- **Visual:** Estilo vidro (`backdrop-blur-md`, `bg-surface/85`, `rounded-2xl`), abaixo do cartão Hero com espaçamento de 16px (`gap-4`), sem sobreposição ou margens negativas.
 - **4 Ações Principais:**
   1. 🟢 **Nova receita:** Abre modal/sheet com tipo `INCOME` selecionado.
   2. 🔴 **Nova despesa:** Abre modal/sheet com tipo `EXPENSE` selecionado.

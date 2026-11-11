@@ -1,73 +1,42 @@
-import { apiFetch } from "@/lib/api/client";
-import { simulateNetworkDelay, USE_MOCK } from "@/lib/config";
-import {
-  dashboardSummary,
-  evolutionResponse,
-  expenseCategories,
-  mockTransactions,
-} from "@/lib/mock-data";
-import type { DashboardSummary, EvolutionResponse, ExpenseByCategory, Transaction } from "@/types";
+import { apiFetch } from '@/lib/api/client';
+import { simulateNetworkDelay, USE_MOCK } from '@/lib/config';
+import type { DashboardSummary, EvolutionResponse, ExpenseByCategory, RecentTransaction, DashboardFilters, Period } from '@/types';
 
-/**
- * Retorna os totalizadores do período selecionado (receitas, despesas, saldo e comparação anterior).
- * // GET /dashboard/summary
- */
-export async function getSummary(period = "MONTH", date?: string): Promise<DashboardSummary> {
+type Filters = Omit<DashboardFilters, 'period' | 'date'>;
+
+export async function getSummary(period: Period = 'MONTH', date?: string, filters: Filters = {}): Promise<DashboardSummary> {
   if (USE_MOCK) {
-    await simulateNetworkDelay(350);
-    return dashboardSummary;
+    await simulateNetworkDelay();
+    return (await import('@/lib/mock-data')).dashboardSummary;
   }
-
-  return apiFetch<DashboardSummary>("/dashboard/summary", {
-    params: { period, date },
-  });
+  return apiFetch<DashboardSummary>('/dashboard/summary', { params: { period, date, ...filters } });
 }
 
-/**
- * Retorna os totais e percentuais de despesas agrupados por categoria.
- * // GET /dashboard/expenses-by-category
- */
-export async function getExpensesByCategory(
-  period = "MONTH",
-  date?: string
-): Promise<ExpenseByCategory[]> {
+export async function getExpensesByCategory(period: Period = 'MONTH', date?: string, filters: Filters = {}): Promise<ExpenseByCategory[]> {
   if (USE_MOCK) {
-    await simulateNetworkDelay(300);
-    return expenseCategories;
+    await simulateNetworkDelay();
+    return (await import('@/lib/mock-data')).expenseCategories;
   }
-
-  return apiFetch<ExpenseByCategory[]>("/dashboard/expenses-by-category", {
-    params: { period, date },
-  });
+  return apiFetch<ExpenseByCategory[]>('/dashboard/expenses-by-category', { params: { period, date, ...filters } });
 }
 
-/**
- * Retorna a série temporal da evolução financeira de receitas e despesas.
- * // GET /dashboard/evolution
- */
-export async function getEvolution(period = "MONTH", date?: string): Promise<EvolutionResponse> {
+export async function getEvolution(period: Period = 'MONTH', date?: string, filters: Filters = {}): Promise<EvolutionResponse> {
   if (USE_MOCK) {
-    await simulateNetworkDelay(400);
-    return evolutionResponse;
+    await simulateNetworkDelay();
+    return (await import('@/lib/mock-data')).evolutionResponse;
   }
-
-  return apiFetch<EvolutionResponse>("/dashboard/evolution", {
-    params: { period, date },
-  });
+  return apiFetch<EvolutionResponse>('/dashboard/evolution', { params: { period, date, ...filters } });
 }
 
-/**
- * Retorna os lançamentos recentes mais relevantes para o Início.
- * // GET /dashboard/recent
- */
-export async function getRecentTransactions(limit = 5): Promise<Transaction[]> {
+export async function getRecentTransactions(limit = 5): Promise<RecentTransaction[]> {
   if (USE_MOCK) {
-    await simulateNetworkDelay(300);
-    return mockTransactions.slice(0, limit);
+    await simulateNetworkDelay();
+    return (await import('@/lib/mock-data')).mockTransactions.slice(0, limit).map(item => ({
+      id: item.id, amount: item.amount, date: item.date, type: item.type,
+      categoryName: item.category.name,
+      accountName: item.account?.name ?? null, creditCardName: item.creditCard?.name ?? null,
+    }));
   }
-
-  return apiFetch<Transaction[]>("/dashboard/recent", {
-    params: { limit },
-  });
+  return apiFetch<RecentTransaction[]>('/dashboard/recent-transactions', { params: { limit } });
 }
 

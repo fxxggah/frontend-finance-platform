@@ -41,6 +41,8 @@ export function useCreateCreditCard() {
     mutationFn: (data: CreditCardRequest) => createCreditCard(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.creditCards.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.accounts.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
       toast.success('Cartão de crédito criado com sucesso!');
     },
     onError: () => {
@@ -57,6 +59,8 @@ export function useUpdateCreditCard() {
       updateCreditCard(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.creditCards.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.accounts.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
       toast.success('Cartão atualizado com sucesso!');
     },
     onError: () => {
@@ -70,13 +74,11 @@ export function useDeleteCreditCard() {
 
   return useMutation({
     mutationFn: (id: number) => deleteCreditCard(id),
-    onSuccess: (res) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.creditCards.all });
-      if (res.archived) {
-        toast.info('Cartão arquivado. O histórico e as faturas continuam preservados.');
-      } else {
-        toast.success('Cartão excluído com sucesso.');
-      }
+      queryClient.invalidateQueries({ queryKey: queryKeys.accounts.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+      toast.success('Cartão arquivado com sucesso.');
     },
     onError: () => {
       toast.error('Erro ao remover cartão.');
@@ -110,6 +112,7 @@ export function usePayInvoice(cardId: number, ym: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.creditCards.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.accounts.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
       queryClient.invalidateQueries({
         queryKey: queryKeys.creditCards.invoiceDetail(cardId, ym),
       });
@@ -133,6 +136,7 @@ export function useDeleteInvoicePayment(cardId: number, ym: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.creditCards.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.accounts.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
       queryClient.invalidateQueries({
         queryKey: queryKeys.creditCards.invoiceDetail(cardId, ym),
       });

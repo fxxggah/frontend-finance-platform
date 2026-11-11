@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { refreshSession, setSessionCookie, clearSessionCookie } from "@/lib/auth/session";
+import { ApiError } from "@/lib/api/errors";
 
 export async function POST(request: NextRequest) {
   if (request.headers.get("origin") !== request.nextUrl.origin) {
@@ -12,9 +13,13 @@ export async function POST(request: NextRequest) {
     const response = NextResponse.json({ accessToken: tokens.accessToken });
     setSessionCookie(response, tokens.refreshToken);
     return response;
-  } catch {
-    const response = NextResponse.json({ error: "Sessão expirada." }, { status: 401 });
-    clearSessionCookie(response);
+  } catch (error) {
+    const expired = error instanceof ApiError && (error.status === 401 || error.status === 400);
+    const response = NextResponse.json({
+      title: expired ? "Sessão expirada" : "Serviço indisponível",
+      detail: expired ? "Entre novamente para continuar." : "Não foi possível renovar sua sessão. Tente novamente.",
+    }, { status: expired ? 401 : 503 });
+    if (expired) clearSessionCookie(response);
     return response;
   }
 }

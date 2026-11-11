@@ -4,12 +4,12 @@ import { useEffect, useMemo } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Minus, Plus, CreditCard as CreditCardIcon, Calendar } from 'lucide-react';
+import { Minus, Plus } from 'lucide-react';
 import { Sheet } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
-import { formatMoney } from '@/lib/format/money';
+import { getToday } from '@/lib/format/date';
 import { useCategories } from '@/hooks/use-categories';
 import { useAccounts } from '@/hooks/use-accounts';
 import { useCreditCards } from '@/hooks/use-credit-cards';
@@ -68,39 +68,6 @@ function parseBRLAmount(value: string): number {
   return parseFloat(value.replace(/\./g, '').replace(',', '.')) || 0;
 }
 
-function calcInstallments(amount: number, count: number): { each: number; last: number } {
-  if (count <= 1) return { each: amount, last: amount };
-  const each = Math.floor((amount / count) * 100) / 100;
-  const last = Math.round((amount - each * (count - 1)) * 100) / 100;
-  return { each, last };
-}
-
-function getPredictedInvoice(dateStr: string, closingDay: number): string {
-  try {
-    const [y, m, d] = dateStr.split('-').map(Number);
-    if (!y || !m || !d) return '';
-    let invoiceMonth = m;
-    let invoiceYear = y;
-
-    // Se o dia da compra for >= ao fechamento, cai na fatura do mês seguinte
-    if (d >= closingDay) {
-      invoiceMonth += 1;
-      if (invoiceMonth > 12) {
-        invoiceMonth = 1;
-        invoiceYear += 1;
-      }
-    }
-
-    const monthNames = [
-      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
-    ];
-    return `${monthNames[invoiceMonth - 1]}/${invoiceYear}`;
-  } catch {
-    return '';
-  }
-}
-
 export function TransactionForm({
   open,
   onOpenChange,
@@ -128,7 +95,7 @@ export function TransactionForm({
       type: defaultType,
       amount: '',
       description: '',
-      date: new Date().toISOString().slice(0, 10),
+      date: getToday(),
       categoryId: '',
       notes: '',
       destinationType: 'account',
@@ -140,23 +107,7 @@ export function TransactionForm({
 
   const type = watch('type');
   const destinationType = watch('destinationType');
-  const amountStr = watch('amount');
   const installments = watch('installments');
-  const creditCardId = watch('creditCardId');
-  const dateStr = watch('date');
-
-  const amount = parseBRLAmount(amountStr);
-  const installmentPreview = calcInstallments(amount, installments);
-
-  const selectedCard = useMemo(() => {
-    if (!creditCardId || !cardsData) return null;
-    return cardsData.find((c) => String(c.id) === creditCardId) ?? null;
-  }, [creditCardId, cardsData]);
-
-  const predictedInvoice = useMemo(() => {
-    if (!selectedCard || !dateStr) return null;
-    return getPredictedInvoice(dateStr, selectedCard.closingDay);
-  }, [selectedCard, dateStr]);
 
   // Preenche formulário ao abrir para edição ou reset para novo
   useEffect(() => {
@@ -178,7 +129,7 @@ export function TransactionForm({
         type: defaultType,
         amount: '',
         description: '',
-        date: new Date().toISOString().slice(0, 10),
+        date: getToday(),
         categoryId: '',
         notes: '',
         destinationType: 'account',
@@ -187,7 +138,7 @@ export function TransactionForm({
         installments: 1,
       });
     }
-  }, [editing, defaultType, open]);
+  }, [editing, defaultType, open, reset]);
 
   // Se trocar para cartão, força despesa
   useEffect(() => {
@@ -375,14 +326,7 @@ export function TransactionForm({
                 ))}
               </Select>
 
-              {predictedInvoice && (
-                <div className="flex items-center gap-2 rounded-xl bg-surface-soft px-3 py-2 text-xs text-text-muted">
-                  <Calendar className="size-3.5 text-primary" />
-                  <span>
-                    Lançamento previsto na <strong>fatura de {predictedInvoice}</strong>
-                  </span>
-                </div>
-              )}
+
             </div>
           )}
 
@@ -437,19 +381,7 @@ export function TransactionForm({
               </span>
             </div>
 
-            {/* Preview de parcelas */}
-            {amount > 0 && installments > 1 && (
-              <div className="mt-3 rounded-2xl bg-primary-soft p-3 text-sm">
-                <p className="font-semibold text-primary">
-                  {installments}× de {formatMoney(installmentPreview.each)}
-                </p>
-                {installmentPreview.last !== installmentPreview.each && (
-                  <p className="mt-0.5 text-xs text-text-muted">
-                    Última parcela: {formatMoney(installmentPreview.last)} (arredondamento de centavos)
-                  </p>
-                )}
-              </div>
-            )}
+            <p className="mt-3 text-xs text-text-muted">A competência e os valores das parcelas serão confirmados após o cadastro.</p>
           </div>
         )}
 

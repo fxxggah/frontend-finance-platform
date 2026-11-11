@@ -1,8 +1,10 @@
 'use client';
 
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import type { Period } from '@/types';
+import { getToday } from '@/lib/format/date';
+import { isPeriod, resolvePeriod } from '@/lib/periods';
 
 export interface PeriodParams {
   period: Period;
@@ -19,23 +21,39 @@ export function usePeriodParams(): PeriodParams & { setPeriod: (p: Partial<Perio
   const router = useRouter();
   const pathname = usePathname();
 
-  const period = (searchParams.get('period') as Period) || 'MONTH';
-  const date = searchParams.get('date') || '2026-10-31';
-  const from = searchParams.get('from') ?? undefined;
-  const to = searchParams.get('to') ?? undefined;
+  const rawPeriod = searchParams.get('period');
+  const period = resolvePeriod(rawPeriod);
+  const date = searchParams.get('date') || getToday();
+  const from = period === 'CUSTOM' ? searchParams.get('from') || date : undefined;
+  const to = period === 'CUSTOM' ? searchParams.get('to') || date : undefined;
+
+  useEffect(() => {
+    if (rawPeriod === null || isPeriod(rawPeriod)) return;
+    const next = new URLSearchParams(searchParams.toString());
+    next.set('period', 'MONTH');
+    next.delete('from');
+    next.delete('to');
+    next.delete('page');
+    router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+  }, [rawPeriod, searchParams, router, pathname]);
 
   const setPeriod = useCallback(
     (params: Partial<PeriodParams>) => {
       const next = new URLSearchParams(searchParams.toString());
-      if (params.period !== undefined) next.set('period', params.period);
+      const nextPeriod = params.period ?? period;
+      next.set('period', nextPeriod);
       if (params.date !== undefined) next.set('date', params.date);
-      if (params.from !== undefined) next.set('from', params.from);
-      else next.delete('from');
-      if (params.to !== undefined) next.set('to', params.to);
-      else next.delete('to');
+      if (nextPeriod === 'CUSTOM') {
+        next.set('from', params.from ?? from ?? params.date ?? date);
+        next.set('to', params.to ?? to ?? params.date ?? date);
+      } else {
+        next.delete('from');
+        next.delete('to');
+      }
+      next.delete('page');
       router.push(`${pathname}?${next.toString()}`);
     },
-    [searchParams, router, pathname]
+    [searchParams, router, pathname, period, date, from, to]
   );
 
   return { period, date, from, to, setPeriod };

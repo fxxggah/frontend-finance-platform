@@ -4,7 +4,8 @@ Documento de planejamento do frontend do app de finanças pessoais **FIN**. Reú
 
 > **Fonte Oficial da Verdade:** A documentação técnica detalhada e modular para desenvolvimento com agentes de IA e desenvolvedores está dividida em:
 > - [`docs/`](./docs/README.md): Arquitetura, Design System, Estado & Dados, Rotas/Layouts, Especificação de Telas e Guia Sequencial.
-> - [`api/`](./api/README.md): Contratos oficiais de integração RESTful do backend (rotas, payloads, respostas e erros).
+> - [`docs/api/`](./docs/api/README.md): Referência dos contratos REST.
+> - [`Integração real`](./docs/api-integration.md): configuração, geração de tipos OpenAPI, testes e limitações atuais. O OpenAPI do backend em execução prevalece sobre o planejamento histórico abaixo.
 
 > **Tema padrão: claro.** O tema escuro é opcional e alternável pelo usuário. Todos os tokens existem nos dois temas, mas o app abre em claro.
 >
@@ -21,7 +22,7 @@ Documento de planejamento do frontend do app de finanças pessoais **FIN**. Reú
 | Navegação mobile | Início, Transações, botão central **+**, Relatórios, Mais (contas, cartões, metas, configurações) |
 | Efeito glass | Somente na pílula de atalhos sobre o cartão de saldo e na barra inferior. O resto é sólido, para manter a legibilidade e o desempenho em celulares fracos |
 | 4º KPI | "Faturas em aberto" (o backend já devolve `creditCardDebt`), em vez de orçamento |
-| Dados (fase atual) | Mock realista em R$, sem marcas reais, mês de outubro/2026 completo |
+| Dados (fase atual) | API REST real por padrão; fixtures somente com `NEXT_PUBLIC_USE_MOCK=true` |
 | Idioma | Tudo em português (o item de menu "Dashboard" vira "Início") |
 | Prioridade de plataforma | Mobile primeiro, com versão desktop completa |
 | Regra de ouro | O front **exibe** o que o backend calcula. Saldo, fatura, status de meta e intervalo de período vêm da API |

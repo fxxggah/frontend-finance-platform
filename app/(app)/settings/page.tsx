@@ -22,8 +22,9 @@ import { useUiStore } from '@/stores/ui-store';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { logout } from '@/lib/api/endpoints/auth';
-import { currentUser } from '@/lib/mock-data';
+import { deleteMe } from '@/lib/api/endpoints/auth';
+import { useCurrentUser, useLogout } from '@/hooks/use-current-user';
+import { UserAvatar } from '@/components/layout/UserAvatar';
 
 // ─── Componentes auxiliares ───────────────────────────────────────────────────
 
@@ -100,6 +101,8 @@ function Toggle({
 
 export default function SettingsPage() {
   const router = useRouter();
+  const { data: currentUser, isPending: profileLoading, isError: profileError, refetch: refetchProfile } = useCurrentUser();
+  const logout = useLogout();
   const { isDark, toggleTheme } = useTheme();
   const { isBalanceVisible, toggleBalanceVisibility } = useUiStore();
   const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
@@ -109,8 +112,7 @@ export default function SettingsPage() {
   async function handleDeleteAccount() {
     setIsDeletingAccount(true);
     try {
-      // Simulação: apenas faz logout e redireciona
-      await new Promise((r) => setTimeout(r, 1000));
+      await deleteMe();
       toast.success('Conta excluída. Seus dados foram removidos.');
       await logout();
       router.replace('/login');
@@ -167,11 +169,12 @@ export default function SettingsPage() {
               className="flex size-12 items-center justify-center rounded-full bg-primary text-white text-lg font-bold select-none"
               aria-hidden="true"
             >
-              {currentUser.name.charAt(0)}
+              <UserAvatar user={currentUser} />
             </div>
             <div>
-              <p className="font-semibold text-text">{currentUser.name}</p>
-              <p className="text-sm text-text-muted">{currentUser.email}</p>
+              <p className="font-semibold text-text">{currentUser?.name ?? (profileLoading ? 'Carregando perfil...' : 'Perfil indisponível')}</p>
+              {currentUser && <p className="text-sm text-text-muted">{currentUser.email}</p>}
+              {profileError && <button type="button" className="min-h-11 text-sm text-primary" onClick={() => void refetchProfile()}>Tentar novamente</button>}
             </div>
           </div>
 

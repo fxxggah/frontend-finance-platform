@@ -2,7 +2,7 @@ import { apiFetch } from "@/lib/api/client";
 import { simulateNetworkDelay, USE_MOCK } from "@/lib/config";
 import { mockCategories } from "@/lib/mock-data";
 import { ApiError } from "@/lib/api/errors";
-import type { Category, CategoryRequest, TransactionType } from "@/types";
+import type { Category, CategoryRequest, CategoryUpdateRequest, TransactionType } from "@/types";
 
 /** Cópia local mutável para simular persistência no modo mock */
 let localCategories = [...mockCategories];
@@ -48,8 +48,8 @@ export async function createCategory(data: CategoryRequest): Promise<Category> {
       id: Math.max(...localCategories.map((c) => c.id), 0) + 1,
       name: data.name.trim(),
       type: data.type,
-      color: data.color,
-      icon: data.icon,
+      color: data.color ?? "#5B3DF5",
+      icon: data.icon ?? "tag",
     };
     localCategories.push(newCategory);
     return newCategory;
@@ -65,7 +65,7 @@ export async function createCategory(data: CategoryRequest): Promise<Category> {
  * Atualiza uma categoria existente.
  * PUT /categories/{id}
  */
-export async function updateCategory(id: number, data: CategoryRequest): Promise<Category> {
+export async function updateCategory(id: number, data: CategoryUpdateRequest): Promise<Category> {
   if (USE_MOCK) {
     await simulateNetworkDelay(350);
 
@@ -82,7 +82,7 @@ export async function updateCategory(id: number, data: CategoryRequest): Promise
     const duplicate = localCategories.some(
       (c) =>
         c.id !== id &&
-        c.type === data.type &&
+        c.type === localCategories[index].type &&
         c.name.trim().toLowerCase() === data.name.trim().toLowerCase(),
     );
     if (duplicate) {

@@ -7,22 +7,15 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { useCategories } from '@/hooks/use-categories';
 import { useAccounts } from '@/hooks/use-accounts';
-import type { Period, TransactionType } from '@/types';
-
-const PERIOD_OPTIONS: { value: Period; label: string }[] = [
-  { value: 'DAY', label: 'Hoje' },
-  { value: 'WEEK', label: 'Esta semana' },
-  { value: 'FORTNIGHT', label: 'Quinzena' },
-  { value: 'MONTH', label: 'Este mês' },
-  { value: 'QUARTER', label: 'Trimestre' },
-  { value: 'SEMESTER', label: 'Semestre' },
-  { value: 'YEAR', label: 'Este ano' },
-];
+import type { TransactionType } from '@/types';
+import { PERIOD_OPTIONS, isPeriod } from '@/lib/periods';
+import { usePeriodParams } from '@/hooks/use-period-params';
 
 export function FilterBar() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { period, date, from, to, setPeriod } = usePeriodParams();
 
   const { data: categoriesData } = useCategories();
   const { data: accountsData } = useAccounts();
@@ -31,6 +24,7 @@ export function FilterBar() {
 
   // Debounce 300ms para a busca
   useEffect(() => {
+    if (search === (searchParams.get('q') ?? '')) return;
     const timer = setTimeout(() => {
       const next = new URLSearchParams(searchParams.toString());
       if (search) next.set('q', search);
@@ -39,7 +33,7 @@ export function FilterBar() {
       router.push(`${pathname}?${next.toString()}`);
     }, 300);
     return () => clearTimeout(timer);
-  }, [search]);
+  }, [search, searchParams, router, pathname]);
 
   const setParam = useCallback(
     (key: string, value: string) => {
@@ -53,7 +47,6 @@ export function FilterBar() {
   );
 
   const type = searchParams.get('type') as TransactionType | null;
-  const period = (searchParams.get('period') as Period) ?? 'MONTH';
   const categoryId = searchParams.get('categoryId') ?? '';
   const accountId = searchParams.get('accountId') ?? '';
 
@@ -85,7 +78,9 @@ export function FilterBar() {
         <Select
           aria-label="Período"
           value={period}
-          onChange={(e) => setParam('period', e.target.value)}
+          onChange={(e) => {
+            if (isPeriod(e.target.value)) setPeriod({ period: e.target.value });
+          }}
         >
           {PERIOD_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>
@@ -133,6 +128,13 @@ export function FilterBar() {
           ))}
         </Select>
       </div>
+
+      {period === 'CUSTOM' && <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <Input type="date" label="De" value={from ?? date} max={to ?? date}
+          onChange={event => { if (event.target.value) setPeriod({ from: event.target.value }); }} />
+        <Input type="date" label="Até" value={to ?? date} min={from ?? date}
+          onChange={event => { if (event.target.value) setPeriod({ to: event.target.value }); }} />
+      </div>}
 
       {/* Limpar filtros */}
       {hasFilters && (

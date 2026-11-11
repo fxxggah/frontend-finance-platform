@@ -22,11 +22,12 @@ import {
 } from "lucide-react";
 import { Sheet, SheetHeader, SheetTitle, SheetBody } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { logout } from "@/lib/api/endpoints/auth";
+import { useLogout } from "@/hooks/use-current-user";
 
 export function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
+  const logout = useLogout();
 
   const [isActionsOpen, setIsActionsOpen] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
@@ -91,7 +92,7 @@ export function BottomNav() {
             type="button"
             onClick={() => setIsActionsOpen(true)}
             aria-label="Criar novo lançamento"
-            className="flex -mt-6 size-13 items-center justify-center rounded-full bg-gradient-hero text-white shadow-lg shadow-primary/40 border-4 border-surface transition-transform active:scale-90"
+            className="relative z-10 -mt-6 flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-full border-0 bg-gradient-hero text-white shadow-[0_8px_20px_rgba(20,23,46,0.28)] transition-transform active:scale-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none"
           >
             <Plus className="size-6 stroke-[2.5]" aria-hidden="true" />
           </button>

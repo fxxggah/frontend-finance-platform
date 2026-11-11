@@ -12,29 +12,6 @@ interface KpiCardsProps {
   isLoading?: boolean;
 }
 
-function Sparkline({ tone }: { tone: string }) {
-  const color =
-    tone === 'income'
-      ? 'var(--color-income)'
-      : tone === 'warning'
-      ? 'var(--color-warning)'
-      : tone === 'blue'
-      ? 'var(--color-accent)'
-      : 'var(--color-primary)';
-
-  return (
-    <svg aria-hidden="true" className="h-10 w-full" viewBox="0 0 120 36" preserveAspectRatio="none">
-      <path
-        d="M2 29 C 18 24, 20 31, 34 22 S 52 24, 62 15 S 78 21, 90 11 S 108 14, 118 4"
-        fill="none"
-        stroke={color}
-        strokeWidth="2.5"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
 function KpiCard({
   label,
   value,
@@ -56,7 +33,7 @@ function KpiCard({
       : tone === 'warning'
       ? 'bg-warning-soft text-warning'
       : tone === 'blue'
-      ? 'bg-[#EAF0FF] text-accent'
+      ? 'bg-primary-soft text-accent'
       : 'bg-primary-soft text-primary';
 
   const isPositive = invertChange ? (change ?? 0) <= 0 : (change ?? 0) >= 0;
@@ -82,9 +59,6 @@ function KpiCard({
       </div>
       <p className="mt-4 text-xs text-text-muted">{label}</p>
       <p className="mt-1 tabular-nums text-lg font-bold sm:text-xl">{formatMoney(value)}</p>
-      <div className="mt-2">
-        <Sparkline tone={tone} />
-      </div>
     </Card>
   );
 }

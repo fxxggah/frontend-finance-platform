@@ -17,10 +17,11 @@ const STALE_TIME = 30 * 1000;
 /**
  * Lista paginada de transações com suporte a filtros.
  */
-export function useTransactions(filters: TransactionFilterParams = {}) {
+export function useTransactions(filters: TransactionFilterParams = {}, enabled = true) {
   return useQuery({
     queryKey: queryKeys.transactions.list(filters as Record<string, unknown>),
     queryFn: () => listTransactions(filters),
+    enabled,
     staleTime: STALE_TIME,
   });
 }
@@ -33,9 +34,7 @@ function useInvalidateAfterTransaction() {
   const queryClient = useQueryClient();
   return () => {
     queryClient.invalidateQueries({ queryKey: queryKeys.transactions.all });
-    queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.summary() });
-    queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.expensesByCategory() });
-    queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.recent() });
+    queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
     queryClient.invalidateQueries({ queryKey: queryKeys.accounts.all });
     queryClient.invalidateQueries({ queryKey: queryKeys.creditCards.all });
     queryClient.invalidateQueries({ queryKey: queryKeys.goals.all });
@@ -71,7 +70,7 @@ export function useUpdateTransaction() {
   const invalidate = useInvalidateAfterTransaction();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<TransactionRequest> }) =>
+    mutationFn: ({ id, data }: { id: number; data: TransactionRequest }) =>
       updateTransaction(id, data),
     onSuccess: () => {
       invalidate();

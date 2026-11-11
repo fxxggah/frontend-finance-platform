@@ -95,6 +95,11 @@ export default function InvoiceDetailPage({ params }: PageProps) {
         )}
       </div>
 
+      {!showLoading && invoice && invoice.payments === undefined && (
+        <p className="rounded-2xl border border-border bg-surface p-4 text-sm text-text-muted">
+          O histórico detalhado de pagamentos está indisponível. O total pago está no resumo da fatura.
+        </p>
+      )}
       {/* Resumo da Fatura */}
       {showLoading || !invoice ? (
         <Skeleton className="h-48 rounded-3xl" />

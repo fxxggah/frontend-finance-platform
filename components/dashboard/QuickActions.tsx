@@ -47,7 +47,7 @@ export function QuickActions({ onNewIncome, onNewExpense, onTransfer }: QuickAct
   ];
 
   return (
-    <div className="relative z-10 -mt-6 mx-3 grid grid-cols-4 gap-1 rounded-3xl border border-white/70 bg-surface/85 p-3 shadow-[0_12px_30px_-16px_rgba(20,23,46,.3)] backdrop-blur-xl sm:mx-8 sm:px-5">
+    <div className="mx-3 grid grid-cols-4 gap-1 rounded-3xl border border-white/70 bg-surface/85 p-3 shadow-[0_12px_30px_-16px_rgba(20,23,46,.3)] backdrop-blur-xl sm:mx-8 sm:px-5">
       {ACTIONS.map(({ label, icon: Icon, colorClasses }, index) => (
         <button
           key={label}

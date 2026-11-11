@@ -3,10 +3,14 @@
  */
 export const TIMEZONE = "America/Sao_Paulo";
 
-/**
- * Data determinística de referência da aplicação (31 de outubro de 2026).
- */
-export const TODAY = "2026-10-31";
+/** Data civil atual em São Paulo, para valores iniciais de formulários e filtros. */
+export function getToday(): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: TIMEZONE, year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(new Date());
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find(p => p.type === type)!.value;
+  return `${part('year')}-${part('month')}-${part('day')}`;
+}
 
 /**
  * Converte de forma segura uma string 'YYYY-MM-DD' ou objeto Date para Date

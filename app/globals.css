@@ -25,7 +25,7 @@
   --color-sidebar-text: var(--color-sidebar-text);
 
   /* Gradientes & Sombras */
-  --background-image-gradient-hero: var(--gradient-hero);
+  --background-image-gradient-hero: linear-gradient(135deg, #3B1FA8 0%, #5B3DF5 55%, #4F7BFF 100%);
   --shadow-default: var(--shadow-default);
   --shadow-card: var(--shadow-default);
 
@@ -66,7 +66,6 @@
   --color-warning-soft: #FFF3DD;
   --color-sidebar: #0E1230;
   --color-sidebar-text: #C9CDEB;
-  --gradient-hero: linear-gradient(135deg, #3B1FA8 0%, #5B3DF5 55%, #4F7BFF 100%);
   --shadow-default: 0 8px 30px -12px rgba(20, 23, 46, 0.18);
 
   /* Aliases para compatibilidade */
@@ -101,7 +100,6 @@
   --color-warning-soft: #47320D;
   --color-sidebar: #0E1230;
   --color-sidebar-text: #C9CDEB;
-  --gradient-hero: linear-gradient(135deg, #2D157F 0%, #4D33D0 55%, #3C63DB 100%);
   --shadow-default: 0 8px 30px -12px rgba(0, 0, 0, 0.45);
 
   /* Aliases para compatibilidade */

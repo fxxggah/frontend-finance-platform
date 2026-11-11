@@ -71,7 +71,7 @@ export async function createAccount(data: AccountRequest): Promise<Account> {
       id: Math.max(...localAccounts.map((a) => a.id), 0) + 1,
       name: data.name,
       type: data.type,
-      balance: data.initialBalance ?? data.balance ?? 0,
+      balance: data.initialBalance ?? 0,
       color: data.color || "#5B3DF5",
       icon: data.icon || "landmark",
       archived: false,

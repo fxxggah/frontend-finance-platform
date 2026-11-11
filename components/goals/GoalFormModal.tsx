@@ -13,6 +13,8 @@ import { ColorPicker } from '@/components/ui/color-picker';
 import { IconPicker } from '@/components/ui/icon-picker';
 import { useCreateGoal, useUpdateGoal } from '@/hooks/use-goals';
 import { useCategories } from '@/hooks/use-categories';
+import { ApiError } from '@/lib/api/errors';
+import { getToday } from '@/lib/format/date';
 import { cn } from '@/lib/utils';
 import type { Goal, GoalType } from '@/types';
 
@@ -71,6 +73,7 @@ export function GoalFormModal({ open, onClose, goal }: GoalFormModalProps) {
     setValue,
     watch,
     reset,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(step2Schema),
@@ -79,8 +82,8 @@ export function GoalFormModal({ open, onClose, goal }: GoalFormModalProps) {
       name: '',
       targetAmount: '',
       categoryId: '',
-      startDate: '2026-10-01',
-      endDate: '2026-10-31',
+      startDate: getToday(),
+      endDate: '',
       color: '#10B981',
       icon: 'shield',
       description: '',
@@ -122,7 +125,7 @@ export function GoalFormModal({ open, onClose, goal }: GoalFormModalProps) {
         name: '',
         targetAmount: '',
         categoryId: '',
-        startDate: '2026-10-01',
+        startDate: getToday(),
         endDate: '',
         color: '#10B981',
         icon: 'shield',
@@ -141,13 +144,13 @@ export function GoalFormModal({ open, onClose, goal }: GoalFormModalProps) {
     } else if (type === 'EXPENSE') {
       setValue('color', '#E11D48');
       setValue('icon', 'alert-triangle');
-      setValue('startDate', '2026-10-01');
-      setValue('endDate', '2026-10-31');
+      setValue('startDate', getToday());
+      setValue('endDate', '');
     } else {
       setValue('color', '#4F7BFF');
       setValue('icon', 'trending-up');
-      setValue('startDate', '2026-10-01');
-      setValue('endDate', '2026-10-31');
+      setValue('startDate', getToday());
+      setValue('endDate', '');
     }
     setStep(2);
   }
@@ -156,6 +159,7 @@ export function GoalFormModal({ open, onClose, goal }: GoalFormModalProps) {
     const target = parseFloat(data.targetAmount.replace(/\./g, '').replace(',', '.'));
     const catId = data.categoryId ? parseInt(data.categoryId, 10) : null;
 
+    try {
     if (isEditing && goal) {
       await updateMutation.mutateAsync({
         id: goal.id,
@@ -185,6 +189,13 @@ export function GoalFormModal({ open, onClose, goal }: GoalFormModalProps) {
       });
     }
     onClose();
+    } catch (error) {
+      if (error instanceof ApiError) {
+        for (const field of error.errors) {
+          if (field.field in data) setError(field.field as keyof FormData, { message: field.message });
+        }
+      }
+    }
   }
 
   const filteredCategories =

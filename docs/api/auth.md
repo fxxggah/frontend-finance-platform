@@ -173,7 +173,7 @@ Exemplo:
 }
 ```
 
-### Response Body (`204 No Content`)
+### Response Body (`200 OK`)
 Não há payload no corpo da resposta (`null`/vazio).
 
 ### Tratamento de Erros

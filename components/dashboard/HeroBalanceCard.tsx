@@ -19,8 +19,8 @@ export function HeroBalanceCard({ summary, totalBalance, creditCardDebt }: HeroB
   return (
     <Card variant="brand" className="relative overflow-hidden p-5 sm:p-7">
       {/* Círculos decorativos concêntricos */}
-      <div className="pointer-events-none absolute -right-20 -top-28 size-80 rounded-full border-[28px] border-white/5" />
-      <div className="pointer-events-none absolute -right-6 -top-14 size-56 rounded-full border-[20px] border-white/5" />
+      <div className="pointer-events-none absolute -right-20 -top-28 size-80 rounded-full border-[28px] border-white opacity-5" aria-hidden="true" />
+      <div className="pointer-events-none absolute -right-6 -top-14 size-56 rounded-full border-[20px] border-white opacity-5" aria-hidden="true" />
 
       <div className="relative">
         {/* Título e botão de visibilidade */}
@@ -29,7 +29,7 @@ export function HeroBalanceCard({ summary, totalBalance, creditCardDebt }: HeroB
           <button
             aria-label={isBalanceVisible ? 'Ocultar saldo' : 'Mostrar saldo'}
             onClick={toggleBalanceVisibility}
-            className="grid size-9 place-items-center rounded-xl bg-white/10 transition hover:bg-white/20"
+            className="grid size-11 place-items-center rounded-xl bg-white/10 transition hover:bg-white/20"
           >
             {isBalanceVisible ? <Eye className="size-4 text-white" /> : <EyeOff className="size-4 text-white" />}
           </button>
@@ -40,12 +40,12 @@ export function HeroBalanceCard({ summary, totalBalance, creditCardDebt }: HeroB
           {isBalanceVisible ? formatMoney(totalBalance) : 'R$ ••••••'}
         </p>
 
-        {/* Receitas e Despesas do mês */}
+        {/* Receitas e Despesas do período */}
         <div className="mt-6 grid grid-cols-2 gap-4">
           <div>
             <div className="flex items-center gap-1 text-xs text-white/65">
-              <ArrowDownLeft className="size-3 text-[#8FF0C6]" />
-              Receitas do mês
+              <ArrowDownLeft className="size-3 text-white" />
+              Receitas do período
             </div>
             <p className="mt-1 tabular-nums text-sm font-semibold text-white">
               {isBalanceVisible ? formatMoney(summary.totalIncome) : '••••'}
@@ -53,8 +53,8 @@ export function HeroBalanceCard({ summary, totalBalance, creditCardDebt }: HeroB
           </div>
           <div>
             <div className="flex items-center gap-1 text-xs text-white/65">
-              <ArrowUpRight className="size-3 text-[#FF9CB2]" />
-              Despesas do mês
+              <ArrowUpRight className="size-3 text-white" />
+              Despesas do período
             </div>
             <p className="mt-1 tabular-nums text-sm font-semibold text-white">
               {isBalanceVisible ? formatMoney(summary.totalExpense) : '••••'}

@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build --webpack",
-    "start": "next start"
+    "start": "next start",
+    "api:types": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/generate-api-types.mjs",
+    "test:api": "node --test scripts/api-integration.test.cjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
@@ -33,6 +35,7 @@
     "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "openapi-typescript": "^7.13.0",
     "postcss": "^8.5",
     "tailwindcss": "^4.3.3",
     "typescript": "5.7.3"

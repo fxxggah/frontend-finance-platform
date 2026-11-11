@@ -16,7 +16,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { formatMoney } from '@/lib/format/money';
-import { calculateInvestment } from '@/lib/simulations';
+import { useInvestmentSimulation } from '@/hooks/use-simulations';
+import { ApiError } from '@/lib/api/errors';
 import type { InvestmentResult } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -24,17 +25,17 @@ import { cn } from '@/lib/utils';
 
 const investmentSchema = z.object({
   initialAmount: z
-    .number({ invalid_type_error: 'Informe um valor válido' })
+    .number({ error: 'Informe um valor válido' })
     .min(0, 'O valor inicial deve ser maior ou igual a zero'),
   monthlyContribution: z
-    .number({ invalid_type_error: 'Informe um valor válido' })
+    .number({ error: 'Informe um valor válido' })
     .min(0, 'O aporte mensal deve ser maior ou igual a zero'),
   annualRate: z
-    .number({ invalid_type_error: 'Informe um valor válido' })
+    .number({ error: 'Informe um valor válido' })
     .min(0, 'A rentabilidade deve ser maior ou igual a zero')
     .max(100, 'A rentabilidade não pode ultrapassar 100%'),
   years: z
-    .number({ invalid_type_error: 'Informe um valor válido' })
+    .number({ error: 'Informe um valor válido' })
     .int('Use um número inteiro de anos')
     .min(1, 'O prazo mínimo é 1 ano')
     .max(50, 'O prazo máximo é 50 anos'),
@@ -106,7 +107,7 @@ function BreakdownTable({
             <tr className="border-b border-border bg-surface-soft text-left">
               <th className="px-4 py-3 font-medium text-text-muted">Mês</th>
               <th className="px-4 py-3 font-medium text-text-muted">Total Investido</th>
-              <th className="px-4 py-3 font-medium text-text-muted text-income">Juros Acum.</th>
+              <th className="px-4 py-3 font-medium text-text-muted text-income">Juros do mês</th>
               <th className="px-4 py-3 font-medium text-text-muted">Saldo</th>
             </tr>
           </thead>
@@ -155,11 +156,14 @@ function BreakdownTable({
 // ─── Página principal ─────────────────────────────────────────────────────────
 
 export default function InvestmentSimulatorPage() {
-  const [result, setResult] = useState<InvestmentResult | null>(null);
+  const mutation = useInvestmentSimulation();
+  const result = mutation.data;
+  const [calcError, setCalcError] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<InvestmentForm>({
     resolver: zodResolver(investmentSchema),
@@ -171,9 +175,19 @@ export default function InvestmentSimulatorPage() {
     },
   });
 
-  function onSubmit(data: InvestmentForm) {
-    const res = calculateInvestment(data);
-    setResult(res);
+  async function onSubmit(data: InvestmentForm) {
+    mutation.reset();
+    setCalcError(null);
+    try {
+      await mutation.mutateAsync(data);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        for (const field of error.errors) {
+          if (field.field in data) setError(field.field as keyof InvestmentForm, { message: field.message });
+        }
+      }
+      setCalcError(error instanceof ApiError ? error.detail : 'Não foi possível realizar a simulação.');
+    }
   }
 
   return (
@@ -235,13 +249,14 @@ export default function InvestmentSimulatorPage() {
             />
           </div>
 
-          <Button type="submit" variant="primary" size="md" className="w-full sm:w-auto">
+          <Button type="submit" variant="primary" size="md" isLoading={mutation.isPending} className="w-full sm:w-auto">
             <Calculator size={16} />
             Calcular
           </Button>
         </form>
       </Card>
 
+      {calcError && <p role="alert" className="text-sm text-expense">{calcError}</p>}
       {/* Resultados */}
       {result && (
         <section aria-label="Resultado da simulação" className="space-y-4">

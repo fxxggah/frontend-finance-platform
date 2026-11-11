@@ -151,7 +151,7 @@ export default function CreditCardDetailPage({ params }: PageProps) {
             <div className="rounded-2xl bg-surface-soft p-3.5 border border-border flex items-center justify-between text-xs">
               <span className="text-text-muted">Fatura atual em aberto</span>
               <span className="font-bold tabular-nums text-text">
-                {formatMoney(card.currentInvoice.total)}
+                {card.currentInvoice ? formatMoney(card.currentInvoice.total) : 'Sem fatura atual'}
               </span>
             </div>
           </Card>

@@ -12,6 +12,8 @@ import { Select } from '@/components/ui/select';
 import { useAccounts } from '@/hooks/use-accounts';
 import { usePayInvoice } from '@/hooks/use-credit-cards';
 import { formatMoney } from '@/lib/format/money';
+import { getToday } from '@/lib/format/date';
+import { ApiError } from '@/lib/api/errors';
 import type { InvoiceDetail, InvoiceSummary } from '@/types';
 
 interface InvoicePayModalProps {
@@ -51,6 +53,7 @@ export function InvoicePayModal({ open, onClose, cardId, invoice }: InvoicePayMo
     register,
     handleSubmit,
     reset,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -60,7 +63,7 @@ export function InvoicePayModal({ open, onClose, cardId, invoice }: InvoicePayMo
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       }),
-      date: new Date().toISOString().slice(0, 10),
+      date: getToday(),
     },
   });
 
@@ -72,19 +75,27 @@ export function InvoicePayModal({ open, onClose, cardId, invoice }: InvoicePayMo
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         }),
-        date: new Date().toISOString().slice(0, 10),
+        date: getToday(),
       });
     }
   }, [open, remaining, reset]);
 
   async function onSubmit(data: FormData) {
     const value = parseFloat(data.amount.replace(/\./g, '').replace(',', '.'));
+    try {
     await payMutation.mutateAsync({
       accountId: parseInt(data.accountId, 10),
       amount: value,
       date: data.date,
     });
     onClose();
+    } catch (error) {
+      if (error instanceof ApiError) {
+        for (const field of error.errors) {
+          if (field.field in data) setError(field.field as keyof FormData, { message: field.message });
+        }
+      }
+    }
   }
 
   const accounts = accountsData?.accounts?.filter((a) => !a.archived) ?? [];

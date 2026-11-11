@@ -98,6 +98,8 @@ export const mockCreditCards: CreditCard[] = [
     archived: false,
     currentInvoice: {
       reference: "2026-11",
+      closingDate: "2026-11-25",
+      paid: 0,
       total: 630.0,
       status: "OPEN",
       dueDate: "2026-12-02",

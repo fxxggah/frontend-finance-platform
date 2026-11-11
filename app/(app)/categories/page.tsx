@@ -27,6 +27,7 @@ import { ColorPicker } from '@/components/ui/color-picker';
 import { IconPicker } from '@/components/ui/icon-picker';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
+import { useDevState } from '@/hooks/use-dev-state';
 import { ApiError } from '@/lib/api/errors';
 import type { Category, TransactionType } from '@/types';
 
@@ -37,16 +38,13 @@ const categorySchema = z.object({
     .string()
     .min(1, 'O nome é obrigatório')
     .max(60, 'O nome deve ter no máximo 60 caracteres'),
-  type: z.enum(['INCOME', 'EXPENSE'], { required_error: 'Selecione o tipo' }),
+  type: z.enum(['INCOME', 'EXPENSE'], { error: 'Selecione o tipo' }),
   color: z.string().min(1, 'Selecione uma cor'),
   icon: z.string().min(1, 'Selecione um ícone'),
 });
 
 type CategoryForm = z.infer<typeof categorySchema>;
 
-// ─── Categorias mockadas com transações (para bloquear edição de tipo) ─────────
-// No cenário real, isso viria da API (ex: `hasTransactions: boolean`)
-const CATEGORIES_WITH_TRANSACTIONS = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 
 // ─── Form Dialog ───────────────────────────────────────────────────────────────
 
@@ -58,7 +56,7 @@ interface CategoryFormDialogProps {
 
 function CategoryFormDialog({ open, onClose, editing }: CategoryFormDialogProps) {
   const isEditing = editing !== null;
-  const hasTransactions = isEditing && CATEGORIES_WITH_TRANSACTIONS.has(editing.id);
+
 
   const createMutation = useCreateCategory();
   const updateMutation = useUpdateCategory();
@@ -95,7 +93,7 @@ function CategoryFormDialog({ open, onClose, editing }: CategoryFormDialogProps)
   async function onSubmit(data: CategoryForm) {
     try {
       if (isEditing) {
-        await updateMutation.mutateAsync({ id: editing.id, data });
+        await updateMutation.mutateAsync({ id: editing.id, data: { name: data.name, color: data.color, icon: data.icon } });
         toast.success('Categoria atualizada com sucesso!');
       } else {
         await createMutation.mutateAsync(data);
@@ -105,6 +103,9 @@ function CategoryFormDialog({ open, onClose, editing }: CategoryFormDialogProps)
     } catch (err) {
       if (err instanceof ApiError) {
         // Erro 409 → nome duplicado → reflete no campo
+        for (const field of err.errors) {
+          if (field.field in data) setError(field.field as keyof CategoryForm, { message: field.message });
+        }
         const fieldError = err.getFieldError('name');
         if (fieldError) {
           setError('name', { message: fieldError });
@@ -157,17 +158,17 @@ function CategoryFormDialog({ open, onClose, editing }: CategoryFormDialogProps)
           <div className="flex flex-col gap-1.5">
             <Select
               label="Tipo"
-              disabled={hasTransactions}
+              disabled={isEditing}
               error={errors.type?.message}
               {...register('type')}
             >
               <option value="EXPENSE">Despesa</option>
               <option value="INCOME">Receita</option>
             </Select>
-            {hasTransactions && (
+            {isEditing && (
               <p className="flex items-center gap-1.5 text-xs text-text-muted">
                 <Info size={12} aria-hidden="true" />
-                O tipo não pode mudar porque já existem transações nessa categoria
+                O tipo da categoria não pode ser alterado.
               </p>
             )}
           </div>
@@ -289,9 +290,10 @@ interface CategoryListProps {
 }
 
 function CategoryList({ type, onEdit, onDelete }: CategoryListProps) {
-  const { data: categories, isLoading, isError } = useCategories(type);
+  const { data: categories, isLoading, isError, refetch } = useCategories(type);
+  const state = useDevState();
 
-  if (isLoading) {
+  if (state === 'loading' || (!state && isLoading)) {
     return (
       <div className="space-y-2">
         {Array.from({ length: 5 }).map((_, i) => (
@@ -301,17 +303,18 @@ function CategoryList({ type, onEdit, onDelete }: CategoryListProps) {
     );
   }
 
-  if (isError) {
+  if (state === 'error' || (!state && isError)) {
     return (
       <EmptyState
         icon={Tag}
         title="Erro ao carregar categorias"
         description="Não foi possível buscar as categorias. Tente novamente."
+        actionLabel="Tentar novamente" onAction={() => void refetch()}
       />
     );
   }
 
-  if (!categories || categories.length === 0) {
+  if (state === 'empty' || !categories || categories.length === 0) {
     return (
       <EmptyState
         icon={Tag}
@@ -407,6 +410,7 @@ export default function CategoriesPage() {
 
       {/* Dialog de criação/edição */}
       <CategoryFormDialog
+        key={editingCategory?.id ?? 'new'}
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
         editing={editingCategory}

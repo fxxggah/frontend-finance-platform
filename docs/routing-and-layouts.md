@@ -109,12 +109,12 @@ Componente presente no topo das telas analíticas (Dashboard, Relatórios, Trans
 - **Opções Suportadas:**
   - `DAY` (Dia)
   - `WEEK` (Semana - Segunda a Domingo)
-  - `FORTNIGHT` (Quinzena - 1 a 15 ou 16 ao fim do mês)
   - `MONTH` (Mês - Padrão)
-  - `QUARTER` (Trimestre)
-  - `SEMESTER` (Semestre)
   - `YEAR` (Ano)
   - `CUSTOM` (Intervalo Personalizado com `from` e `to`)
+- O tipo `Period` e as opções da interface ficam restritos a esses cinco valores.
+  Valores removidos ou inválidos na URL são normalizados para `MONTH`.
+  O OpenAPI e seus tipos gerados continuam descrevendo todos os valores do backend.
 - **Exibição do Intervalo Resolvido:** O componente sempre exibe ao lado do seletor o texto com as datas resolvidas (ex.: `"1 a 31 de out. de 2026"`), **extraídas diretamente dos campos `from` e `to` da resposta da API**. O frontend nunca recalcula calendários complexos.
 - **Sincronização via URL:**
   ```

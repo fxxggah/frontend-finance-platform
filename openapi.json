@@ -1,0 +1,3088 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "OpenAPI definition",
+    "version": "v0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Generated server url"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Cartões de Crédito",
+      "description": "Gestão de cartões, faturas e pagamentos"
+    },
+    {
+      "name": "Contas",
+      "description": "Gerenciamento de contas bancárias, carteiras e saldos"
+    },
+    {
+      "name": "Categorias",
+      "description": "Gerenciamento de categorias de receitas e despesas"
+    },
+    {
+      "name": "Auth",
+      "description": "Autenticação e gerenciamento de sessão"
+    },
+    {
+      "name": "Transferências",
+      "description": "Movimentações financeiras entre contas do usuário"
+    },
+    {
+      "name": "Transações",
+      "description": "Gerenciamento de receitas e despesas"
+    },
+    {
+      "name": "Usuário",
+      "description": "Perfil do usuário autenticado"
+    }
+  ],
+  "paths": {
+    "/api/v1/transfers/{id}": {
+      "get": {
+        "tags": [
+          "Transferências"
+        ],
+        "summary": "Buscar transferência por ID",
+        "operationId": "findById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer-token": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Transferências"
+        ],
+        "summary": "Atualizar transferência",
+        "description": "Recalcula automaticamente os saldos das contas envolvidas (as antigas e as novas).",
+        "operationId": "update",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer-token": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Transferências"
+        ],
+        "summary": "Excluir transferência",
+        "description": "Remove a transferência e recalcula os saldos das contas automaticamente.",
+        "operationId": "delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          {
+            "bearer-token": []
+          }
+        ]
+      }
+    },
+    "/api/v1/transactions/{id}": {
+      "get": {
+        "tags": [
+          "Transações"
+        ],
+        "summary": "Buscar transação por ID",
+        "description": "Retorna os detalhes de uma transação específica.",
+        "operationId": "findById_1",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer-token": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Transações"
+        ],
+        "summary": "Atualizar transação",
+        "description": "Atualiza os dados de uma transação existente. Não permite alterar o valor ou parcelas se for uma compra parcelada.",
+        "operationId": "update_1",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransactionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer-token": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Transações"
+        ],
+        "summary": "Excluir transação",
+        "description": "Realiza a exclusão (soft delete) de uma transação. Se for parcelada, exclui o grupo inteiro.",
+        "operationId": "delete_1",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          {
+            "bearer-token": []
+          }
+        ]
+      }
+    },
+    "/api/v1/goals/{id}": {
+      "get": {
+        "tags": [
+          "goal-controller"
+        ],
+        "operationId": "getGoal",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "goal-controller"
+        ],
+        "operationId": "updateGoal",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "goal-controller"
+        ],
+        "operationId": "deleteGoal",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/credit-cards/{id}": {
+      "put": {
+        "tags": [
+          "Cartões de Crédito"
+        ],
+        "operationId": "update_2",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreditCardRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditCardResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Cartões de Crédito"
+        ],
+        "operationId": "delete_2",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/categories/{id}": {
+      "put": {
+        "tags": [
+          "Categorias"
+        ],
+        "summary": "Atualizar categoria",
+        "description": "Atualiza os dados de uma categoria existente. O tipo da categoria não pode ser alterado se ela já possuir transações vinculadas.",
+        "operationId": "update_3",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer-token": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Categorias"
+        ],
+        "summary": "Excluir categoria",
+        "description": "Exclui uma categoria. Se a categoria já possuir transações, o sistema aplicará um soft delete (ocultando-a de novos lançamentos); se estiver vazia, fará a exclusão física.",
+        "operationId": "delete_3",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          {
+            "bearer-token": []
+          }
+        ]
+      }
+    },
+    "/api/v1/accounts/{id}": {
+      "get": {
+        "tags": [
+          "Contas"
+        ],
+        "summary": "Buscar conta por ID",
+        "description": "Retorna os detalhes de uma conta específica, juntamente com o seu saldo atual calculado.",
+        "operationId": "getById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer-token": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Contas"
+        ],
+        "summary": "Atualizar conta",
+        "description": "Atualiza os dados de uma conta existente. Alterar o saldo inicial (initialBalance) atualizará automaticamente o saldo final calculado.",
+        "operationId": "update_4",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer-token": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Contas"
+        ],
+        "summary": "Excluir ou arquivar conta",
+        "description": "Remove uma conta. Se a conta já tiver movimentações (transações), ela será arquivada (soft delete). Se estiver completamente vazia, sofrerá exclusão física (hard delete). Não é possível arquivar/excluir a última conta ativa do usuário.",
+        "operationId": "delete_4",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountDeleteResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer-token": []
+          }
+        ]
+      }
+    },
+    "/api/v1/transfers": {
+      "get": {
+        "tags": [
+          "Transferências"
+        ],
+        "summary": "Listar transferências",
+        "description": "Retorna uma lista paginada de transferências. Pode ser filtrada por período ou por conta específica.",
+        "operationId": "list",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "accountId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "default": [
+                "date,DESC"
+              ],
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseTransferResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer-token": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Transferências"
+        ],
+        "summary": "Criar transferência",
+        "description": "Transfere um valor de uma conta para outra. Não gera receitas ou despesas, apenas altera o saldo dinâmico das contas.",
+        "operationId": "create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer-token": []
+          }
+        ]
+      }
+    },
+    "/api/v1/transactions": {
+      "get": {
+        "tags": [
+          "Transações"
+        ],
+        "summary": "Listar transações",
+        "description": "Retorna uma lista paginada de transações do usuário logado, com suporte a filtros dinâmicos.",
+        "operationId": "list_1",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "INCOME",
+                "EXPENSE"
+              ]
+            }
+          },
+          {
+            "name": "categoryId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "accountId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "creditCardId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "default": [
+                "date,DESC"
+              ],
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseTransactionResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer-token": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Transações"
+        ],
+        "summary": "Criar transação",
+        "description": "Cria uma nova transação (receita ou despesa) vinculada a uma conta ou cartão.",
+        "operationId": "create_1",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransactionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer-token": []
+          }
+        ]
+      }
+    },
+    "/api/v1/simulations/investment": {
+      "post": {
+        "tags": [
+          "simulation-controller"
+        ],
+        "operationId": "simulateInvestment",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvestmentSimulationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvestmentSimulationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/simulations/debt-payoff": {
+      "post": {
+        "tags": [
+          "simulation-controller"
+        ],
+        "operationId": "simulateDebtPayoff",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DebtPayoffSimulationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DebtPayoffSimulationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/goals": {
+      "get": {
+        "tags": [
+          "goal-controller"
+        ],
+        "operationId": "listGoals",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "SAVINGS",
+                "INCOME",
+                "EXPENSE"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "CANCELLED"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GoalResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "goal-controller"
+        ],
+        "operationId": "createGoal",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/goals/{id}/contributions": {
+      "get": {
+        "tags": [
+          "goal-controller"
+        ],
+        "operationId": "listContributions",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GoalContributionResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "goal-controller"
+        ],
+        "operationId": "addContribution",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoalContributionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/credit-cards": {
+      "get": {
+        "tags": [
+          "Cartões de Crédito"
+        ],
+        "operationId": "list_2",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreditCardResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Cartões de Crédito"
+        ],
+        "operationId": "create_2",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreditCardRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditCardResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/credit-cards/{id}/invoices/{reference}/payments": {
+      "post": {
+        "tags": [
+          "Cartões de Crédito"
+        ],
+        "operationId": "payInvoice",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "reference",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvoicePaymentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/api/v1/categories": {
+      "get": {
+        "tags": [
+          "Categorias"
+        ],
+        "summary": "Listar categorias",
+        "description": "Retorna a lista de categorias do usuário logado, com suporte a filtro opcional por tipo (INCOME ou EXPENSE).",
+        "operationId": "list_3",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "INCOME",
+                "EXPENSE"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CategoryResponse"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer-token": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Categorias"
+        ],
+        "summary": "Criar categoria",
+        "description": "Cria uma nova categoria personalizada (com nome, cor, ícone e tipo) vinculada ao usuário.",
+        "operationId": "create_3",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer-token": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Renovar tokens",
+        "description": "Troca o refresh token por um novo par de tokens (rotation)",
+        "operationId": "refresh",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Logout",
+        "description": "Revoga o refresh token",
+        "operationId": "logout",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogoutRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/google": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Login com Google",
+        "description": "Valida o ID Token do Google e retorna access + refresh tokens",
+        "operationId": "loginWithGoogle",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleLoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounts": {
+      "get": {
+        "tags": [
+          "Contas"
+        ],
+        "summary": "Listar contas",
+        "description": "Retorna a lista de contas do usuário logado, incluindo o saldo dinâmico de cada uma e o patrimônio total (totalBalance). Permite filtrar ou incluir contas arquivadas.",
+        "operationId": "list_4",
+        "parameters": [
+          {
+            "name": "includeArchived",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountListResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer-token": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Contas"
+        ],
+        "summary": "Criar conta",
+        "description": "Cria uma nova conta financeira. O nome da conta deve ser único por usuário.",
+        "operationId": "create_4",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer-token": []
+          }
+        ]
+      }
+    },
+    "/api/v1/goals/{id}/cancel": {
+      "patch": {
+        "tags": [
+          "goal-controller"
+        ],
+        "operationId": "cancelGoal",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/users/me": {
+      "get": {
+        "tags": [
+          "Usuário"
+        ],
+        "summary": "Dados do usuário logado",
+        "operationId": "getMe",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer-token": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Usuário"
+        ],
+        "summary": "Excluir conta (LGPD)",
+        "description": "Apaga a conta e todos os dados do usuário",
+        "operationId": "deleteMe",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearer-token": []
+          }
+        ]
+      }
+    },
+    "/api/v1/dashboard/summary": {
+      "get": {
+        "tags": [
+          "dashboard-controller"
+        ],
+        "operationId": "getSummary",
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "MONTH",
+              "enum": [
+                "DAY",
+                "WEEK",
+                "FORTNIGHT",
+                "MONTH",
+                "QUARTER",
+                "SEMESTER",
+                "YEAR",
+                "CUSTOM"
+              ]
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "accountId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "creditCardId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardSummaryDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dashboard/recent-transactions": {
+      "get": {
+        "tags": [
+          "dashboard-controller"
+        ],
+        "operationId": "getRecentTransactions",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 5
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TransactionRecentDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dashboard/expenses-by-category": {
+      "get": {
+        "tags": [
+          "dashboard-controller"
+        ],
+        "operationId": "getExpensesByCategory",
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "MONTH",
+              "enum": [
+                "DAY",
+                "WEEK",
+                "FORTNIGHT",
+                "MONTH",
+                "QUARTER",
+                "SEMESTER",
+                "YEAR",
+                "CUSTOM"
+              ]
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "accountId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "creditCardId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CategoryExpenseDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dashboard/evolution": {
+      "get": {
+        "tags": [
+          "dashboard-controller"
+        ],
+        "operationId": "getEvolution",
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "MONTH",
+              "enum": [
+                "DAY",
+                "WEEK",
+                "FORTNIGHT",
+                "MONTH",
+                "QUARTER",
+                "SEMESTER",
+                "YEAR",
+                "CUSTOM"
+              ]
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "accountId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "creditCardId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvolutionDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/credit-cards/{id}/invoices": {
+      "get": {
+        "tags": [
+          "Cartões de Crédito"
+        ],
+        "operationId": "listInvoices",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InvoiceResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/goals/{id}/contributions/{contributionId}": {
+      "delete": {
+        "tags": [
+          "goal-controller"
+        ],
+        "operationId": "deleteContribution",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "contributionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/credit-cards/{id}/invoices/{reference}/payments/{paymentId}": {
+      "delete": {
+        "tags": [
+          "Cartões de Crédito"
+        ],
+        "operationId": "deletePayment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "reference",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "paymentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "TransferRequest": {
+        "type": "object",
+        "properties": {
+          "fromAccountId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "toAccountId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "amount": {
+            "type": "number",
+            "minimum": 0.01
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "amount",
+          "date",
+          "fromAccountId",
+          "toAccountId"
+        ]
+      },
+      "AccountSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string"
+          }
+        }
+      },
+      "TransferResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fromAccount": {
+            "$ref": "#/components/schemas/AccountSummary"
+          },
+          "toAccount": {
+            "$ref": "#/components/schemas/AccountSummary"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "TransactionRequest": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "INCOME",
+              "EXPENSE"
+            ]
+          },
+          "amount": {
+            "type": "number",
+            "maximum": 999999999.99,
+            "minimum": 0.01
+          },
+          "categoryId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "accountId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "creditCardId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "installments": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 24,
+            "minimum": 1
+          }
+        },
+        "required": [
+          "categoryId",
+          "date",
+          "type"
+        ]
+      },
+      "AccountInfo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "CategoryInfo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string"
+          }
+        }
+      },
+      "CreditCardInfo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "InstallmentInfo": {
+        "type": "object",
+        "properties": {
+          "groupId": {
+            "type": "string"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "TransactionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "INCOME",
+              "EXPENSE"
+            ]
+          },
+          "amount": {
+            "type": "number"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "description": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "category": {
+            "$ref": "#/components/schemas/CategoryInfo"
+          },
+          "account": {
+            "$ref": "#/components/schemas/AccountInfo"
+          },
+          "creditCard": {
+            "$ref": "#/components/schemas/CreditCardInfo"
+          },
+          "invoiceReference": {
+            "type": "string"
+          },
+          "installment": {
+            "$ref": "#/components/schemas/InstallmentInfo"
+          }
+        }
+      },
+      "GoalRequest": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "SAVINGS",
+              "INCOME",
+              "EXPENSE"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "icon": {
+            "type": "string",
+            "maxLength": 40,
+            "minLength": 0
+          },
+          "color": {
+            "type": "string",
+            "maxLength": 7,
+            "minLength": 0
+          },
+          "targetAmount": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "categoryId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "name",
+          "targetAmount",
+          "type"
+        ]
+      },
+      "CategorySimpleDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string"
+          }
+        }
+      },
+      "GoalResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "SAVINGS",
+              "INCOME",
+              "EXPENSE"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string"
+          },
+          "targetAmount": {
+            "type": "number"
+          },
+          "currentAmount": {
+            "type": "number"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "CANCELLED"
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "IN_PROGRESS",
+              "WARNING",
+              "EXCEEDED",
+              "ACHIEVED",
+              "EXPIRED"
+            ]
+          },
+          "percentage": {
+            "type": "number"
+          },
+          "monthlyNeeded": {
+            "type": "number"
+          },
+          "category": {
+            "$ref": "#/components/schemas/CategorySimpleDto"
+          }
+        }
+      },
+      "CreditCardRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "creditLimit": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "closingDay": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 28,
+            "minimum": 1
+          },
+          "dueDay": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 28,
+            "minimum": 1
+          },
+          "color": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "closingDay",
+          "creditLimit",
+          "dueDay",
+          "name"
+        ]
+      },
+      "CreditCardResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "creditLimit": {
+            "type": "number"
+          },
+          "usedLimit": {
+            "type": "number"
+          },
+          "availableLimit": {
+            "type": "number"
+          },
+          "closingDay": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dueDay": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "color": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "archived": {
+            "type": "boolean"
+          },
+          "currentInvoice": {
+            "$ref": "#/components/schemas/InvoiceResponse"
+          }
+        }
+      },
+      "InvoiceResponse": {
+        "type": "object",
+        "properties": {
+          "reference": {
+            "type": "string"
+          },
+          "closingDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "total": {
+            "type": "number"
+          },
+          "paid": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "CLOSED",
+              "PARTIALLY_PAID",
+              "PAID",
+              "OVERDUE"
+            ]
+          }
+        }
+      },
+      "CategoryUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 60,
+            "minLength": 0
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          },
+          "icon": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]{1,40}$"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "CategoryResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "INCOME",
+              "EXPENSE"
+            ]
+          },
+          "color": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string"
+          }
+        }
+      },
+      "AccountRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 60,
+            "minLength": 0
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "BANK",
+              "CASH",
+              "DIGITAL_WALLET",
+              "OTHER"
+            ]
+          },
+          "initialBalance": {
+            "type": "number"
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          },
+          "icon": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]{1,40}$"
+          }
+        },
+        "required": [
+          "name",
+          "type"
+        ]
+      },
+      "AccountResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "BANK",
+              "CASH",
+              "DIGITAL_WALLET",
+              "OTHER"
+            ]
+          },
+          "balance": {
+            "type": "number"
+          },
+          "color": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "archived": {
+            "type": "boolean"
+          }
+        }
+      },
+      "InvestmentSimulationRequest": {
+        "type": "object",
+        "properties": {
+          "initialAmount": {
+            "type": "number",
+            "minimum": 0
+          },
+          "monthlyContribution": {
+            "type": "number",
+            "minimum": 0
+          },
+          "annualRate": {
+            "type": "number",
+            "maximum": 100,
+            "minimum": 0
+          },
+          "years": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 50,
+            "minimum": 1
+          }
+        },
+        "required": [
+          "annualRate",
+          "initialAmount",
+          "monthlyContribution",
+          "years"
+        ]
+      },
+      "InvestmentMonthlyBreakdownDTO": {
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "currentInvested": {
+            "type": "number"
+          },
+          "interestEarned": {
+            "type": "number"
+          },
+          "totalBalance": {
+            "type": "number"
+          }
+        }
+      },
+      "InvestmentSimulationResponse": {
+        "type": "object",
+        "properties": {
+          "totalInvested": {
+            "type": "number"
+          },
+          "totalInterest": {
+            "type": "number"
+          },
+          "finalAmount": {
+            "type": "number"
+          },
+          "monthlyBreakdown": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvestmentMonthlyBreakdownDTO"
+            }
+          },
+          "disclaimer": {
+            "type": "string"
+          }
+        }
+      },
+      "DebtPayoffSimulationRequest": {
+        "type": "object",
+        "properties": {
+          "debtAmount": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "monthlyRate": {
+            "type": "number",
+            "minimum": 0
+          },
+          "monthlyPayment": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
+        },
+        "required": [
+          "debtAmount",
+          "monthlyPayment",
+          "monthlyRate"
+        ]
+      },
+      "AmortizationScheduleDTO": {
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "paymentAmount": {
+            "type": "number"
+          },
+          "principalPaid": {
+            "type": "number"
+          },
+          "interestPaid": {
+            "type": "number"
+          },
+          "remainingBalance": {
+            "type": "number"
+          }
+        }
+      },
+      "DebtPayoffSimulationResponse": {
+        "type": "object",
+        "properties": {
+          "months": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPaid": {
+            "type": "number"
+          },
+          "totalInterest": {
+            "type": "number"
+          },
+          "schedule": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AmortizationScheduleDTO"
+            }
+          },
+          "disclaimer": {
+            "type": "string"
+          }
+        }
+      },
+      "GoalContributionRequest": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "number"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "amount",
+          "date"
+        ]
+      },
+      "InvoicePaymentRequest": {
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "amount": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "accountId",
+          "amount",
+          "date"
+        ]
+      },
+      "CategoryRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 60,
+            "minLength": 0
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "INCOME",
+              "EXPENSE"
+            ]
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          },
+          "icon": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]{1,40}$"
+          }
+        },
+        "required": [
+          "name",
+          "type"
+        ]
+      },
+      "RefreshRequest": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "refreshToken"
+        ]
+      },
+      "TokenResponse": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "refreshToken": {
+            "type": "string"
+          },
+          "expiresIn": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "LogoutRequest": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "refreshToken"
+        ]
+      },
+      "GoogleLoginRequest": {
+        "type": "object",
+        "properties": {
+          "idToken": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "idToken"
+        ]
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "refreshToken": {
+            "type": "string"
+          },
+          "expiresIn": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserResponse"
+          }
+        }
+      },
+      "UserResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "pictureUrl": {
+            "type": "string"
+          }
+        }
+      },
+      "PageResponseTransferResponse": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TransferResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PageResponseTransactionResponse": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TransactionResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "GoalContributionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "DashboardSummaryDTO": {
+        "type": "object",
+        "properties": {
+          "period": {
+            "type": "string",
+            "enum": [
+              "DAY",
+              "WEEK",
+              "FORTNIGHT",
+              "MONTH",
+              "QUARTER",
+              "SEMESTER",
+              "YEAR",
+              "CUSTOM"
+            ]
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "totalIncome": {
+            "type": "number"
+          },
+          "totalExpense": {
+            "type": "number"
+          },
+          "balance": {
+            "type": "number"
+          },
+          "previous": {
+            "$ref": "#/components/schemas/PreviousSummaryDTO"
+          }
+        }
+      },
+      "PreviousSummaryDTO": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "incomeChangePct": {
+            "type": "number"
+          },
+          "expenseChangePct": {
+            "type": "number"
+          }
+        }
+      },
+      "TransactionRecentDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "INCOME",
+              "EXPENSE"
+            ]
+          },
+          "categoryName": {
+            "type": "string"
+          },
+          "accountName": {
+            "type": "string"
+          },
+          "creditCardName": {
+            "type": "string"
+          }
+        }
+      },
+      "CategoryExpenseDTO": {
+        "type": "object",
+        "properties": {
+          "categoryId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "total": {
+            "type": "number"
+          },
+          "percentage": {
+            "type": "number"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "EvolutionDTO": {
+        "type": "object",
+        "properties": {
+          "granularity": {
+            "type": "string",
+            "enum": [
+              "DAY",
+              "WEEK",
+              "MONTH"
+            ]
+          },
+          "points": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EvolutionPointDTO"
+            }
+          }
+        }
+      },
+      "EvolutionPointDTO": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "income": {
+            "type": "number"
+          },
+          "expense": {
+            "type": "number"
+          },
+          "balance": {
+            "type": "number"
+          }
+        }
+      },
+      "AccountListResponse": {
+        "type": "object",
+        "properties": {
+          "accounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccountResponse"
+            }
+          },
+          "totalBalance": {
+            "type": "number"
+          },
+          "creditCardDebt": {
+            "type": "number"
+          }
+        }
+      },
+      "AccountDeleteResponse": {
+        "type": "object",
+        "properties": {
+          "archived": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}

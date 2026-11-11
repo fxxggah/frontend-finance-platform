@@ -6,6 +6,7 @@ import {
   mockInvoicePayments,
   mockTransactions,
 } from "@/lib/mock-data";
+import { listTransactions } from "./transactions";
 import { ApiError } from "@/lib/api/errors";
 import type {
   CreditCard,
@@ -32,9 +33,8 @@ export async function listCreditCards(includeArchived = false): Promise<CreditCa
     return localCards.filter((card) => !card.archived);
   }
 
-  return apiFetch<CreditCard[]>("/credit-cards", {
-    params: { includeArchived },
-  });
+  const cards = await apiFetch<CreditCard[]>("/credit-cards");
+  return includeArchived ? cards : cards.filter(card => !card.archived);
 }
 
 /**
@@ -55,7 +55,9 @@ export async function getCreditCard(id: number): Promise<CreditCard> {
     return card;
   }
 
-  return apiFetch<CreditCard>(`/credit-cards/${id}`);
+  const card = (await listCreditCards(true)).find(item => item.id === id);
+  if (!card) throw new ApiError({ status: 404, title: "Cartão não encontrado", detail: "Este cartão não está disponível." });
+  return card;
 }
 
 /**
@@ -78,6 +80,8 @@ export async function createCreditCard(data: CreditCardRequest): Promise<CreditC
       archived: false,
       currentInvoice: {
         reference: "2026-11",
+        closingDate: "2026-11-25",
+        paid: 0,
         total: 0,
         status: "OPEN",
         dueDate: `2026-12-${String(data.dueDay).padStart(2, "0")}`,
@@ -139,7 +143,7 @@ export async function updateCreditCard(
  * Remove ou arquiva um cartão de crédito.
  * DELETE /api/v1/credit-cards/{id}
  */
-export async function deleteCreditCard(id: number): Promise<{ archived: boolean }> {
+export async function deleteCreditCard(id: number): Promise<void> {
   if (USE_MOCK) {
     await simulateNetworkDelay(300);
     const card = localCards.find((c) => c.id === id);
@@ -154,14 +158,14 @@ export async function deleteCreditCard(id: number): Promise<{ archived: boolean 
     // Se possui transações (card.id === 1), arquiva
     if (card.usedLimit > 0 || card.id === 1) {
       card.archived = true;
-      return { archived: true };
+      return;
     } else {
       localCards = localCards.filter((c) => c.id !== id);
-      return { archived: false };
+      return;
     }
   }
 
-  return apiFetch<{ archived: boolean }>(`/credit-cards/${id}`, {
+  return apiFetch<void>(`/credit-cards/${id}`, {
     method: "DELETE",
   });
 }
@@ -212,7 +216,24 @@ export async function getInvoiceDetail(
     };
   }
 
-  return apiFetch<InvoiceDetail>(`/credit-cards/${cardId}/invoices/${ym}`);
+  let invoice = (await listInvoices(cardId)).find(item => item.reference === ym);
+  if (!invoice) {
+    const current = (await getCreditCard(cardId)).currentInvoice;
+    if (current?.reference === ym) invoice = current;
+  }
+  if (!invoice) throw new ApiError({ status: 404, title: "Fatura não encontrada", detail: "Esta fatura não está disponível." });
+  const transactions: InvoiceDetail['transactions'] = [];
+  // O contrato atual não oferece filtro por competência nem endpoint de detalhe.
+  // Filtramos a competência retornada em cada lançamento, sem recalcular valores.
+  let page = 0;
+  let totalPages = 1;
+  while (page < totalPages) {
+    const result = await listTransactions({ creditCardId: cardId, page, size: 100, sort: 'date,desc' });
+    transactions.push(...result.content.filter(item => item.invoiceReference === ym));
+    totalPages = result.totalPages;
+    page += 1;
+  }
+  return { ...invoice, transactions };
 }
 
 /**

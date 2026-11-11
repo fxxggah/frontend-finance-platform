@@ -58,3 +58,11 @@ export async function getMe(): Promise<User> {
   return apiFetch<User>("/users/me");
 }
 
+export async function deleteMe(): Promise<void> {
+  if (USE_MOCK) {
+    await simulateNetworkDelay();
+    return;
+  }
+  await apiFetch<void>("/users/me", { method: "DELETE" });
+}
+
