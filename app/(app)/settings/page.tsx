@@ -261,35 +261,6 @@ export default function SettingsPage() {
         </Card>
       </section>
 
-      {/* ── Seção: Dados ── */}
-      <section aria-labelledby="section-data">
-        <SectionTitle>
-          <span id="section-data">Gerenciamento de Dados</span>
-        </SectionTitle>
-
-        <Card variant="solid" className="mt-3 divide-y divide-border px-5">
-          <SettingsRow
-            icon={Database}
-            label="Limpar cache local"
-            description="Remove preferências e dados em cache do navegador"
-            action={
-              <Button variant="outline" size="sm" onClick={() => setClearCacheOpen(true)}>
-                Limpar
-              </Button>
-            }
-          />
-
-          <SettingsRow
-            icon={RefreshCw}
-            label="Versão do aplicativo"
-            description="FIN v1.0.0 — Fase 7 completa"
-            action={
-              <span className="text-xs text-text-muted tabular-nums">v1.0.0</span>
-            }
-          />
-        </Card>
-      </section>
-
       {/* ── Aviso de privacidade ── */}
       <div className="flex items-start gap-2 rounded-2xl border border-primary/20 bg-primary-soft px-4 py-3">
         <ShieldAlert size={16} className="mt-0.5 shrink-0 text-primary" aria-hidden="true" />
