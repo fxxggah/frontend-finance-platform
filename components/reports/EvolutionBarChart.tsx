@@ -38,7 +38,7 @@ function BarTooltip({
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-2xl border border-white/20 bg-slate-900/95 p-3 text-xs text-white shadow-2xl backdrop-blur-md">
+    <div className="rounded-2xl border border-border bg-surface p-3 text-xs text-text shadow-default">
       <p className="mb-2 font-bold text-white/90">{label}</p>
       {payload.map((item) => (
         <p key={item.dataKey} className="flex items-center justify-between gap-4 text-white/80">
@@ -74,13 +74,13 @@ export function EvolutionBarChart({ points, granularity, isLoading }: EvolutionB
           <span className="text-xs font-semibold uppercase tracking-wider text-white/80">
             Evolução Comparativa
           </span>
-          <h2 className="text-xl font-bold tracking-tight text-white mt-0.5">
+          <h2 className="text-lg font-semibold tracking-tight text-white mt-0.5">
             Receitas vs. Despesas
           </h2>
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold backdrop-blur-sm text-white/95">
+          <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white/95">
             {GRANULARITY_LABELS[granularity] || granularity}
           </span>
         </div>

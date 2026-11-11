@@ -36,8 +36,9 @@ export function ColorPicker({ value, onChange, className }: ColorPickerProps) {
             onClick={() => onChange(c)}
             style={{ backgroundColor: c }}
             aria-label={`Cor ${c}`}
+            aria-pressed={isSelected}
             className={cn(
-              'size-8 rounded-full transition-transform active:scale-95 flex items-center justify-center text-white shadow-sm',
+              'size-11 rounded-full transition-transform active:scale-95 flex items-center justify-center text-white shadow-sm motion-reduce:transition-none',
               isSelected ? 'ring-2 ring-primary ring-offset-2 ring-offset-surface scale-110' : 'hover:scale-105'
             )}
           >

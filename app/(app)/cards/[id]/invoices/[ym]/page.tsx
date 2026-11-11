@@ -1,5 +1,6 @@
 'use client';
 
+import { PageHeader, PageContainer } from '@/components/ui/page';
 import { use, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, CreditCard as CardIcon, DollarSign, RotateCcw, Info, ShoppingBag, AlertCircle } from 'lucide-react';
@@ -40,7 +41,7 @@ export default function InvoiceDetailPage({ params }: PageProps) {
 
   if (showError) {
     return (
-      <div className="container mx-auto max-w-4xl p-4 lg:p-8 space-y-6">
+      <PageContainer className="space-y-6">
         <Link
           href={`/cards/${cardId}`}
           className="inline-flex items-center gap-2 text-sm text-text-muted hover:text-text"
@@ -55,7 +56,7 @@ export default function InvoiceDetailPage({ params }: PageProps) {
           actionLabel="Tentar novamente"
           onAction={() => refetch()}
         />
-      </div>
+      </PageContainer>
     );
   }
 
@@ -77,7 +78,7 @@ export default function InvoiceDetailPage({ params }: PageProps) {
   const payments = invoice?.payments ?? [];
 
   return (
-    <div className="container mx-auto max-w-4xl p-4 lg:p-8 space-y-8">
+    <PageContainer className="space-y-8">
       {/* Navegação */}
       <div className="flex items-center justify-between">
         <Link
@@ -100,19 +101,20 @@ export default function InvoiceDetailPage({ params }: PageProps) {
           O histórico detalhado de pagamentos está indisponível. O total pago está no resumo da fatura.
         </p>
       )}
+      <PageHeader title={'Fatura de ' + monthLabel} description="Compras, pagamentos e informações da fatura." />
       {/* Resumo da Fatura */}
       {showLoading || !invoice ? (
         <Skeleton className="h-48 rounded-3xl" />
       ) : (
-        <Card variant="solid" padding="lg" className="space-y-6">
+        <Card variant="panel" padding="lg" className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-text-muted">
                 Fatura de {monthLabel}
               </p>
-              <h1 className="text-3xl font-extrabold tabular-nums tracking-tight text-text mt-1">
+              <p className="text-3xl font-semibold tabular-nums tracking-tight text-text mt-1">
                 {formatMoney(invoice.total)}
-              </h1>
+              </p>
             </div>
 
             {/* Botão de Pagamento com trava para OPEN */}
@@ -318,7 +320,7 @@ export default function InvoiceDetailPage({ params }: PageProps) {
         cancelLabel="Cancelar"
         isLoading={deletePaymentMutation.isPending}
       />
-    </div>
+    </PageContainer>
   );
 }
 

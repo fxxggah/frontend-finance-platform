@@ -1,5 +1,6 @@
 "use client";
 
+import styles from "./navigation.module.css";
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -56,7 +57,7 @@ export function BottomNav() {
       {/* Barra Inferior com Efeito Vidro (Glassmorphism Restrito §4) */}
       <nav
         aria-label="Navegação mobile"
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 h-20 rounded-t-[1.75rem] border-t border-border/60 bg-white/85 dark:bg-surface/85 backdrop-blur-md shadow-[0_-8px_30px_-8px_rgba(20,23,46,0.1)] px-4 flex items-center justify-between"
+        className={`${styles.bottom} fin-glass lg:hidden fixed bottom-0 left-0 right-0 z-40 rounded-t-[2rem] backdrop-blur-md px-4 flex items-center justify-between`}
       >
         {/* 1. Início */}
         <Link

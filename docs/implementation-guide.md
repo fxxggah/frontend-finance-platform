@@ -6,6 +6,10 @@ Este documento define a ordem exata de criação dos arquivos e módulos para co
 fase 2. Configuração, geração OpenAPI, consultas, sessão e limitações atuais estão
 em [api-integration.md](./api-integration.md).
 
+**Design global:** a linguagem aprovada no Início foi consolidada na UI compartilhada e aplicada à navegação, módulos financeiros, simulações, Configurações, login e telas de erro. Variantes, restrições de liquid glass e roteiro de validação estão em [design-system.md](./design-system.md). Esta evolução visual não altera as fases de integração nem os contratos de API.
+
+Cobertura de QA e limites das medições estão em [design-validation.md](./design-validation.md).
+
 ---
 
 ## FASE 1: Configuração Base, Tokens e Tipagem

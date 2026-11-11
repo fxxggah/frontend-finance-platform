@@ -39,7 +39,7 @@ export function EmptyState({
       role="status"
       aria-label={title}
       className={cn(
-        'flex flex-col items-center justify-center gap-4 py-16 px-6 text-center',
+        'flex flex-col items-center justify-center gap-4 rounded-3xl border border-border bg-surface py-12 px-5 text-center',
         className,
       )}
     >
@@ -52,7 +52,7 @@ export function EmptyState({
       </span>
 
       <div className="flex flex-col gap-1">
-        <p className="text-base font-semibold text-text">{title}</p>
+        <p className="text-base font-semibold tracking-tight text-text">{title}</p>
         {description && (
           <p className="text-sm text-text-muted max-w-xs">{description}</p>
         )}

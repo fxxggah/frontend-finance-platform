@@ -1,5 +1,6 @@
 'use client';
 
+import { PageContainer, PageHeader } from '@/components/ui/page';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -91,15 +92,12 @@ function TransfersContent() {
 export default function TransactionsPage() {
   const params = useSearchParams();
   const transfers = params.get('tab') === 'transfers';
-  return <div className="mx-auto max-w-6xl space-y-6">
-    <div className="flex flex-wrap items-center justify-between gap-4">
-      <h1 className="text-2xl font-bold text-text">Transações</h1>
-      <Link href="/transactions/new" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-white"><Plus className="size-4" aria-hidden="true" />Nova transação</Link>
-    </div>
-    <nav aria-label="Tipo de movimentação" className="flex gap-3">
-      <Link href="/transactions" aria-current={!transfers ? 'page' : undefined} className="inline-flex min-h-11 items-center text-sm font-semibold text-primary">Transações</Link>
+  return <PageContainer className="space-y-6">
+    <PageHeader title="Transações" action={<><Link href="/transactions/new" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-white"><Plus className="size-4" aria-hidden="true" />Nova transação</Link></>} />
+    <nav aria-label="Tipo de movimentação" className="flex w-fit max-w-full flex-wrap gap-1 rounded-2xl bg-surface-soft p-1">
+      <Link href="/transactions" aria-current={!transfers ? 'page' : undefined} className={`inline-flex min-h-11 items-center rounded-xl px-4 text-sm font-semibold ${!transfers ? 'bg-primary text-white' : 'text-text-muted hover:text-text'}`}>Transações</Link>
       <Link href="/transactions?tab=transfers" aria-current={transfers ? 'page' : undefined} className="inline-flex min-h-11 items-center text-sm font-semibold text-primary">Transferências</Link>
     </nav>
     {transfers ? <TransfersContent /> : <TransactionsContent />}
-  </div>;
+  </PageContainer>;
 }

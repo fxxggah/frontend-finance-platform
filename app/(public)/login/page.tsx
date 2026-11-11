@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
-import { Loader2 } from "lucide-react";
+import { Loader2, Wallet, ArrowUpRight, Target } from "lucide-react";
+import { Card } from '@/components/ui/card';
+import styles from '@/components/layout/auth.module.css';
 import { loginWithGoogle } from "@/lib/api/endpoints/auth";
 import { setAccessToken } from "@/lib/api/client";
 import { USE_MOCK } from "@/lib/config";
@@ -83,10 +85,21 @@ export default function LoginPage() {
   }, [scriptReady, finishLogin]);
 
   return (
-    <main className="relative flex min-h-screen w-full items-center justify-center overflow-hidden px-4 py-8">
-      <div className="pointer-events-none absolute -left-32 -top-32 size-96 rounded-full bg-gradient-hero opacity-20 blur-3xl" aria-hidden="true" />
-      <div className="pointer-events-none absolute -bottom-32 -right-32 size-96 rounded-full bg-accent opacity-20 blur-3xl" aria-hidden="true" />
-      <div className="relative z-10 w-full max-w-md rounded-3xl border border-border bg-surface p-8 shadow-default md:p-10">
+    <main className={`${styles.layout} grid min-h-screen w-full items-center gap-8 px-4 py-8 sm:px-8 lg:grid-cols-2 lg:gap-12 lg:px-16 xl:px-24`}>
+      <Card variant="brand" className={`${styles.intro} hidden p-10 lg:flex xl:p-14`}>
+        <div className="flex items-center gap-3 text-xl font-semibold tracking-tight text-white"><span className="size-4 rotate-45 rounded-sm bg-white" aria-hidden="true" />FIN</div>
+        <div className="relative max-w-md">
+          <p className="mb-5 text-xs font-semibold uppercase tracking-widest text-white/85">Seu espaço financeiro</p>
+          <h2 className="text-4xl font-semibold leading-tight tracking-tight text-white xl:text-5xl">Uma visão clara das suas finanças.</h2>
+          <p className="mt-5 text-sm leading-relaxed text-white/90">Contas, movimentações e objetivos. Tudo conectado para você acompanhar cada passo.</p>
+        </div>
+        <div className="relative flex flex-wrap gap-4 border-t border-white/20 pt-6 text-xs text-white/90">
+          <span className="flex items-center gap-2"><Wallet className="size-4" aria-hidden="true" />Suas contas</span>
+          <span className="flex items-center gap-2"><ArrowUpRight className="size-4" aria-hidden="true" />Seus movimentos</span>
+          <span className="flex items-center gap-2"><Target className="size-4" aria-hidden="true" />Suas metas</span>
+        </div>
+      </Card>
+      <Card variant="panel" className="relative z-10 mx-auto w-full max-w-md p-6 sm:p-8 md:p-10">
         <div className="mb-8 flex flex-col items-center text-center">
           <div className="mb-3 flex items-center gap-2.5">
             <div className="flex size-10 items-center justify-center rounded-2xl bg-gradient-hero" aria-hidden="true">
@@ -94,7 +107,7 @@ export default function LoginPage() {
             </div>
             <span className="text-2xl font-bold tracking-tight text-text">FIN</span>
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-text sm:text-2xl">Suas finanças, num só lugar</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-text sm:text-3xl">Suas finanças, num só lugar</h1>
           <p className="mt-2 text-sm text-text-muted">Acompanhe gastos, contas e metas com simplicidade.</p>
         </div>
 
@@ -116,7 +129,7 @@ export default function LoginPage() {
         )}
 
         <p className="mt-8 text-center text-xs leading-relaxed text-text-muted">Ao continuar, você concorda com os termos de uso e a política de privacidade do FIN.</p>
-      </div>
+      </Card>
       {!USE_MOCK && GOOGLE_CLIENT_ID && <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive"
         onReady={() => setScriptReady(true)} onError={() => setErrorMessage("Não foi possível carregar o login do Google. Recarregue a página.")} />}
     </main>

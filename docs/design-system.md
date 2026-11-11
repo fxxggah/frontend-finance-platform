@@ -9,7 +9,7 @@ Este documento padroniza a linguagem visual do **FIN**, detalhando a configuraç
 - **Tema Padrão:** Tema **CLARO suave** (não branco puro estourado), com paleta elegante baseada em violeta e azul profundo.
 - **Tema Escuro:** Alternável via atributo `data-theme="dark"` no elemento `<html>`, com preferência salva em `localStorage` e carregada via script inline para evitar FOUC (*flash of unstyled content*).
 - **Gradiente de marca:** `bg-gradient-hero` usa um gradiente fixo definido em `@theme`, idêntico nos temas claro e escuro; o cartão Hero e o botão central da navegação usam essa classe.
-- **Superfícies:** Visual limpo com cartões com bordas sutis e sombras difusas. O uso de **Glassmorphism** é estritamente restrito à pílula de atalhos e à navegação inferior mobile, preservando a legibilidade e a performance geral.
+- **Superfícies:** Linguagem visual aprovada no Início, aplicada ao app inteiro: conteúdo sólido, bordas sutis, tipografia com peso moderado e reflexos estáticos. Desfoque de fundo restrito às barras compactas de ações e à navegação inferior mobile.
 - **Tipografia:** Fonte **Inter** (`next/font/google`), com uso mandatário de números tabulares (`tabular-nums`) para todos os valores numéricos e monetários.
 
 ---
@@ -54,14 +54,32 @@ Para manter a consistência orgânica e suave:
 
 ---
 
-## 4. Diretriz de Glassmorphism Restrito
+## 4. Superfícies e liquid glass
 
-O efeito vidro (`backdrop-blur-md` com fundo translúcido `rgba(255, 255, 255, 0.85)`) é **permitido exclusivamente** em dois elementos:
+A linguagem aprovada na dashboard é a referência global. A implementação compartilhada fica em `components/ui/surfaces.module.css`; o CSS Module do dashboard contém apenas a altura específica do seu Hero.
 
-1. **Pílula de Atalhos Rápidos:** Abaixo do cartão Hero de saldo, separada por 16px, sem cobrir seu conteúdo.
-2. **Barra de Navegação Inferior Mobile:** Fixada no rodapé da viewport em telas `< 1024px`.
+| Variante de `Card` | Uso |
+|---|---|
+| `solid` | Listas, conteúdo e formulários: fundo opaco, borda sutil, sem sombra elevada |
+| `panel` | Painéis com reflexo estático, incluindo resumos, login e modais; fundo sólido, sem blur |
+| `metric` | Indicadores com borda e realce interno discreto |
+| `chart` | Gráficos com padding, largura mínima zero e tipografia definida pelo componente |
+| `brand` | Resumos de destaque com gradiente fixo e arcos decorativos idênticos nos dois temas |
+| `glass` | Apenas barras compactas de ações; blur de 12px a partir de 640px |
 
-*Todo o restante da interface (tabelas, listas, modais, formulários) deve utilizar superfícies opacas e sólidas para manter a velocidade de renderização em dispositivos móveis e acessibilidade de leitura.*
+`PageContainer`, `PageHeader`, `SectionHeader` e `MetricCard` padronizam a composição. Páginas usam largura máxima de 1440px; formulários independentes e Configurações, 768px. O shell fornece o padding externo, evitando espaçamento duplicado nas páginas. A sidebar permanece escura nos dois temas.
+
+Os tokens derivados `--glass-edge`, `--surface-reflection` e `--shadow-panel` referenciam a paleta existente. Cores base, fonte e raios não foram alterados. Regras universais de borda e foco ficam em `@layer base`, permitindo sobrescrita local sem `!important`.
+
+Somente barras compactas e a BottomNav usam `backdrop-filter`. Barras de ações ficam sólidas abaixo de 640px; a BottomNav mantém o vidro e respeita a área segura do dispositivo. Ambas oferecem fallback sólido sem suporte ao filtro ou com `prefers-reduced-transparency: reduce`. Não aplicar blur em sidebar, Topbar, gráficos, formulários ou overlays de tela inteira. Reflexos e arcos usam gradientes e sombras estáticos, sem eventos de mouse ou filtros SVG.
+
+Transições novas são de até 200ms e respeitam `prefers-reduced-motion`. Controles interativos têm área mínima de 44px, foco visível e indicação textual de estado. Dialogs e sheets contêm o foco, fecham com Escape e restauram o foco ao acionador quando ele continua montado.
+
+Dialogs e sheets usam portal no `document.body` após a hidratação, evitando que o contexto visual das páginas prenda o overlay abaixo da Topbar ou BottomNav. O alvo do portal tem snapshot SSR estável; a camada estática das páginas continua sem providers adicionais.
+
+### Validação visual local
+
+Com o app rodando e um Chrome headless isolado com depuração na porta 9334, executar `node scripts/design-smoke.cjs`. O script intercepta chamadas ao backend com fixtures de `lib/mock-data.ts`, rejeita mutações com ProblemDetail de teste e grava capturas/relatório na pasta temporária `fin-design-review`. Não executa operações em dados reais. `QA_BASE_URL`, `QA_CDP_URL` e `QA_WIDTHS` permitem selecionar a instância e as larguras. O build e os testes de contrato continuam sendo `pnpm build` e `pnpm test:api`.
 
 ---
 

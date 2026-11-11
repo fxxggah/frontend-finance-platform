@@ -1,5 +1,6 @@
 'use client';
 
+import { PageContainer, PageHeader } from '@/components/ui/page';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -373,24 +374,14 @@ export default function CategoriesPage() {
   }
 
   return (
-    <main className="mx-auto max-w-2xl space-y-6 p-4 pb-24 lg:p-8 lg:pb-8">
+    <PageContainer className="space-y-6">
       {/* Cabeçalho */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="flex size-10 items-center justify-center rounded-2xl bg-primary-soft">
-            <Tag size={20} className="text-primary" aria-hidden="true" />
-          </span>
-          <div>
-            <h1 className="text-xl font-bold text-text">Categorias</h1>
-            <p className="text-sm text-text-muted">Organize suas receitas e despesas</p>
-          </div>
-        </div>
-
+      <PageHeader title="Categorias" description="Organize suas receitas e despesas" action={
         <Button variant="primary" size="md" onClick={handleOpenCreate}>
           <Plus size={16} />
           Nova categoria
         </Button>
-      </div>
+      } />
 
       {/* Abas */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TransactionType)}>
@@ -426,6 +417,6 @@ export default function CategoriesPage() {
         confirmLabel="Excluir"
         isPending={deleteMutation.isPending}
       />
-    </main>
+    </PageContainer>
   );
 }

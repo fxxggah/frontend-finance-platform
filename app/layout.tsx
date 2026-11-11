@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   colorScheme: "light dark",
   themeColor: "#EDEFFA",
-  userScalable: false,
+  userScalable: true,
 };
 
 export default function RootLayout({
@@ -23,7 +23,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem('fin-theme')||localStorage.getItem('fin_theme');t=t==='dark'?'dark':'light';document.documentElement.dataset.theme=t;document.documentElement.classList.toggle('dark',t==='dark');localStorage.setItem('fin-theme',t)}catch{document.documentElement.dataset.theme='light'}` }} />
+      </head>
       <body className={`${inter.variable} antialiased`}>
         <QueryProvider>
           {children}

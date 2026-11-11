@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import { Sun, Moon } from "lucide-react";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { UserAvatar } from "./UserAvatar";
+import { useTheme } from "@/hooks/use-theme";
 
 export function HeaderMobile() {
   const { data: currentUser, isPending } = useCurrentUser();
   const [greeting, setGreeting] = useState("Olá");
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -19,26 +20,8 @@ export function HeaderMobile() {
     } else {
       setGreeting("Boa noite");
     }
-
-    const isDark =
-      document.documentElement.classList.contains("dark") ||
-      document.documentElement.getAttribute("data-theme") === "dark";
-    setTheme(isDark ? "dark" : "light");
   }, []);
 
-  function toggleTheme() {
-    const nextTheme = theme === "light" ? "dark" : "light";
-    setTheme(nextTheme);
-    if (nextTheme === "dark") {
-      document.documentElement.classList.add("dark");
-      document.documentElement.setAttribute("data-theme", "dark");
-      localStorage.setItem("fin_theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      document.documentElement.setAttribute("data-theme", "light");
-      localStorage.setItem("fin_theme", "light");
-    }
-  }
 
   return (
     <header className="lg:hidden relative overflow-hidden bg-gradient-hero text-white rounded-b-[2rem] px-5 pt-6 pb-8 shadow-lg shadow-primary/20">
@@ -58,9 +41,9 @@ export function HeaderMobile() {
             <span className="text-xs font-medium text-white/80">
               {greeting},
             </span>
-            <h1 className="text-base font-bold tracking-tight text-white leading-tight">
+            <p className="text-base font-semibold tracking-tight text-white leading-tight">
               {currentUser?.name ?? (isPending ? 'Carregando perfil...' : 'Perfil indisponível')}
-            </h1>
+            </p>
           </div>
         </div>
 

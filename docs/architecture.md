@@ -63,6 +63,8 @@ src/ ou raiz:
 
 ## 2. Server Components vs. Client Components
 
+Os componentes de composição `PageContainer`, `PageHeader`, `SectionHeader` e `MetricCard` não adicionam estado nem providers. O controle do tema é compartilhado por `useTheme` com `useSyncExternalStore`, notificação entre consumidores e sincronização entre abas. Um script no `head` aplica `fin-theme` antes da primeira pintura, migrando a chave antiga `fin_theme` se necessário. A preferência padrão permanece clara; indisponibilidade do localStorage não impede a alternância. Apenas o elemento `<html>`, alterado pelo script antes da hidratação, usa `suppressHydrationWarning`. Essa camada não toca cookies nem autenticação.
+
 Para manter excelente performance e SEO:
 
 - **Server Components (Padrão):**

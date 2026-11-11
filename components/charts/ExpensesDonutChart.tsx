@@ -45,8 +45,8 @@ export function ExpensesDonutChart({ categories, total, isLoading }: ExpensesDon
   const sorted = [...categories].sort((a, b) => b.total - a.total);
 
   return (
-    <Card className="p-5 sm:p-6">
-      <h2 className="text-lg font-bold text-text">Despesas por categoria</h2>
+    <Card variant="chart" className="">
+      <h2 className="text-base font-semibold tracking-tight text-text">Despesas por categoria</h2>
 
       <div className="mt-4 grid items-center gap-6 sm:grid-cols-[180px_1fr]">
         {/* Rosca */}
@@ -54,6 +54,7 @@ export function ExpensesDonutChart({ categories, total, isLoading }: ExpensesDon
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
+                isAnimationActive={false}
                 data={sorted}
                 dataKey="total"
                 nameKey="name"
@@ -78,7 +79,7 @@ export function ExpensesDonutChart({ categories, total, isLoading }: ExpensesDon
           </ResponsiveContainer>
           {/* Total no centro */}
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-            <strong className="tabular-nums text-lg font-bold text-text">
+            <strong className="tabular-nums text-base font-semibold tracking-tight text-text">
               {formatMoney(total)}
             </strong>
             <span className="text-xs text-text-muted">Total</span>

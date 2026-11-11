@@ -76,6 +76,9 @@
   --text: var(--color-text);
   --text-muted: var(--color-text-muted);
   --primary: var(--color-primary);
+  --glass-edge: color-mix(in srgb, var(--color-surface) 78%, var(--color-primary) 22%);
+  --surface-reflection: color-mix(in srgb, var(--color-white) 35%, transparent);
+  --shadow-panel: inset 0 1px 0 var(--surface-reflection), 0 8px 24px -20px var(--color-primary);
 }
 
 [data-theme='dark'],
@@ -112,8 +115,15 @@
   --primary: var(--color-primary);
 }
 
-* {
-  @apply border-border outline-ring/50;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 4px;
+  }
 }
 
 html {
@@ -128,6 +138,14 @@ body {
 
 button {
   cursor: pointer;
+}
+
+/* Mantido no CSS global para que o fallback seja igual em dev e produção. */
+@media (prefers-reduced-transparency: reduce) {
+  .fin-glass {
+    @apply backdrop-filter-none;
+    background-color: var(--color-surface);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

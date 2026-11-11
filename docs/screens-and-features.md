@@ -23,6 +23,8 @@ Este documento estabelece as especificações completas de interface, regras de 
 
 A tela principal do usuário reúne visão consolidada, atalhos rápidos e métricas do período selecionado.
 
+**Referência visual global:** o Início utiliza composição com Hero e seletor de período lado a lado a partir de 1280px, barra independente de ações rápidas, quatro indicadores, gráficos, movimentações recentes e metas. Em telas menores, os painéis se empilham e os atalhos usam duas colunas abaixo de 640px. Seus padrões foram extraídos para a UI compartilhada e aplicados a todas as áreas, conforme `design-system.md`, preservando dados e contratos existentes.
+
 ### 2.1 Cartão de Saldo Principal (Hero)
 - **Visual:** Fundo gradiente `gradient-hero` (violeta para azul elétrico), bordas `rounded-3xl`.
 - **Conteúdo:**

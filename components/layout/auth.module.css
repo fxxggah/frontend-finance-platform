@@ -1,0 +1,8 @@
+.layout {
+  background: radial-gradient(ellipse closest-side at 15% 20%, color-mix(in srgb, var(--color-primary) 12%, transparent), transparent), var(--color-bg);
+}
+.intro {
+  min-height: 560px;
+  flex-direction: column;
+  justify-content: space-between;
+}

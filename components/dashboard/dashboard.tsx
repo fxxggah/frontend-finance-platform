@@ -1,6 +1,8 @@
 'use client';
 
 import { AlertCircle, Wallet } from 'lucide-react';
+import styles from '@/components/ui/surfaces.module.css';
+import { PageContainer, PageHeader } from '@/components/ui/page';
 import { useRouter } from 'next/navigation';
 import { HeroBalanceCard } from './HeroBalanceCard';
 import { QuickActions } from './QuickActions';
@@ -32,24 +34,28 @@ export function Dashboard() {
   const retry = () => { queries.forEach(query => { void query.refetch(); }); };
 
   if (loading) return (
-    <div className="mx-auto max-w-[1440px] space-y-6" role="status" aria-label="Carregando início">
-      <Skeleton className="h-72 rounded-3xl" />
+    <PageContainer className="space-y-6" role="status" aria-label="Carregando início">
+      <Skeleton className="h-20 w-64 rounded-2xl" />
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.7fr)_minmax(300px,1fr)]">
+        <Skeleton className="h-[340px] rounded-3xl" /><Skeleton className="h-[340px] rounded-3xl" />
+      </div>
+      <Skeleton className="h-24 rounded-3xl" />
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-36 rounded-2xl" />)}
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
         <Skeleton className="h-80 rounded-3xl" /><Skeleton className="h-80 rounded-3xl" />
       </div>
-    </div>
+    </PageContainer>
   );
 
-  if (state === 'empty') return <EmptyState icon={Wallet} title="Nenhuma movimentação neste período"
+  if (state === 'empty') return <div className={styles.state}><EmptyState icon={Wallet} title="Seu próximo passo começa aqui"
     description="Registre uma transação para acompanhar suas finanças." actionLabel="Nova transação"
-    onAction={() => router.push('/transactions/new')} />;
+    onAction={() => router.push('/transactions/new')} /></div>;
 
   if (error || !summary.data || !accounts.data || !evolution.data || !categories.data || !recent.data || !goals.data) return (
-    <EmptyState icon={AlertCircle} title="Não foi possível carregar seus dados"
-      description="Verifique sua conexão e tente novamente." actionLabel="Tentar novamente" onAction={retry} />
+    <div className={styles.state}><EmptyState icon={AlertCircle} title="Não foi possível carregar seus dados"
+      description="Verifique sua conexão e tente novamente." actionLabel="Tentar novamente" onAction={retry} /></div>
   );
 
   const empty = (
@@ -58,15 +64,15 @@ export function Dashboard() {
   );
 
   return (
-    <div className="mx-auto max-w-[1440px]">
-      <h1 className="sr-only">Início</h1>
-      <div className="grid gap-7 lg:grid-cols-[minmax(0,1.5fr)_minmax(300px,1fr)] lg:items-start">
-        <section aria-label="Saldo e ações rápidas" className="grid gap-4">
+    <PageContainer>
+      <PageHeader className="mb-7" title="Início" eyebrow="Visão geral" />
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.7fr)_minmax(300px,1fr)]">
+        <section aria-label="Patrimônio e resumo financeiro" className="min-w-0">
           <HeroBalanceCard summary={summary.data} totalBalance={accounts.data.totalBalance} creditCardDebt={accounts.data.creditCardDebt} />
-          <QuickActions />
         </section>
         <PeriodSelect from={summary.data.from} to={summary.data.to} />
       </div>
+      <div className="mt-4"><QuickActions /></div>
       <KpiCards summary={summary.data} creditCardDebt={accounts.data.creditCardDebt} />
       {empty && <div className="mt-9"><EmptyState icon={Wallet} title="Nenhuma movimentação neste período"
         description="Registre uma transação para acompanhar suas finanças."
@@ -74,6 +80,6 @@ export function Dashboard() {
       <FinancialSections points={empty ? [] : evolution.data.points} categories={empty ? [] : categories.data}
         totalExpense={summary.data.totalExpense} goals={goals.data}
         transactions={recent.data} showCharts={!empty} />
-    </div>
+    </PageContainer>
   );
 }

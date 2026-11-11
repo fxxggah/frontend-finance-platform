@@ -47,7 +47,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             aria-invalid={!!error}
             className={cn(
               // base
-              'h-11 w-full rounded-2xl bg-surface-soft px-4 text-sm text-text',
+              'min-h-11 w-full min-w-0 rounded-xl bg-surface px-4 text-sm text-text',
               'border border-border outline-none',
               'placeholder:text-text-muted',
               // foco

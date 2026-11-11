@@ -1,5 +1,7 @@
 'use client';
 
+import { CreditCard } from 'lucide-react';
+import { PageContainer, PageHeader } from '@/components/ui/page';
 import { useState } from 'react';
 import { Plus, ChevronDown, ChevronRight, Archive, Wallet, AlertCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
@@ -72,7 +74,7 @@ export default function AccountsPage() {
 
   if (showError) {
     return (
-      <div className="container mx-auto max-w-6xl p-4 lg:p-8 space-y-6">
+      <PageContainer className="space-y-6">
         <EmptyState
           icon={AlertCircle}
           title="Erro ao carregar contas"
@@ -80,25 +82,17 @@ export default function AccountsPage() {
           actionLabel="Tentar novamente"
           onAction={() => refetch()}
         />
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="container mx-auto max-w-6xl p-4 lg:p-8 space-y-8">
+    <PageContainer className="space-y-8">
       {/* Cabeçalho da página */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-text">Minhas Contas</h1>
-          <p className="text-sm text-text-muted">
-            Gerencie suas contas bancárias, carteiras físicas e reservas financeiras
-          </p>
-        </div>
-        <Button variant="brand" onClick={handleOpenCreate} className="self-start sm:self-auto gap-2">
+      <PageHeader title="Minhas Contas" description={<>Gerencie suas contas bancárias, carteiras físicas e reservas financeiras</>} action={<><Button variant="brand" onClick={handleOpenCreate} className="self-start sm:self-auto gap-2">
           <Plus size={18} />
           <span>Nova conta</span>
-        </Button>
-      </div>
+        </Button></>} />
 
       {/* Topo: Card tipo BRAND consolidado */}
       {showLoading ? (
@@ -109,14 +103,14 @@ export default function AccountsPage() {
             <span className="text-xs font-semibold uppercase tracking-wider text-white/80">
               Patrimônio Consolidado
             </span>
-            <div className="mt-2 text-3xl sm:text-4xl font-extrabold tabular-nums tracking-tight text-white">
+            <div className="mt-2 text-3xl sm:text-4xl font-semibold tabular-nums tracking-tight text-white">
               {formatMoney(totalBalance)}
             </div>
           </div>
 
           <div className="mt-6 pt-4 border-t border-white/15 flex flex-wrap items-center justify-between gap-2 text-xs text-white/90">
             <span className="flex items-center gap-1.5">
-              <span>💳</span> Faturas de cartão em aberto:
+              <CreditCard className="size-4" aria-hidden="true" /> Faturas de cartão em aberto:
             </span>
             <span className="font-bold tabular-nums text-sm text-white">
               {formatMoney(creditCardDebt)}
@@ -125,7 +119,7 @@ export default function AccountsPage() {
         </Card>
       )}
 
-      Grade de Contas Ativas
+      {/* Grade de contas ativas */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-text">
@@ -245,7 +239,7 @@ export default function AccountsPage() {
         cancelLabel="Cancelar"
         isLoading={deleteMutation.isPending}
       />
-    </div>
+    </PageContainer>
   );
 }
 

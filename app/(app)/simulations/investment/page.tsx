@@ -1,5 +1,6 @@
 'use client';
 
+import { PageContainer, PageHeader } from '@/components/ui/page';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -73,7 +74,7 @@ function ResultCard({
 }) {
   return (
     <Card
-      variant="solid"
+      variant="metric"
       className={cn('flex flex-col gap-1 p-4', highlight && 'border-primary/30 bg-primary-soft')}
     >
       <p className="text-xs font-medium text-text-muted uppercase tracking-wide">{label}</p>
@@ -191,22 +192,14 @@ export default function InvestmentSimulatorPage() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl space-y-6 p-4 pb-24 lg:p-8 lg:pb-8">
+    <PageContainer className="space-y-6">
       {/* Cabeçalho */}
-      <div className="flex items-center gap-3">
-        <span className="flex size-10 items-center justify-center rounded-2xl bg-primary-soft">
-          <TrendingUp size={20} className="text-primary" aria-hidden="true" />
-        </span>
-        <div>
-          <h1 className="text-xl font-bold text-text">Simulador de Investimentos</h1>
-          <p className="text-sm text-text-muted">Projete o crescimento do seu patrimônio</p>
-        </div>
-      </div>
+      <PageHeader title="Simulador de Investimentos" description={<>Projete o crescimento do seu patrimônio</>} />
 
       <DisclaimerBanner />
 
       {/* Formulário */}
-      <Card variant="solid" className="p-5">
+      <Card variant="panel" className="p-5 sm:p-6">
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <Input
@@ -260,7 +253,7 @@ export default function InvestmentSimulatorPage() {
       {/* Resultados */}
       {result && (
         <section aria-label="Resultado da simulação" className="space-y-4">
-          <h2 className="text-base font-semibold text-text flex items-center gap-2">
+          <h2 className="text-base font-semibold tracking-tight text-text flex items-center gap-2">
             <Info size={16} className="text-primary" aria-hidden="true" />
             Resultado da Simulação
           </h2>
@@ -285,7 +278,7 @@ export default function InvestmentSimulatorPage() {
           </Card>
         </section>
       )}
-    </main>
+    </PageContainer>
   );
 }
 

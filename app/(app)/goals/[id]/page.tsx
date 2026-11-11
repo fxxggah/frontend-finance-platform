@@ -1,5 +1,6 @@
 'use client';
 
+import { PageHeader, PageContainer } from '@/components/ui/page';
 import { use, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -79,9 +80,16 @@ export default function GoalDetailPage({ params }: PageProps) {
   const showLoading = devState === 'loading' || (isLoading && devState !== 'empty' && devState !== 'error');
   const showError = devState === 'error' || (isError && devState !== 'loading');
 
+  if (devState === 'empty') {
+    return <PageContainer>
+      <EmptyState title="Nenhuma meta disponível" description="Escolha uma meta para acompanhar o progresso."
+        actionLabel="Ver metas" onAction={() => router.push('/goals')} />
+    </PageContainer>;
+  }
+
   if (showError) {
     return (
-      <div className="container mx-auto max-w-4xl p-4 lg:p-8 space-y-6">
+      <PageContainer className="space-y-6">
         <Link
           href="/goals"
           className="inline-flex items-center gap-2 text-sm text-text-muted hover:text-text"
@@ -96,7 +104,7 @@ export default function GoalDetailPage({ params }: PageProps) {
           actionLabel="Tentar novamente"
           onAction={() => refetch()}
         />
-      </div>
+      </PageContainer>
     );
   }
 
@@ -120,7 +128,7 @@ export default function GoalDetailPage({ params }: PageProps) {
   }
 
   return (
-    <div className="container mx-auto max-w-4xl p-4 lg:p-8 space-y-8">
+    <PageContainer className="space-y-8">
       {/* Navegação e Ações Rápidas */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <Link
@@ -168,11 +176,12 @@ export default function GoalDetailPage({ params }: PageProps) {
         )}
       </div>
 
+      <PageHeader title={goal?.name ?? 'Detalhes da meta'} description="Acompanhe o progresso e as movimentações do seu objetivo." />
       {/* Topo: Card Principal da Meta com Grande Indicador */}
       {showLoading || !goal ? (
         <Skeleton className="h-64 rounded-3xl" />
       ) : (
-        <Card variant="solid" padding="lg" className="space-y-6">
+        <Card variant="panel" padding="lg" className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div className="flex items-center gap-4 min-w-0">
               <div
@@ -187,7 +196,7 @@ export default function GoalDetailPage({ params }: PageProps) {
 
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-2xl font-bold tracking-tight text-text">{goal.name}</h1>
+                  <h2 className="text-lg font-semibold tracking-tight text-text">{goal.name}</h2>
                   <GoalStateBadge state={goal.state} />
                   {isCancelled && (
                     <span className="rounded-full bg-expense-soft text-expense px-2.5 py-0.5 text-xs font-semibold">
@@ -204,7 +213,7 @@ export default function GoalDetailPage({ params }: PageProps) {
 
             {/* Percentual em Destaque */}
             <div className="text-left sm:text-right">
-              <span className="text-3xl sm:text-4xl font-extrabold tabular-nums tracking-tight text-text">
+              <span className="text-3xl sm:text-4xl font-semibold tabular-nums tracking-tight text-text">
                 {goal.percentage.toFixed(1)}%
               </span>
               <p className="text-xs text-text-muted">do objetivo atingido</p>
@@ -358,12 +367,12 @@ export default function GoalDetailPage({ params }: PageProps) {
           <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-primary-soft text-primary">
             <Info size={24} />
           </div>
-          <div className="max-w-md mx-auto space-y-1">
+          <PageContainer className="space-y-1">
             <h2 className="text-base font-semibold text-text">Cálculo Automático por Transações</h2>
             <p className="text-xs text-text-muted leading-relaxed">
               Esta meta é calculada automaticamente a partir das suas transações no período estipulado. Lançamentos cadastrados com a categoria vinculada atualizam o saldo em tempo real.
             </p>
-          </div>
+          </PageContainer>
           <div>
             <Link
               href={
@@ -422,7 +431,7 @@ export default function GoalDetailPage({ params }: PageProps) {
         cancelLabel="Voltar"
         isLoading={deleteMutation.isPending}
       />
-    </div>
+    </PageContainer>
   );
 }
 

@@ -39,7 +39,7 @@ export function VisualCard({ card, className, size = 'md' }: VisualCardProps) {
 
       {/* Topo do cartão: Ícone e chip */}
       <div className="relative z-10 flex items-center justify-between">
-        <div className="flex size-9 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
+        <div className="flex size-11 items-center justify-center rounded-xl bg-white/20">
           <CategoryIcon name={card.icon} size={20} className="text-white" />
         </div>
 
@@ -56,7 +56,7 @@ export function VisualCard({ card, className, size = 'md' }: VisualCardProps) {
       {/* Meio: Dígitos mascarados */}
       <div className="relative z-10 tracking-widest font-mono text-sm sm:text-base text-white/90">
         <span>•••• •••• •••• </span>
-        <span className="font-bold text-white">{lastDigits}</span>
+        <span className="font-semibold text-white">{lastDigits}</span>
       </div>
 
       {/* Base: Nome do titular / cartão */}

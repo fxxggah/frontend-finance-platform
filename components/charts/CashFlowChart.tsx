@@ -64,10 +64,10 @@ export function CashFlowChart({ points, isLoading, periodLabel }: CashFlowChartP
   }
 
   return (
-    <Card className="p-5 sm:p-6">
+    <Card variant="chart" className="">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-bold text-text">Fluxo de caixa</h2>
+          <h2 className="text-base font-semibold tracking-tight text-text">Fluxo de caixa</h2>
           <p className="mt-1 text-xs text-text-muted">Receitas e despesas no período</p>
         </div>
         {periodLabel && (
@@ -129,8 +129,7 @@ export function CashFlowChart({ points, isLoading, periodLabel }: CashFlowChartP
               stroke="var(--color-primary)"
               strokeWidth={2.5}
               fill="url(#income-fill)"
-              isAnimationActive
-              animationDuration={400}
+              isAnimationActive={false}
             />
             <Area
               type="monotone"
@@ -138,8 +137,7 @@ export function CashFlowChart({ points, isLoading, periodLabel }: CashFlowChartP
               stroke="var(--color-expense)"
               strokeWidth={2.5}
               fill="url(#expense-fill)"
-              isAnimationActive
-              animationDuration={400}
+              isAnimationActive={false}
             />
           </AreaChart>
         </ResponsiveContainer>

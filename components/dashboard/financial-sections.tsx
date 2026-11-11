@@ -18,12 +18,12 @@ interface FinancialSectionsProps {
 export function FinancialSections({ points, categories, totalExpense, goals, transactions, showCharts }: FinancialSectionsProps) {
   return (
     <>
-      {showCharts && <div className="mt-9 grid min-w-0 gap-6 xl:grid-cols-2">
+      {showCharts && <div className="mt-7 grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
         <CashFlowChart points={points} />
         <ExpensesDonutChart categories={categories} total={totalExpense} />
       </div>}
-      <GoalsSection goals={goals} />
       <RecentTransactionsList transactions={transactions} />
+      <GoalsSection goals={goals} />
     </>
   );
 }

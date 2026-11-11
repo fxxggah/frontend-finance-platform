@@ -29,7 +29,7 @@ export default async function AppLayout({
         <HeaderMobile />
 
         {/* Conteúdo Principal com padding adaptado para mobile (espaço para o BottomNav) */}
-        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 pb-28 lg:pb-8">
+        <main className="min-w-0 flex-1 px-4 py-6 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8 lg:pb-8">
           {children}
         </main>
 

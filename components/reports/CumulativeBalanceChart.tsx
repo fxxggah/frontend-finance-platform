@@ -86,10 +86,10 @@ export function CumulativeBalanceChart({ points, isLoading }: CumulativeBalanceC
   }
 
   return (
-    <Card className="p-5 sm:p-6 space-y-4">
+    <Card variant="chart" className=" space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-bold tracking-tight text-text">
+          <h2 className="text-base font-semibold tracking-tight tracking-tight text-text">
             Evolução do Saldo Acumulado
           </h2>
           <p className="text-xs text-text-muted">

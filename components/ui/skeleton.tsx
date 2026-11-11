@@ -19,7 +19,7 @@ function Skeleton({ className, ...props }: SkeletonProps) {
       aria-busy="true"
       aria-label="Carregando…"
       className={cn(
-        'animate-pulse rounded-lg bg-surface-soft motion-reduce:animate-none',
+        'animate-pulse rounded-2xl border border-border bg-surface motion-reduce:animate-none',
         className,
       )}
       {...props}

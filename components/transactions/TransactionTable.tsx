@@ -51,14 +51,14 @@ export function TransactionTable({ transactions, isLoading, onEdit }: Transactio
 
   if (isLoading) {
     return (
-      <div className="hidden overflow-hidden rounded-3xl border border-border bg-surface lg:block">
-        <div className="grid grid-cols-[110px_1.7fr_1fr_1fr_150px_80px] gap-4 border-b border-border px-5 py-4">
+      <div className="hidden overflow-x-auto rounded-3xl border border-border bg-surface lg:block">
+        <div className="grid min-w-[880px] grid-cols-[110px_1.7fr_1fr_1fr_150px_100px] gap-4 border-b border-border px-5 py-4">
           {Array.from({ length: 6 }).map((_, i) => (
             <Skeleton key={i} className="h-4" />
           ))}
         </div>
         {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="grid grid-cols-[110px_1.7fr_1fr_1fr_150px_80px] items-center gap-4 border-b border-border px-5 py-4 last:border-0">
+          <div key={i} className="grid min-w-[880px] grid-cols-[110px_1.7fr_1fr_1fr_150px_100px] items-center gap-4 border-b border-border px-5 py-4 last:border-0">
             {Array.from({ length: 6 }).map((_, j) => (
               <Skeleton key={j} className="h-4" />
             ))}
@@ -70,15 +70,15 @@ export function TransactionTable({ transactions, isLoading, onEdit }: Transactio
 
   return (
     <>
-      <div className="hidden overflow-hidden rounded-3xl border border-border bg-surface lg:block">
-        <div className="grid grid-cols-[110px_1.7fr_1fr_1fr_150px_80px] gap-4 border-b border-border px-5 py-4 text-xs font-bold uppercase tracking-wider text-text-muted">
-          <button onClick={() => toggleSort('date')} className="flex items-center gap-1 text-left hover:text-text">
+      <div className="hidden overflow-x-auto rounded-3xl border border-border bg-surface lg:block">
+        <div className="grid min-w-[880px] grid-cols-[110px_1.7fr_1fr_1fr_150px_100px] gap-4 border-b border-border px-5 py-4 text-xs font-semibold uppercase tracking-wider text-text-muted">
+          <button onClick={() => toggleSort('date')} className="flex min-h-11 items-center gap-1 text-left hover:text-text">
             Data <SortIcon col="date" />
           </button>
           <span>Descrição</span>
           <span>Categoria</span>
           <span>Conta / Cartão</span>
-          <button onClick={() => toggleSort('amount')} className="flex items-center justify-end gap-1 text-right hover:text-text">
+          <button onClick={() => toggleSort('amount')} className="flex min-h-11 items-center justify-end gap-1 text-right hover:text-text">
             Valor <SortIcon col="amount" />
           </button>
           <span />
@@ -90,7 +90,7 @@ export function TransactionTable({ transactions, isLoading, onEdit }: Transactio
           return (
             <div
               key={tx.id}
-              className="grid grid-cols-[110px_1.7fr_1fr_1fr_150px_80px] items-center gap-4 border-b border-border px-5 py-4 last:border-0 hover:bg-surface-soft"
+              className="grid min-w-[880px] grid-cols-[110px_1.7fr_1fr_1fr_150px_100px] items-center gap-4 border-b border-border px-5 py-4 last:border-0 hover:bg-surface-soft"
             >
               <span className="text-sm text-text-muted">{formatDate(tx.date)}</span>
               <div className="flex items-center gap-3">
@@ -127,18 +127,18 @@ export function TransactionTable({ transactions, isLoading, onEdit }: Transactio
               <span className={`text-right tabular-nums text-sm font-bold ${signClass}`}>
                 {signChar}{formatMoney(tx.amount, { signDisplay: 'never' })}
               </span>
-              <div className="flex items-center justify-end gap-1">
+              <div className="flex min-h-11 items-center justify-end gap-1">
                 <button
                   onClick={() => onEdit?.(tx)}
                   aria-label="Editar transação"
-                  className="grid size-8 place-items-center rounded-xl text-text-muted transition hover:bg-surface-soft hover:text-primary"
+                  className="grid size-11 place-items-center rounded-xl text-text-muted transition hover:bg-surface-soft hover:text-primary"
                 >
                   <Pencil className="size-3.5" />
                 </button>
                 <button
                   onClick={() => setConfirmId(tx.id)}
                   aria-label="Excluir transação"
-                  className="grid size-8 place-items-center rounded-xl text-text-muted transition hover:bg-expense-soft hover:text-expense"
+                  className="grid size-11 place-items-center rounded-xl text-text-muted transition hover:bg-expense-soft hover:text-expense"
                 >
                   <Trash2 className="size-3.5" />
                 </button>

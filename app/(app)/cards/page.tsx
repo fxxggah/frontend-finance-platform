@@ -1,5 +1,6 @@
 'use client';
 
+import { PageContainer, PageHeader } from '@/components/ui/page';
 import { useState } from 'react';
 import Link from 'next/link';
 import { Plus, CreditCard as CardIcon, ChevronRight, MoreVertical, Edit2, Trash2, AlertCircle } from 'lucide-react';
@@ -51,7 +52,7 @@ export default function CreditCardsPage() {
 
   if (showError) {
     return (
-      <div className="container mx-auto max-w-6xl p-4 lg:p-8 space-y-6">
+      <PageContainer className="space-y-6">
         <EmptyState
           icon={AlertCircle}
           title="Erro ao carregar cartões"
@@ -59,25 +60,17 @@ export default function CreditCardsPage() {
           actionLabel="Tentar novamente"
           onAction={() => refetch()}
         />
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="container mx-auto max-w-6xl p-4 lg:p-8 space-y-8">
+    <PageContainer className="space-y-8">
       {/* Cabeçalho */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-text">Cartões de Crédito</h1>
-          <p className="text-sm text-text-muted">
-            Monitore seus limites, datas de fechamento e controle suas faturas mensais
-          </p>
-        </div>
-        <Button variant="brand" onClick={handleOpenCreate} className="self-start sm:self-auto gap-2">
+      <PageHeader title="Cartões de Crédito" description={<>Monitore seus limites, datas de fechamento e controle suas faturas mensais</>} action={<><Button variant="brand" onClick={handleOpenCreate} className="self-start sm:self-auto gap-2">
           <Plus size={18} />
           <span>Novo cartão</span>
-        </Button>
-      </div>
+        </Button></>} />
 
       {/* Grid de Cartões */}
       {showLoading ? (
@@ -108,7 +101,7 @@ export default function CreditCardsPage() {
 
                 {/* Barra de Uso do Limite */}
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs">
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                     <span className="font-medium text-text-muted">Limite Utilizado</span>
                     <span className="font-semibold tabular-nums text-text">
                       {formatMoney(card.usedLimit)} de {formatMoney(card.creditLimit)}
@@ -121,7 +114,7 @@ export default function CreditCardsPage() {
                     aria-label={`Uso de limite do cartão ${card.name}`}
                   />
 
-                  <div className="flex items-center justify-between text-xs">
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                     {isExceeded ? (
                       <span className="font-bold text-expense tabular-nums">
                         Limite excedido em {formatMoney(exceededAmount)}
@@ -141,7 +134,7 @@ export default function CreditCardsPage() {
                 </div>
 
                 {/* Datas de Fechamento e Vencimento */}
-                <div className="rounded-2xl bg-surface-soft p-3.5 border border-border flex items-center justify-between text-xs">
+                <div className="rounded-2xl bg-surface-soft p-3.5 border border-border flex flex-wrap items-center justify-between gap-2 text-xs">
                   <span className="text-text-muted">Ciclo da fatura</span>
                   <span className="font-semibold text-text">
                     Fecha dia {card.closingDay} · Vence dia {card.dueDay}
@@ -150,7 +143,7 @@ export default function CreditCardsPage() {
 
                 {/* Resumo da Fatura Atual */}
                 {card.currentInvoice ? <div className="rounded-2xl border border-border/80 p-4 space-y-3">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
                       <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">
                         Fatura Atual ({card.currentInvoice.reference})
@@ -162,11 +155,11 @@ export default function CreditCardsPage() {
                     <InvoiceStatusBadge status={card.currentInvoice.status} />
                   </div>
 
-                  <div className="flex items-center justify-between text-xs text-text-muted pt-2 border-t border-border/60">
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-text-muted pt-2 border-t border-border/60">
                     <span>Vencimento: {formatDate(card.currentInvoice.dueDate)}</span>
                     <Link
                       href={`/cards/${card.id}/invoices/${card.currentInvoice.reference}`}
-                      className="font-semibold text-primary hover:underline flex items-center gap-0.5"
+                      className="font-semibold text-primary hover:underline flex min-h-11 items-center gap-0.5"
                     >
                       <span>Ver fatura</span>
                       <ChevronRight size={14} />
@@ -175,7 +168,7 @@ export default function CreditCardsPage() {
                 </div> : <p className="text-sm text-text-muted">Nenhuma fatura atual disponível.</p>}
 
                 {/* Ações do Cartão */}
-                <div className="flex items-center justify-between pt-2 border-t border-border">
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border">
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
@@ -228,7 +221,7 @@ export default function CreditCardsPage() {
         cancelLabel="Cancelar"
         isLoading={deleteMutation.isPending}
       />
-    </div>
+    </PageContainer>
   );
 }
 

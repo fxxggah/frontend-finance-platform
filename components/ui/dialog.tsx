@@ -1,16 +1,18 @@
 'use client';
 
 import {
-  useEffect,
   useRef,
   useId,
   createContext,
   useContext,
-  useCallback,
   type ReactNode,
 } from 'react';
 import { X } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
+import { useModalFocus } from '@/hooks/use-modal-focus';
+import { usePortalTarget } from '@/hooks/use-portal-target';
+import styles from './surfaces.module.css';
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 
@@ -48,50 +50,34 @@ export function Dialog({ open, onClose, children, maxWidth = 'max-w-lg' }: Dialo
   const titleId = `${id}-title`;
   const descriptionId = `${id}-desc`;
   const panelRef = useRef<HTMLDivElement>(null);
+  const portalTarget = usePortalTarget();
 
-  // ESC fecha
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [open, onClose]);
+  useModalFocus(open && !!portalTarget, panelRef, onClose);
 
-  // Bloqueia scroll do body
-  useEffect(() => {
-    if (open) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => { document.body.style.overflow = ''; };
-  }, [open]);
+  if (!open || !portalTarget) return null;
 
-  if (!open) return null;
-
-  return (
+  return createPortal(
     <DialogContext.Provider value={{ titleId, descriptionId, onClose }}>
       {/* Overlay */}
       <div
         className={cn(
           'fixed inset-0 z-50 flex items-center justify-center p-4',
-          'bg-black/50 backdrop-blur-sm',
+          'bg-black/50',
           'animate-in fade-in duration-200 motion-reduce:animate-none',
         )}
         onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-        aria-hidden="true"
       >
         {/* Painel */}
         <div
           ref={panelRef}
           role="dialog"
           aria-modal="true"
+          tabIndex={-1}
           aria-labelledby={titleId}
           aria-describedby={descriptionId}
           className={cn(
-            'relative z-10 w-full bg-surface rounded-3xl',
+            'relative z-10 max-h-[90dvh] overflow-y-auto w-full rounded-3xl outline-none',
+            styles.glass,
             'shadow-[0_24px_64px_-16px_rgba(20,23,46,0.32)]',
             'animate-in zoom-in-95 slide-in-from-bottom-4 duration-250 motion-reduce:animate-none',
             maxWidth,
@@ -101,7 +87,7 @@ export function Dialog({ open, onClose, children, maxWidth = 'max-w-lg' }: Dialo
           {children}
         </div>
       </div>
-    </DialogContext.Provider>
+    </DialogContext.Provider>, portalTarget
   );
 }
 
@@ -119,7 +105,7 @@ export function DialogHeader({ className, ...props }: React.HTMLAttributes<HTMLD
         onClick={onClose}
         aria-label="Fechar"
         className={cn(
-          'ml-auto -mt-1 flex size-8 items-center justify-center rounded-xl',
+          'ml-auto -mt-1 flex size-11 items-center justify-center rounded-xl',
           'text-text-muted hover:bg-surface-soft hover:text-text',
           'transition-colors duration-150',
         )}

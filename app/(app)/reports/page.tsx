@@ -1,5 +1,6 @@
 'use client';
 
+import { PageContainer, PageHeader } from '@/components/ui/page';
 import { useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Share2, AlertCircle, Calendar, Filter, AlertTriangle } from 'lucide-react';
@@ -113,7 +114,7 @@ export default function ReportsPage() {
 
   if (showError) {
     return (
-      <div className="container mx-auto max-w-6xl p-4 lg:p-8 space-y-6">
+      <PageContainer className="space-y-6">
         <EmptyState
           icon={AlertCircle}
           title="Erro ao carregar relatórios"
@@ -125,22 +126,14 @@ export default function ReportsPage() {
             refetchEvo();
           }}
         />
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="container mx-auto max-w-6xl p-4 lg:p-8 space-y-8">
+    <PageContainer className="space-y-8">
       {/* Topo: Título, Filtro de Período, Filtro de Entidade e Compartilhamento */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-text">Relatórios Financeiros</h1>
-          <p className="text-sm text-text-muted">
-            Análises profundas de fluxo de caixa, evolução patrimonial e categorização
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
+      <PageHeader title="Relatórios Financeiros" description={<>Análises profundas de fluxo de caixa, evolução patrimonial e categorização</>} action={<><div className="flex flex-wrap items-center gap-3">
           {/* Seletor de Período Rápido */}
           <div className="flex flex-wrap items-center gap-1 p-1 rounded-xl bg-surface border border-border">
             {PERIOD_OPTIONS.map((p) => {
@@ -151,7 +144,7 @@ export default function ReportsPage() {
                   type="button"
                   onClick={() => setPeriod({ period: p.value })}
                   aria-pressed={isActive}
-                  className={`min-h-11 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                  className={`min-h-11 min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold transition-all ${
                     isActive
                       ? 'bg-primary text-white shadow-sm'
                       : 'text-text-muted hover:text-text'
@@ -168,7 +161,7 @@ export default function ReportsPage() {
             <Select
               value={selectedEntity}
               onChange={(e) => setSelectedEntity(e.target.value)}
-              className="text-xs py-1.5 h-9"
+              className="text-xs py-1.5 min-h-11"
             >
               <option value="">Todas as contas e cartões</option>
               {accountsData?.accounts && accountsData.accounts.length > 0 && (
@@ -197,14 +190,13 @@ export default function ReportsPage() {
             variant="outline"
             size="sm"
             onClick={handleShare}
-            className="gap-2 text-xs h-9"
+            className="gap-2 text-xs min-h-11"
             title="Compartilhar relatório"
           >
             <Share2 size={15} />
             <span className="hidden sm:inline">Compartilhar</span>
           </Button>
-        </div>
-      </div>
+        </div></>} />
 
       {period === 'CUSTOM' && <div className="grid gap-3 sm:grid-cols-2">
         <label className="text-sm text-text-muted">De
@@ -281,7 +273,7 @@ export default function ReportsPage() {
           </div>
         </>
       )}
-    </div>
+    </PageContainer>
   );
 }
 

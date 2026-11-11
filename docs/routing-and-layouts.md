@@ -49,6 +49,8 @@ app/
 
 ## 2. Shell Desktop (`viewport >= 1024px`)
 
+Todas as rotas seguem a linguagem visual consolidada da dashboard. O shell fornece o padding externo; `PageContainer` limita o conteúdo a 1440px (ou 768px para composições de formulário). Sidebar e Topbar usam superfícies sólidas, sem blur. A sidebar permanece escura nos dois temas. A BottomNav usa vidro de até 12px com fallback sólido e padding para a área segura do dispositivo.
+
 Projetado para telas amplas com navegação intuitiva e estável:
 
 ### 2.1 Sidebar Fixa à Esquerda (`w-64`)

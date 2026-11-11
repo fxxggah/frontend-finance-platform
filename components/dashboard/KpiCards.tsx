@@ -1,7 +1,8 @@
 'use client';
 
 import { TrendingUp, TrendingDown, PiggyBank, CreditCard } from 'lucide-react';
-import { Card } from '@/components/ui/card';
+import { MetricCard } from '@/components/ui/metric-card';
+import type { LucideIcon } from 'lucide-react';
 import { formatMoney } from '@/lib/format/money';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { DashboardSummary } from '@/types';
@@ -19,47 +20,34 @@ function KpiCard({
   icon: Icon,
   tone,
   invertChange = false,
+  description,
 }: {
   label: string;
   value: number;
   change: number | null;
-  icon: React.ComponentType<{ className?: string }>;
-  tone: string;
+  icon: LucideIcon;
+  tone: 'income' | 'expense' | 'warning' | 'blue';
   invertChange?: boolean;
+  description: string;
 }) {
-  const bgClass =
-    tone === 'income'
-      ? 'bg-income-soft text-income'
-      : tone === 'warning'
-      ? 'bg-warning-soft text-warning'
-      : tone === 'blue'
-      ? 'bg-primary-soft text-accent'
-      : 'bg-primary-soft text-primary';
-
   const isPositive = invertChange ? (change ?? 0) <= 0 : (change ?? 0) >= 0;
 
   return (
-    <Card className="p-4 sm:p-5">
-      <div className="flex items-start justify-between">
-        <div className={`grid size-10 place-items-center rounded-2xl ${bgClass}`}>
-          <Icon className="size-5" />
-        </div>
-        {change === null ? (
-          <span className="text-sm text-text-muted">—</span>
+    <MetricCard label={label} icon={Icon} tone={tone === 'blue' ? 'accent' : tone}
+      value={formatMoney(value, { showSign: tone === 'income' || tone === 'expense' })}
+      description={description} comparison={change === null ? (
+          <span className="text-xs text-text-muted" aria-label="Sem comparação">—</span>
         ) : (
           <span
-            className={`flex items-center gap-0.5 text-xs font-bold ${
+            aria-label={`${change >= 0 ? 'Aumento' : 'Redução'} de ${Math.abs(change).toLocaleString('pt-BR')}% em relação ao período anterior`}
+            className={`flex items-center gap-0.5 tabular-nums text-xs font-semibold ${
               isPositive ? 'text-income' : 'text-expense'
             }`}
           >
             {change >= 0 ? '+' : '−'}
             {Math.abs(change).toLocaleString('pt-BR')}%
           </span>
-        )}
-      </div>
-      <p className="mt-4 text-xs text-text-muted">{label}</p>
-      <p className="mt-1 tabular-nums text-lg font-bold sm:text-xl">{formatMoney(value)}</p>
-    </Card>
+        )} />
   );
 }
 
@@ -82,13 +70,15 @@ export function KpiCards({ summary, creditCardDebt, isLoading }: KpiCardsProps) 
         change={summary.previous.incomeChangePct}
         icon={TrendingUp}
         tone="income"
+        description="Entradas nas suas contas"
       />
       <KpiCard
         label="Despesas do período"
-        value={summary.totalExpense}
+        value={-Math.abs(summary.totalExpense)}
         change={summary.previous.expenseChangePct}
         icon={TrendingDown}
-        tone="violet"
+        tone="expense"
+        description="Saídas nas suas contas"
         invertChange
       />
       <KpiCard
@@ -97,6 +87,7 @@ export function KpiCards({ summary, creditCardDebt, isLoading }: KpiCardsProps) 
         change={null}
         icon={PiggyBank}
         tone="blue"
+        description="Resultado desta janela de análise"
       />
       <KpiCard
         label="Faturas em aberto"
@@ -104,6 +95,7 @@ export function KpiCards({ summary, creditCardDebt, isLoading }: KpiCardsProps) 
         change={null}
         icon={CreditCard}
         tone="warning"
+        description="Comprometido nos cartões"
       />
     </div>
   );

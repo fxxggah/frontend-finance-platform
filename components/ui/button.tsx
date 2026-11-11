@@ -9,7 +9,7 @@ const buttonVariants = cva(
   [
     // base
     'inline-flex items-center justify-center gap-2 font-medium',
-    'rounded-2xl transition-all duration-200 select-none whitespace-nowrap',
+    'rounded-2xl transition-colors duration-200 select-none whitespace-nowrap',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
     'disabled:pointer-events-none disabled:opacity-50',
     'motion-reduce:transition-none',
@@ -50,11 +50,11 @@ const buttonVariants = cva(
         ].join(' '),
       },
       size: {
-        sm: 'h-9 px-3 text-sm [&_svg:not([class*="size-"])]:size-4',
+        sm: 'h-11 px-3 text-sm [&_svg:not([class*="size-"])]:size-4',
         md: 'h-11 px-4 text-sm [&_svg:not([class*="size-"])]:size-4',
         lg: 'h-13 px-6 text-base [&_svg:not([class*="size-"])]:size-5',
         icon: 'size-11 p-0 [&_svg:not([class*="size-"])]:size-5',
-        'icon-sm': 'size-9 p-0 [&_svg:not([class*="size-"])]:size-4',
+        'icon-sm': 'size-11 p-0 [&_svg:not([class*="size-"])]:size-4',
       },
     },
     defaultVariants: {

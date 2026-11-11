@@ -1,5 +1,6 @@
 'use client';
 
+import { PageContainer, PageHeader } from '@/components/ui/page';
 import { useState } from 'react';
 import {
   User,
@@ -25,6 +26,8 @@ import { Card } from '@/components/ui/card';
 import { deleteMe } from '@/lib/api/endpoints/auth';
 import { useCurrentUser, useLogout } from '@/hooks/use-current-user';
 import { UserAvatar } from '@/components/layout/UserAvatar';
+import { useDevState } from '@/hooks/use-dev-state';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // ─── Componentes auxiliares ───────────────────────────────────────────────────
 
@@ -84,15 +87,15 @@ function Toggle({
       aria-checked={checked}
       aria-label={label}
       onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-        checked ? 'bg-primary' : 'bg-border'
-      }`}
+      className="relative inline-flex h-11 w-14 items-center justify-center rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
     >
+      <span aria-hidden="true" className={`inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${checked ? 'bg-primary' : 'bg-border'}`}>
       <span
         className={`inline-block size-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${
           checked ? 'translate-x-6' : 'translate-x-1'
         }`}
       />
+      </span>
     </button>
   );
 }
@@ -101,7 +104,11 @@ function Toggle({
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { data: currentUser, isPending: profileLoading, isError: profileError, refetch: refetchProfile } = useCurrentUser();
+  const devState = useDevState();
+  const { data: profile, isPending, isError, refetch: refetchProfile } = useCurrentUser();
+  const currentUser = devState ? undefined : profile;
+  const profileLoading = devState === 'loading' || (!devState && isPending);
+  const profileError = devState === 'error' || (!devState && isError);
   const logout = useLogout();
   const { isDark, toggleTheme } = useTheme();
   const { isBalanceVisible, toggleBalanceVisibility } = useUiStore();
@@ -144,17 +151,9 @@ export default function SettingsPage() {
   }
 
   return (
-    <main className="mx-auto max-w-2xl space-y-8 p-4 pb-24 lg:p-8 lg:pb-8">
+    <PageContainer width="form" className="space-y-8">
       {/* Cabeçalho */}
-      <div className="flex items-center gap-3">
-        <span className="flex size-10 items-center justify-center rounded-2xl bg-primary-soft">
-          <Settings size={20} className="text-primary" aria-hidden="true" />
-        </span>
-        <div>
-          <h1 className="text-xl font-bold text-text">Configurações</h1>
-          <p className="text-sm text-text-muted">Gerencie sua conta e preferências</p>
-        </div>
-      </div>
+      <PageHeader title="Configurações" description={<>Gerencie sua conta e preferências</>} />
 
       {/* ── Seção: Perfil e Conta ── */}
       <section aria-labelledby="section-profile">
@@ -172,7 +171,7 @@ export default function SettingsPage() {
               <UserAvatar user={currentUser} />
             </div>
             <div>
-              <p className="font-semibold text-text">{currentUser?.name ?? (profileLoading ? 'Carregando perfil...' : 'Perfil indisponível')}</p>
+              {profileLoading ? <Skeleton className="h-5 w-40" /> : <p className="font-semibold text-text">{currentUser?.name ?? (devState === 'empty' ? 'Nenhum perfil disponível' : 'Perfil indisponível')}</p>}
               {currentUser && <p className="text-sm text-text-muted">{currentUser.email}</p>}
               {profileError && <button type="button" className="min-h-11 text-sm text-primary" onClick={() => void refetchProfile()}>Tentar novamente</button>}
             </div>
@@ -191,21 +190,7 @@ export default function SettingsPage() {
           />
 
           {/* Excluir conta */}
-          <SettingsRow
-            icon={Trash2}
-            label="Excluir minha conta"
-            description="Remove permanentemente todos os seus dados (LGPD)"
-            danger
-            action={
-              <Button
-                variant="danger"
-                size="sm"
-                onClick={() => setDeleteAccountOpen(true)}
-              >
-                Excluir
-              </Button>
-            }
-          />
+
         </Card>
       </section>
 
@@ -261,6 +246,25 @@ export default function SettingsPage() {
         </Card>
       </section>
 
+      <section aria-labelledby="section-danger">
+        <SectionTitle><span id="section-danger">Zona de atenção</span></SectionTitle>
+        <Card className="mt-3 border-expense/20 px-5"><SettingsRow
+            icon={Trash2}
+            label="Excluir minha conta"
+            description="Remove permanentemente todos os seus dados (LGPD)"
+            danger
+            action={
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => setDeleteAccountOpen(true)}
+              >
+                Excluir
+              </Button>
+            }
+          /></Card>
+      </section>
+
       {/* ── Aviso de privacidade ── */}
       <div className="flex items-start gap-2 rounded-2xl border border-primary/20 bg-primary-soft px-4 py-3">
         <ShieldAlert size={16} className="mt-0.5 shrink-0 text-primary" aria-hidden="true" />
@@ -291,7 +295,7 @@ export default function SettingsPage() {
         description="Isso removerá preferências salvas no navegador como visibilidade de saldo e filtros. Será necessário reconfigurar suas preferências."
         confirmLabel="Limpar cache"
       />
-    </main>
+    </PageContainer>
   );
 }
 

@@ -32,8 +32,8 @@ export function SummaryKpis({ summary, topCategory, periodQuery, isLoading }: Su
   return (
     <div className="grid grid-cols-2 lg:grid-cols-1 gap-3.5 sm:gap-4">
       {/* 1. Receitas do Período */}
-      <Link href={`/transactions${periodQuery ? `${periodQuery}&` : '?'}type=INCOME`} className="block group">
-        <Card className="p-4 sm:p-5 transition-all group-hover:border-income/50 group-hover:shadow-md flex flex-col justify-between h-full">
+      <Link href={`/transactions${periodQuery ? `${periodQuery}&` : '?'}type=INCOME`} className="block min-w-0 group">
+        <Card variant="metric" className="p-4 sm:p-5 transition-colors group-hover:border-income/50 group-hover:shadow-md flex flex-col justify-between h-full">
           <div>
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">
@@ -41,8 +41,8 @@ export function SummaryKpis({ summary, topCategory, periodQuery, isLoading }: Su
               </span>
               <ChevronRight size={14} className="text-text-muted group-hover:text-income transition-colors" />
             </div>
-            <p className="mt-1 text-lg sm:text-xl font-bold tabular-nums text-text">
-              {formatMoney(totalIncome)}
+            <p className="mt-1 break-words text-lg sm:text-xl font-semibold tabular-nums text-text">
+              {formatMoney(totalIncome, { showSign: true })}
             </p>
           </div>
 
@@ -66,8 +66,8 @@ export function SummaryKpis({ summary, topCategory, periodQuery, isLoading }: Su
       </Link>
 
       {/* 2. Despesas do Período */}
-      <Link href={`/transactions${periodQuery ? `${periodQuery}&` : '?'}type=EXPENSE`} className="block group">
-        <Card className="p-4 sm:p-5 transition-all group-hover:border-expense/50 group-hover:shadow-md flex flex-col justify-between h-full">
+      <Link href={`/transactions${periodQuery ? `${periodQuery}&` : '?'}type=EXPENSE`} className="block min-w-0 group">
+        <Card variant="metric" className="p-4 sm:p-5 transition-colors group-hover:border-expense/50 group-hover:shadow-md flex flex-col justify-between h-full">
           <div>
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">
@@ -75,8 +75,8 @@ export function SummaryKpis({ summary, topCategory, periodQuery, isLoading }: Su
               </span>
               <ChevronRight size={14} className="text-text-muted group-hover:text-expense transition-colors" />
             </div>
-            <p className="mt-1 text-lg sm:text-xl font-bold tabular-nums text-text">
-              {formatMoney(totalExpense)}
+            <p className="mt-1 break-words text-lg sm:text-xl font-semibold tabular-nums text-text">
+              {formatMoney(-Math.abs(totalExpense), { showSign: true })}
             </p>
           </div>
 
@@ -106,9 +106,9 @@ export function SummaryKpis({ summary, topCategory, periodQuery, isLoading }: Su
             ? `/transactions${periodQuery ? `${periodQuery}&` : '?'}categoryId=${topCategory.categoryId}`
             : `/transactions${periodQuery}`
         }
-        className="block group"
+        className="block min-w-0 group"
       >
-        <Card className="p-4 sm:p-5 transition-all group-hover:border-primary/50 group-hover:shadow-md flex flex-col justify-between h-full">
+        <Card variant="metric" className="p-4 sm:p-5 transition-colors group-hover:border-primary/50 group-hover:shadow-md flex flex-col justify-between h-full">
           <div>
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">
@@ -129,7 +129,7 @@ export function SummaryKpis({ summary, topCategory, periodQuery, isLoading }: Su
                   <CategoryIcon name={topCategory.icon} size={16} />
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-bold text-text">{topCategory.name}</p>
+                  <p className="truncate text-sm font-semibold text-text">{topCategory.name}</p>
                   <p className="text-xs font-semibold tabular-nums text-text-muted">
                     {formatMoney(topCategory.total)}
                   </p>
@@ -149,8 +149,8 @@ export function SummaryKpis({ summary, topCategory, periodQuery, isLoading }: Su
       </Link>
 
       {/* 4. Taxa de Poupança */}
-      <Link href={`/transactions${periodQuery}`} className="block group">
-        <Card className="p-4 sm:p-5 transition-all group-hover:border-primary/50 group-hover:shadow-md flex flex-col justify-between h-full">
+      <Link href={`/transactions${periodQuery}`} className="block min-w-0 group">
+        <Card variant="metric" className="p-4 sm:p-5 transition-colors group-hover:border-primary/50 group-hover:shadow-md flex flex-col justify-between h-full">
           <div>
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">
@@ -158,7 +158,7 @@ export function SummaryKpis({ summary, topCategory, periodQuery, isLoading }: Su
               </span>
               <ChevronRight size={14} className="text-text-muted group-hover:text-primary transition-colors" />
             </div>
-            <p className="mt-1 text-lg sm:text-xl font-bold tabular-nums text-text">
+            <p className="mt-1 break-words text-lg sm:text-xl font-semibold tabular-nums text-text">
               {savingsRate.toFixed(1)}%
             </p>
           </div>

@@ -53,9 +53,9 @@ export function CategoryBreakdown({ categories, total, isLoading }: CategoryBrea
   }
 
   return (
-    <Card className="p-5 sm:p-6 space-y-6">
+    <Card variant="chart" className=" space-y-6">
       <div>
-        <h2 className="text-lg font-bold tracking-tight text-text">
+        <h2 className="text-base font-semibold tracking-tight tracking-tight text-text">
           Distribuição por Categoria
         </h2>
         <p className="text-xs text-text-muted">
@@ -98,7 +98,7 @@ export function CategoryBreakdown({ categories, total, isLoading }: CategoryBrea
             <span className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">
               Total Despesas
             </span>
-            <strong className="tabular-nums text-lg font-bold text-text mt-0.5">
+            <strong className="tabular-nums text-base font-semibold tracking-tight text-text mt-0.5">
               {formatMoney(total)}
             </strong>
           </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Card } from '@/components/ui/card';
 import { AlertOctagon, RefreshCw, Home } from 'lucide-react';
 
 interface ErrorPageProps {
@@ -16,7 +17,7 @@ interface ErrorPageProps {
 export default function ErrorPage({ error, reset }: ErrorPageProps) {
   return (
     <div className="flex min-h-svh items-center justify-center bg-bg p-6">
-      <div className="mx-auto flex max-w-md flex-col items-center gap-6 text-center">
+      <Card variant="panel" className="mx-auto flex w-full max-w-lg flex-col items-center gap-6 p-6 text-center sm:p-10">
         {/* Ícone */}
         <div className="flex size-24 items-center justify-center rounded-3xl bg-expense-soft">
           <AlertOctagon size={48} className="text-expense" aria-hidden="true" />
@@ -24,7 +25,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
 
         {/* Mensagem principal */}
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold text-text">Ops! Algo deu errado</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-text">Ops! Algo deu errado</h1>
           <p className="text-sm leading-relaxed text-text-muted">
             Ocorreu um erro inesperado ao exibir esta página. Você pode tentar novamente ou
             retornar à tela inicial.
@@ -59,7 +60,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
             Ir ao Início
           </Link>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

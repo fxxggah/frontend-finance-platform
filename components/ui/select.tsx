@@ -34,7 +34,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
             aria-invalid={!!error}
             className={cn(
               // base
-              'h-11 w-full appearance-none rounded-2xl bg-surface-soft px-4 pr-10 text-sm text-text',
+              'min-h-11 w-full min-w-0 appearance-none rounded-xl bg-surface px-4 pr-10 text-sm text-text',
               'border border-border outline-none',
               // foco
               'focus:border-primary focus:ring-2 focus:ring-primary/20',

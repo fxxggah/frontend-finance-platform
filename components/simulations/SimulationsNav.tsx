@@ -19,10 +19,10 @@ export function SimulationsNav() {
   return (
     <nav
       aria-label="Simuladores disponíveis"
-      className="border-b border-border bg-bg px-4 pt-4 lg:px-8 lg:pt-6"
+      className="mx-auto w-full max-w-[1440px]"
     >
-      <div className="mx-auto max-w-4xl">
-        <div className="flex gap-1 rounded-2xl bg-surface-soft p-1 w-fit">
+      <div className="min-w-0">
+        <div className="flex flex-wrap gap-1 rounded-2xl bg-surface-soft p-1 w-fit max-w-full">
           {SIMULATION_TABS.map((tab) => {
             const isActive = pathname === tab.href;
             return (
@@ -31,11 +31,11 @@ export function SimulationsNav() {
                 href={tab.href}
                 aria-current={isActive ? 'page' : undefined}
                 className={cn(
-                  'inline-flex h-9 items-center justify-center rounded-xl px-4 text-sm font-medium',
+                  'inline-flex min-h-11 items-center justify-center rounded-xl px-4 text-sm font-medium',
                   'transition-all duration-200 motion-reduce:transition-none',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50',
                   isActive
-                    ? 'bg-surface text-text shadow-sm'
+                    ? 'bg-primary text-white shadow-sm'
                     : 'text-text-muted hover:text-text',
                 )}
               >

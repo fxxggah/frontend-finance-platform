@@ -15,6 +15,7 @@ import {
   Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import styles from "./navigation.module.css";
 
 export interface NavItem {
   label: string;
@@ -39,7 +40,7 @@ export function Sidebar() {
 
   return (
     <aside
-      className="hidden lg:flex fixed inset-y-0 left-0 z-30 w-64 flex-col bg-sidebar text-sidebar-text shadow-xl select-none"
+      className={`${styles.sidebar} hidden lg:flex fixed inset-y-0 left-0 z-30 w-64 flex-col bg-sidebar text-sidebar-text select-none`}
       aria-label="Navegação principal"
     >
       {/* Topo: Marca FIN com símbolo em gradiente */}
@@ -71,17 +72,19 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              aria-current={isActive ? "page" : undefined}
               className={cn(
-                "group flex items-center gap-3.5 rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-200",
+                "group flex min-h-11 items-center gap-3.5 rounded-2xl px-4 py-3 text-sm font-medium transition-colors duration-200",
+                isActive && styles.active,
                 isActive
                   ? "bg-gradient-hero text-white shadow-md shadow-primary/25"
-                  : "text-[#C9CDEB] hover:bg-white/5 hover:text-white"
+                  : "text-sidebar-text hover:bg-white/5 hover:text-white"
               )}
             >
               <Icon
                 className={cn(
                   "size-5 shrink-0 transition-colors duration-200",
-                  isActive ? "text-white" : "text-[#C9CDEB] group-hover:text-white"
+                  isActive ? "text-white" : "text-sidebar-text group-hover:text-white"
                 )}
               />
               <span>{item.label}</span>
@@ -92,19 +95,19 @@ export function Sidebar() {
 
       {/* Base da Sidebar: Card "Defina um objetivo" */}
       <div className="p-4">
-        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4">
           <div className="mb-2 flex items-center gap-2 text-white">
             <Target className="size-4 text-accent" aria-hidden="true" />
             <h4 className="text-xs font-semibold tracking-wide uppercase text-white/90">
               Defina um objetivo
             </h4>
           </div>
-          <p className="mb-3 text-xs leading-relaxed text-[#C9CDEB]/80">
+          <p className="mb-3 text-xs leading-relaxed text-sidebar-text">
             Crie metas financeiras e acompanhe seu progresso mês a mês.
           </p>
           <Link
             href="/goals"
-            className="flex h-9 w-full items-center justify-center gap-1.5 rounded-xl bg-white/10 text-xs font-semibold text-white transition-all hover:bg-white/20 active:scale-[0.98]"
+            className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl bg-white/10 text-xs font-semibold text-white transition-all hover:bg-white/20 active:scale-[0.98]"
           >
             <Plus className="size-3.5" aria-hidden="true" />
             <span>Nova meta</span>

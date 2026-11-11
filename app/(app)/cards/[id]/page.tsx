@@ -1,5 +1,6 @@
 'use client';
 
+import { PageHeader, PageContainer } from '@/components/ui/page';
 import { use, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ChevronRight, Edit2, Calendar, FileText, AlertCircle } from 'lucide-react';
@@ -40,7 +41,7 @@ export default function CreditCardDetailPage({ params }: PageProps) {
 
   if (showError) {
     return (
-      <div className="container mx-auto max-w-5xl p-4 lg:p-8 space-y-6">
+      <PageContainer className="space-y-6">
         <Link
           href="/cards"
           className="inline-flex items-center gap-2 text-sm text-text-muted hover:text-text transition-colors"
@@ -58,7 +59,7 @@ export default function CreditCardDetailPage({ params }: PageProps) {
             refetchInvoices();
           }}
         />
-      </div>
+      </PageContainer>
     );
   }
 
@@ -67,7 +68,7 @@ export default function CreditCardDetailPage({ params }: PageProps) {
   const exceededAmount = card ? Math.abs(card.availableLimit) : 0;
 
   return (
-    <div className="container mx-auto max-w-5xl p-4 lg:p-8 space-y-8">
+    <PageContainer className="space-y-8">
       {/* Navegação de Retorno */}
       <div className="flex items-center justify-between">
         <Link
@@ -91,6 +92,7 @@ export default function CreditCardDetailPage({ params }: PageProps) {
         )}
       </div>
 
+      <PageHeader title={card?.name ?? 'Detalhes do cartão'} description="Limites, datas e faturas do seu cartão." />
       {/* Topo: Cartão Visual + Métricas */}
       {showLoading || !card ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -117,7 +119,7 @@ export default function CreditCardDetailPage({ params }: PageProps) {
               <div className="mt-3 flex items-baseline justify-between">
                 <div>
                   <p className="text-xs text-text-muted">Limite total concedido</p>
-                  <p className="text-2xl font-bold tabular-nums text-text">{formatMoney(card.creditLimit)}</p>
+                  <p className="text-2xl font-semibold tabular-nums text-text">{formatMoney(card.creditLimit)}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-text-muted">Limite utilizado</p>
@@ -246,7 +248,7 @@ export default function CreditCardDetailPage({ params }: PageProps) {
           card={card}
         />
       )}
-    </div>
+    </PageContainer>
   );
 }
 

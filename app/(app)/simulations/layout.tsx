@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react';
 import { SimulationsNav } from '@/components/simulations/SimulationsNav';
+import { SimulationState } from '@/components/simulations/SimulationState';
 
 interface SimulationsLayoutProps {
   children: ReactNode;
@@ -13,7 +14,7 @@ export default function SimulationsLayout({ children }: SimulationsLayoutProps) 
   return (
     <div className="flex flex-col gap-4">
       <SimulationsNav />
-      {children}
+      <SimulationState>{children}</SimulationState>
     </div>
   );
 }

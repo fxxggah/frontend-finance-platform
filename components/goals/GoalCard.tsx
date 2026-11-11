@@ -42,7 +42,7 @@ export function GoalCard({ goal }: GoalCardProps) {
 
   return (
     <Link href={`/goals/${goal.id}`} className="block">
-      <Card className="p-5 sm:p-6 transition-all hover:border-primary/40 hover:shadow-md flex flex-col justify-between space-y-4">
+      <Card className="p-5 sm:p-6 transition-colors hover:border-primary/40 hover:shadow-md flex flex-col justify-between space-y-4">
         {/* Topo: Ícone, Nome, Tipo e Badge de Estado */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3.5 min-w-0">
@@ -79,7 +79,7 @@ export function GoalCard({ goal }: GoalCardProps) {
             <span className="font-medium text-text-muted">
               {isExpense ? 'Gasto no período' : 'Acumulado'}
             </span>
-            <span className="font-bold tabular-nums text-text">
+            <span className="font-semibold tabular-nums text-text">
               {formatMoney(goal.currentAmount)}
               <span className="font-normal text-text-muted">
                 {' '}
@@ -97,7 +97,7 @@ export function GoalCard({ goal }: GoalCardProps) {
 
           <div className="flex items-center justify-between text-xs">
             <span className="text-text-muted truncate max-w-[70%]">{support}</span>
-            <span className="font-bold tabular-nums text-text shrink-0">
+            <span className="font-semibold tabular-nums text-text shrink-0">
               {Math.round(goal.percentage)}%
             </span>
           </div>

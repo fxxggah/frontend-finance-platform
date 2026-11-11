@@ -59,7 +59,7 @@ export function TabsList({ className, variant = 'pill', children, ...props }: Ta
       id={listId}
       role="tablist"
       className={cn(
-        'flex gap-1',
+        'flex flex-wrap gap-1',
         variant === 'pill' && 'rounded-2xl bg-surface-soft p-1',
         variant === 'underline' && 'border-b border-border',
         className,
@@ -83,6 +83,7 @@ export function TabsTrigger({
   value,
   variant = 'pill',
   children,
+  onKeyDown,
   ...props
 }: TabsTriggerProps) {
   const { value: selected, onChange, listId } = useTabsContext();
@@ -93,13 +94,24 @@ export function TabsTrigger({
       role="tab"
       type="button"
       aria-selected={isActive}
-      aria-controls={`panel-${value}`}
+      aria-controls={`panel-${listId}-${value}`}
       id={`tab-${listId}-${value}`}
       tabIndex={isActive ? 0 : -1}
       onClick={() => onChange(value)}
+      onKeyDown={event => {
+        onKeyDown?.(event);
+        if (event.defaultPrevented || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+        const items = [...event.currentTarget.closest('[role="tablist"]')!.querySelectorAll<HTMLButtonElement>('[role="tab"]:not(:disabled)')];
+        const index = items.indexOf(event.currentTarget);
+        const next = event.key === 'Home' ? 0 : event.key === 'End' ? items.length - 1
+          : (index + (event.key === 'ArrowRight' ? 1 : -1) + items.length) % items.length;
+        event.preventDefault();
+        items[next]?.click();
+        items[next]?.focus();
+      }}
       className={cn(
         'inline-flex items-center justify-center gap-1.5 px-4 text-sm font-medium',
-        'h-9 min-w-[80px] rounded-xl',
+        'min-h-11 min-w-[80px] rounded-xl',
         'transition-all duration-200 motion-reduce:transition-none',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50',
         // pill variant
@@ -136,7 +148,7 @@ export function TabsContent({ value, className, children, ...props }: TabsConten
   return (
     <div
       role="tabpanel"
-      id={`panel-${value}`}
+      id={`panel-${listId}-${value}`}
       aria-labelledby={`tab-${listId}-${value}`}
       tabIndex={0}
       className={cn('focus:outline-none', className)}

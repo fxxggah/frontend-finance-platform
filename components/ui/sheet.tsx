@@ -1,16 +1,19 @@
 'use client';
 
 import {
-  useEffect,
   useRef,
+  useCallback,
   useId,
   createContext,
   useContext,
-  useCallback,
   type ReactNode,
 } from 'react';
 import { X } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
+import { useModalFocus } from '@/hooks/use-modal-focus';
+import { usePortalTarget } from '@/hooks/use-portal-target';
+import styles from './surfaces.module.css';
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 
@@ -45,51 +48,39 @@ export interface SheetProps {
 export function Sheet({ open, onClose, onOpenChange, title, children }: SheetProps) {
   const id = useId();
   const titleId = `${id}-title`;
+  const panelRef = useRef<HTMLDivElement>(null);
+  const portalTarget = usePortalTarget();
 
   const handleClose = useCallback(() => {
     if (onClose) onClose();
     if (onOpenChange) onOpenChange(false);
   }, [onClose, onOpenChange]);
 
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') handleClose();
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [open, handleClose]);
+  useModalFocus(open && !!portalTarget, panelRef, handleClose);
 
-  useEffect(() => {
-    if (open) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => { document.body.style.overflow = ''; };
-  }, [open]);
+  if (!open || !portalTarget) return null;
 
-  if (!open) return null;
-
-  return (
+  return createPortal(
     <SheetContext.Provider value={{ titleId, onClose: handleClose }}>
       {/* Overlay */}
       <div
         className={cn(
           'fixed inset-0 z-50 flex items-end',
-          'bg-black/50 backdrop-blur-sm',
+          'bg-black/50',
           'animate-in fade-in duration-200 motion-reduce:animate-none',
         )}
         onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
-        aria-hidden="true"
       >
         {/* Painel */}
         <div
+          ref={panelRef}
           role="dialog"
           aria-modal="true"
+          tabIndex={-1}
           aria-labelledby={titleId}
           className={cn(
-            'relative z-10 w-full bg-surface',
+            'relative z-10 mx-auto w-full max-w-3xl outline-none',
+            styles.glass,
             'rounded-t-[2rem]',
             'shadow-[0_-8px_40px_-8px_rgba(20,23,46,0.22)]',
             'animate-in slide-in-from-bottom duration-300 motion-reduce:animate-none',
@@ -107,7 +98,7 @@ export function Sheet({ open, onClose, onOpenChange, title, children }: SheetPro
           {title ? <SheetBody>{children}</SheetBody> : children}
         </div>
       </div>
-    </SheetContext.Provider>
+    </SheetContext.Provider>, portalTarget
   );
 }
 
@@ -125,7 +116,7 @@ export function SheetHeader({ className, ...props }: React.HTMLAttributes<HTMLDi
         onClick={onClose}
         aria-label="Fechar"
         className={cn(
-          'ml-auto flex size-8 items-center justify-center rounded-xl',
+          'ml-auto flex size-11 items-center justify-center rounded-xl',
           'text-text-muted hover:bg-surface-soft hover:text-text',
           'transition-colors duration-150',
         )}

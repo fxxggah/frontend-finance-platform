@@ -35,14 +35,14 @@ export function ProgressBar({
   className,
   'aria-label': ariaLabel,
 }: ProgressBarProps) {
-  const clamped = Math.min(value, 100);
+  const clamped = Math.max(0, Math.min(value, 100));
   const isOver = value > 100;
 
   return (
     <div className={cn('flex items-center gap-2', className)}>
       <div
         role="progressbar"
-        aria-valuenow={Math.round(value)}
+        aria-valuenow={Math.round(clamped)}
         aria-valuemin={0}
         aria-valuemax={100}
         aria-label={ariaLabel}
@@ -53,7 +53,7 @@ export function ProgressBar({
       >
         <div
           className={cn(
-            'h-full rounded-full transition-all duration-500 motion-reduce:transition-none',
+            'h-full rounded-full transition-all duration-200 motion-reduce:transition-none',
             isOver ? 'bg-expense' : fillClass[variant],
           )}
           style={{ width: `${clamped}%` }}

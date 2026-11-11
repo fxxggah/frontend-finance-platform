@@ -2,6 +2,7 @@
 
 import { ArrowDownLeft, ArrowUpRight, Repeat2, CreditCard } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import styles from '@/components/ui/surfaces.module.css';
 
 interface QuickActionsProps {
   onNewIncome?: () => void;
@@ -47,19 +48,19 @@ export function QuickActions({ onNewIncome, onNewExpense, onTransfer }: QuickAct
   ];
 
   return (
-    <div className="mx-3 grid grid-cols-4 gap-1 rounded-3xl border border-white/70 bg-surface/85 p-3 shadow-[0_12px_30px_-16px_rgba(20,23,46,.3)] backdrop-blur-xl sm:mx-8 sm:px-5">
+    <nav aria-label="Ações rápidas" className={`${styles.glass} ${styles.dock} fin-glass grid grid-cols-2 gap-1 rounded-3xl p-2 sm:grid-cols-4 sm:p-3 sm:backdrop-blur-md`}>
       {ACTIONS.map(({ label, icon: Icon, colorClasses }, index) => (
         <button
           key={label}
           onClick={handlers[index]}
-          className="flex min-h-20 flex-col items-center justify-center gap-2 rounded-2xl text-center text-[10px] font-semibold text-text transition hover:bg-surface-soft"
+          className={`${styles.action} flex min-h-16 items-center justify-center gap-2 rounded-2xl px-2 text-xs font-semibold text-text sm:gap-3`}
         >
-          <span className={`grid size-10 place-items-center rounded-2xl ${colorClasses}`}>
-            <Icon className="size-4" />
+          <span className={`grid size-9 shrink-0 place-items-center rounded-xl ${colorClasses}`}>
+            <Icon className="size-4" aria-hidden="true" />
           </span>
           <span>{label}</span>
         </button>
       ))}
-    </div>
+    </nav>
   );
 }

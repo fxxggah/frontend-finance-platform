@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Search, X } from 'lucide-react';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { useCategories } from '@/hooks/use-categories';
@@ -58,7 +59,7 @@ export function FilterBar() {
   };
 
   return (
-    <div className="rounded-2xl border border-border bg-surface p-4">
+    <Card variant="panel" className="p-4 sm:p-5">
       {/* Linha 1: busca */}
       <div className="relative mb-3">
         <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-text-muted" />
@@ -146,6 +147,6 @@ export function FilterBar() {
           Limpar filtros
         </button>
       )}
-    </div>
+    </Card>
   );
 }

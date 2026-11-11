@@ -1,0 +1,119 @@
+@layer components {
+.page {
+  position: relative;
+  isolation: isolate;
+}
+
+.page::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0 0 auto;
+  height: 560px;
+  pointer-events: none;
+  background: radial-gradient(ellipse closest-side at 78% 35%, color-mix(in srgb, var(--color-primary) 9%, transparent), transparent);
+}
+
+.eyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+
+.hero {
+  position: relative;
+  isolation: isolate;
+  border: 1px solid color-mix(in srgb, var(--color-white) 28%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-white) 24%, transparent), 0 18px 36px -24px var(--color-primary);
+}
+
+.orbit {
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  top: -115px;
+  right: -105px;
+  width: 370px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--color-white) 20%, transparent);
+  background: linear-gradient(140deg, color-mix(in srgb, var(--color-white) 15%, transparent), transparent 65%);
+  box-shadow: inset 12px 8px 28px color-mix(in srgb, var(--color-white) 9%, transparent), 0 0 0 24px color-mix(in srgb, var(--color-white) 4%, transparent), 0 0 0 50px color-mix(in srgb, var(--color-white) 4%, transparent);
+}
+
+.heroButton {
+  border: 1px solid color-mix(in srgb, var(--color-white) 28%, transparent);
+  background: color-mix(in srgb, var(--color-white) 12%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-white) 16%, transparent);
+}
+
+.heroStats {
+  border-top: 1px solid color-mix(in srgb, var(--color-white) 22%, transparent);
+  background: linear-gradient(110deg, color-mix(in srgb, var(--color-white) 10%, transparent), transparent);
+}
+
+.glass {
+  position: relative;
+  border: 1px solid var(--glass-edge);
+  background: var(--color-surface);
+  background-image: linear-gradient(125deg, color-mix(in srgb, var(--color-primary) 5%, transparent), transparent 45%);
+  box-shadow: var(--shadow-panel);
+}
+
+/* Only the small action dock samples its backdrop; all large panels are solid. */
+@supports (backdrop-filter: blur(12px)) {
+  .dock {
+    background-color: color-mix(in srgb, var(--color-surface) 85%, transparent);
+  }
+}
+
+.action {
+  transition: background-color 180ms ease, box-shadow 180ms ease;
+}
+
+.action:hover {
+  background: var(--color-surface-soft);
+  box-shadow: inset 0 1px 0 var(--glass-edge);
+}
+
+.page :is(button, a, input):focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 4px;
+}
+
+.hero button:focus-visible,
+.hero a:focus-visible {
+  outline-color: var(--color-white);
+}
+
+.metric {
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  box-shadow: inset 0 2px 0 color-mix(in srgb, var(--color-primary) 7%, transparent);
+}
+
+.state {
+  padding: clamp(24px, 5vw, 64px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-3xl);
+  background: var(--color-surface);
+}
+
+@media (max-width: 639px) {
+  .orbit { right: -190px; opacity: .7; }
+  .dock { backdrop-filter: none; -webkit-backdrop-filter: none; background-color: var(--color-surface); }
+}
+
+
+
+@media (prefers-reduced-motion: reduce) {
+  .action { transition: none; }
+}
+
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .dock { backdrop-filter: none; -webkit-backdrop-filter: none; background-color: var(--color-surface); }
+}

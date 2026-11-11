@@ -1,0 +1,5 @@
+.balance { min-height: 340px; }
+
+@media (max-width: 639px) {
+  .balance { min-height: 320px; }
+}

@@ -1,5 +1,6 @@
 'use client';
 
+import { PageContainer, PageHeader } from '@/components/ui/page';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -194,17 +195,9 @@ export default function DebtSimulatorPage() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl space-y-6 p-4 pb-24 lg:p-8 lg:pb-8">
+    <PageContainer className="space-y-6">
       {/* Cabeçalho */}
-      <div className="flex items-center gap-3">
-        <span className="flex size-10 items-center justify-center rounded-2xl bg-expense-soft">
-          <Calculator size={20} className="text-expense" aria-hidden="true" />
-        </span>
-        <div>
-          <h1 className="text-xl font-bold text-text">Simulador de Quitação de Dívidas</h1>
-          <p className="text-sm text-text-muted">Descubra quando sua dívida será zerada</p>
-        </div>
-      </div>
+      <PageHeader title="Simulador de Quitação de Dívidas" description={<>Descubra quando sua dívida será zerada</>} />
 
       <DisclaimerBanner />
 
@@ -262,7 +255,7 @@ export default function DebtSimulatorPage() {
       {/* Resultados */}
       {result && (
         <section aria-label="Resultado da simulação" className="space-y-4">
-          <h2 className="flex items-center gap-2 text-base font-semibold text-text">
+          <h2 className="flex items-center gap-2 text-base font-semibold tracking-tight text-text">
             <Info size={16} className="text-primary" aria-hidden="true" />
             Resultado da Simulação
           </h2>
@@ -297,7 +290,7 @@ export default function DebtSimulatorPage() {
           </div>
         </section>
       )}
-    </main>
+    </PageContainer>
   );
 }
 

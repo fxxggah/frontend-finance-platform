@@ -35,7 +35,7 @@ interface IconPickerProps {
 
 export function IconPicker({ value, onChange, color, className }: IconPickerProps) {
   return (
-    <div className={cn('grid grid-cols-5 sm:grid-cols-10 gap-2', className)}>
+    <div className={cn('grid grid-cols-[repeat(auto-fit,minmax(44px,1fr))] gap-2', className)}>
       {PRESET_ICONS.map((iconName) => {
         const isSelected = value === iconName;
         return (
@@ -44,8 +44,9 @@ export function IconPicker({ value, onChange, color, className }: IconPickerProp
             type="button"
             onClick={() => onChange(iconName)}
             aria-label={`Ícone ${iconName}`}
+            aria-pressed={isSelected}
             className={cn(
-              'flex size-10 items-center justify-center rounded-xl border transition-all active:scale-95',
+              'flex size-11 items-center justify-center rounded-xl border transition-colors active:scale-95 motion-reduce:transition-none',
               isSelected
                 ? 'border-primary bg-primary-soft text-primary ring-2 ring-primary ring-offset-1 ring-offset-surface'
                 : 'border-border bg-surface hover:bg-surface-soft text-text-muted hover:text-text'

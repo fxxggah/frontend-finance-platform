@@ -1,32 +1,32 @@
 import { forwardRef } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
+import styles from './surfaces.module.css';
 
 // ─── Container ───────────────────────────────────────────────────────────────
 
-const cardVariants = cva('transition-shadow duration-200', {
+const cardVariants = cva('min-w-0 transition-shadow duration-200', {
   variants: {
     variant: {
       /** Cartão padrão com fundo sólido e borda sutil */
-      solid: 'bg-surface border border-border rounded-2xl shadow-[var(--shadow-default)]',
+      solid: 'bg-surface border border-border rounded-3xl',
+      panel: `${styles.glass} rounded-3xl`,
+      metric: `${styles.metric} rounded-2xl`,
+      chart: 'min-w-0 rounded-3xl border border-border bg-surface p-5 sm:p-6',
       /** Cartão hero com gradiente de marca */
       brand: [
-        'rounded-3xl text-white border-transparent',
+        'rounded-3xl text-white',
         'bg-gradient-hero',
-        'shadow-[0_16px_40px_-16px_rgba(91,61,245,0.55)]',
         // overlay translúcido para textura
         'relative overflow-hidden',
+        styles.hero,
         'before:pointer-events-none before:absolute before:inset-0',
         'before:bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.12)_0%,transparent_60%)]',
       ].join(' '),
-      /**
-       * Glassmorphism — exclusivo para pílula de atalhos e BottomNav mobile.
-       * NÃO usar em outros contextos (ver design-system.md §4).
-       */
+      /** Vidro restrito a barras compactas de ações. */
       glass: [
-        'rounded-2xl border border-white/60',
-        'bg-white/85 dark:bg-white/10 backdrop-blur-md',
-        'shadow-[0_4px_24px_-8px_rgba(20,23,46,0.12)]',
+        styles.glass, styles.dock,
+        'fin-glass rounded-3xl sm:backdrop-blur-md',
       ].join(' '),
     },
     padding: {
@@ -47,12 +47,15 @@ export interface CardProps
     VariantProps<typeof cardVariants> {}
 
 const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ className, variant, padding, ...props }, ref) => (
+  ({ className, variant, padding, children, ...props }, ref) => (
     <div
       ref={ref}
       className={cn(cardVariants({ variant, padding, className }))}
       {...props}
-    />
+    >
+      {variant === 'brand' && <div className={styles.orbit} aria-hidden="true" />}
+      {children}
+    </div>
   ),
 );
 Card.displayName = 'Card';

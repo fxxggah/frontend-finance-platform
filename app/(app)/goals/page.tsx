@@ -1,5 +1,6 @@
 'use client';
 
+import { PageContainer, PageHeader } from '@/components/ui/page';
 import { useState } from 'react';
 import { Plus, Target, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -38,7 +39,7 @@ export default function GoalsPage() {
 
   if (showError) {
     return (
-      <div className="container mx-auto max-w-6xl p-4 lg:p-8 space-y-6">
+      <PageContainer className="space-y-6">
         <EmptyState
           icon={AlertCircle}
           title="Erro ao carregar metas"
@@ -46,25 +47,17 @@ export default function GoalsPage() {
           actionLabel="Tentar novamente"
           onAction={() => refetch()}
         />
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="container mx-auto max-w-6xl p-4 lg:p-8 space-y-8">
+    <PageContainer className="space-y-8">
       {/* Cabeçalho */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-text">Metas Financeiras</h1>
-          <p className="text-sm text-text-muted">
-            Planeje suas economias, estabeleça tetos de gastos e monitore receitas
-          </p>
-        </div>
-        <Button variant="brand" onClick={() => setIsFormOpen(true)} className="self-start sm:self-auto gap-2">
+      <PageHeader title="Metas Financeiras" description={<>Planeje suas economias, estabeleça tetos de gastos e monitore receitas</>} action={<><Button variant="brand" onClick={() => setIsFormOpen(true)} className="self-start sm:self-auto gap-2">
           <Plus size={18} />
           <span>Nova meta</span>
-        </Button>
-      </div>
+        </Button></>} />
 
       {/* Abas e Filtros */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -96,7 +89,7 @@ export default function GoalsPage() {
             type="button"
             onClick={() => setSelectedStatus('ACTIVE')}
             className={cn(
-              'rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
+              'min-h-11 rounded-xl px-3 py-1.5 text-xs font-medium transition-colors',
               selectedStatus === 'ACTIVE'
                 ? 'bg-primary-soft text-primary font-semibold'
                 : 'text-text-muted hover:text-text'
@@ -108,7 +101,7 @@ export default function GoalsPage() {
             type="button"
             onClick={() => setSelectedStatus('CANCELLED')}
             className={cn(
-              'rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
+              'min-h-11 rounded-xl px-3 py-1.5 text-xs font-medium transition-colors',
               selectedStatus === 'CANCELLED'
                 ? 'bg-primary-soft text-primary font-semibold'
                 : 'text-text-muted hover:text-text'
@@ -151,7 +144,7 @@ export default function GoalsPage() {
         open={isFormOpen}
         onClose={() => setIsFormOpen(false)}
       />
-    </div>
+    </PageContainer>
   );
 }
 

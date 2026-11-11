@@ -8,6 +8,7 @@ import { CategoryIcon } from '@/components/icons/CategoryIcon';
 import { formatMoney } from '@/lib/format/money';
 import { formatDate } from '@/lib/format/date';
 import type { Goal } from '@/types';
+import { SectionHeader } from '@/components/ui/page';
 
 const STATE_LABEL: Record<string, string> = {
   IN_PROGRESS: 'Em andamento',
@@ -28,7 +29,7 @@ const STATE_COLOR: Record<string, string> = {
 function GoalCard({ goal }: { goal: Goal }) {
   const tone = STATE_COLOR[goal.state] ?? 'var(--color-text-muted)';
   return (
-    <Card className="min-w-[260px] snap-start lg:min-w-0 p-5">
+    <Card className="min-w-[260px] snap-start rounded-3xl p-5 shadow-none lg:min-w-0">
       <div className="flex items-start justify-between">
         <CategoryIcon name={goal.icon} className="size-5" />
         <Badge style={{ color: tone, backgroundColor: 'var(--color-surface-soft)' }}>
@@ -71,16 +72,15 @@ interface GoalsSectionProps {
 export function GoalsSection({ goals, isLoading }: GoalsSectionProps) {
   return (
     <section className="mt-9">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-bold text-text">Metas em andamento</h2>
+      <SectionHeader title="Metas em andamento" description="Seu progresso, objetivo por objetivo." action={
         <Link
           href="/goals"
-          className="text-sm font-bold text-primary hover:underline"
+          className="inline-flex min-h-11 shrink-0 items-center text-xs font-semibold text-primary hover:underline"
           aria-label="Ver todas as metas"
         >
           Ver todas
         </Link>
-      </div>
+      } />
 
       {isLoading ? (
         <div className="flex gap-4 overflow-x-auto pb-3">
@@ -89,11 +89,11 @@ export function GoalsSection({ goals, isLoading }: GoalsSectionProps) {
           ))}
         </div>
       ) : goals.length === 0 ? (
-        <Card className="p-6 text-center">
+        <Card className="rounded-3xl p-6 text-center shadow-none">
           <p className="text-text-muted text-sm">Nenhuma meta ativa no momento.</p>
           <Link
             href="/goals"
-            className="mt-3 inline-block text-sm font-bold text-primary hover:underline"
+            className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-primary hover:underline"
           >
             Criar primeira meta
           </Link>

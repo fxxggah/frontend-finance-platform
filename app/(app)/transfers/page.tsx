@@ -1,5 +1,6 @@
 'use client';
 
+import { PageContainer, PageHeader } from '@/components/ui/page';
 import { useState } from 'react';
 import { Plus, ArrowLeftRight, ArrowRight, Trash2, Info, AlertCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
@@ -39,7 +40,7 @@ export default function TransfersPage() {
 
   if (showError) {
     return (
-      <div className="container mx-auto max-w-4xl p-4 lg:p-8 space-y-6">
+      <PageContainer className="space-y-6">
         <EmptyState
           icon={AlertCircle}
           title="Erro ao carregar transferências"
@@ -47,25 +48,17 @@ export default function TransfersPage() {
           actionLabel="Tentar novamente"
           onAction={() => refetch()}
         />
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="container mx-auto max-w-4xl p-4 lg:p-8 space-y-8">
+    <PageContainer className="space-y-8">
       {/* Cabeçalho */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-text">Transferências</h1>
-          <p className="text-sm text-text-muted">
-            Histórico e movimentações financeiras entre suas contas
-          </p>
-        </div>
-        <Button variant="brand" onClick={() => setIsFormOpen(true)} className="self-start sm:self-auto gap-2">
+      <PageHeader title="Transferências" description={<>Histórico e movimentações financeiras entre suas contas</>} action={<><Button variant="brand" onClick={() => setIsFormOpen(true)} className="self-start sm:self-auto gap-2">
           <Plus size={18} />
           <span>Nova transferência</span>
-        </Button>
-      </div>
+        </Button></>} />
 
       {/* Nota Conceitual Obrigatória */}
       <div className="flex items-start gap-3 rounded-2xl border border-border bg-surface-soft p-4 text-xs text-text-muted leading-relaxed">
@@ -160,7 +153,7 @@ export default function TransfersPage() {
         cancelLabel="Cancelar"
         isLoading={deleteMutation.isPending}
       />
-    </div>
+    </PageContainer>
   );
 }
 
