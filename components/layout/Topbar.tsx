@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Sun, Moon, Bell, LogOut, User as UserIcon } from "lucide-react";
+import { Sun, Moon, LogOut, User as UserIcon } from "lucide-react";
 import { useCurrentUser, useLogout } from "@/hooks/use-current-user";
 import { UserAvatar } from "./UserAvatar";
 
@@ -80,15 +80,6 @@ export function Topbar() {
           ) : (
             <Sun className="size-4.5 text-warning" aria-hidden="true" />
           )}
-        </button>
-
-        {/* Sino de Notificações com Badge */}
-        <button
-          type="button"
-          aria-label="Notificações"
-          className="relative flex size-10 items-center justify-center rounded-2xl border border-border bg-surface text-text-muted transition-all hover:bg-surface-soft hover:text-text active:scale-95"
-        >
-          <Bell className="size-4.5" aria-hidden="true" />
         </button>
 
         {/* Divisor Vertical */}

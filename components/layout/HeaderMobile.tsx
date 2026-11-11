@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell, Sun, Moon } from "lucide-react";
+import { Sun, Moon } from "lucide-react";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { UserAvatar } from "./UserAvatar";
 
@@ -64,31 +64,19 @@ export function HeaderMobile() {
           </div>
         </div>
 
-        {/* Ações Rápidas no Header Mobile */}
-        <div className="flex items-center gap-2">
-          {/* Alternador de Tema Mobile */}
-          <button
-            type="button"
-            onClick={toggleTheme}
-            aria-label={theme === "light" ? "Ativar modo escuro" : "Ativar modo claro"}
-            className="flex size-11 items-center justify-center rounded-2xl bg-white/15 text-white border border-white/20 transition-all active:scale-95"
-          >
-            {theme === "light" ? (
-              <Moon className="size-4" aria-hidden="true" />
-            ) : (
-              <Sun className="size-4 text-warning" aria-hidden="true" />
-            )}
-          </button>
-
-          {/* Notificações Mobile */}
-          <button
-            type="button"
-            aria-label="Notificações"
-            className="relative flex size-11 items-center justify-center rounded-2xl bg-white/15 text-white border border-white/20 transition-all active:scale-95"
-          >
-            <Bell className="size-4" aria-hidden="true" />
-          </button>
-        </div>
+        {/* Alternador de Tema Mobile */}
+        <button
+          type="button"
+          onClick={toggleTheme}
+          aria-label={theme === "light" ? "Ativar modo escuro" : "Ativar modo claro"}
+          className="flex size-11 items-center justify-center rounded-2xl bg-white/15 text-white border border-white/20 transition-all active:scale-95"
+        >
+          {theme === "light" ? (
+            <Moon className="size-4" aria-hidden="true" />
+          ) : (
+            <Sun className="size-4 text-warning" aria-hidden="true" />
+          )}
+        </button>
       </div>
     </header>
   );

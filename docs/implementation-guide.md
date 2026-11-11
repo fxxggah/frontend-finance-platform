@@ -90,7 +90,7 @@ em [api-integration.md](./api-integration.md).
 
 ### 4.2 `components/layout/*.tsx`
 - **`Sidebar.tsx`:** Barra lateral desktop fixa (`w-64`, cor `#0E1230`, navegação com pílula ativa gradiente e card inferior de incentivo a metas).
-- **`Topbar.tsx`:** Cabeçalho desktop com saudação, seletor de tema claro/escuro, sino de notificações e avatar.
+- **`Topbar.tsx`:** Cabeçalho desktop com saudação, seletor de tema claro/escuro e avatar.
 - **`BottomNav.tsx`:** Barra inferior mobile fixa com efeito vidro, 5 posições e botão central flutuante `+` (`FabAction`).
 - **`MobileHeader.tsx`:** Topo mobile com fundo em gradiente hero e cantos `rounded-b-[2rem]`.
 

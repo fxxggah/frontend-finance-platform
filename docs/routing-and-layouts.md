@@ -71,7 +71,6 @@ Projetado para telas amplas com navegação intuitiva e estável:
 - **Saudação Contextual:** Baseada no horário do dia (*"Bom dia"*, *"Boa tarde"*, *"Boa noite"*, acompanhada pelo nome da usuária).
 - **Controles:**
   - Seletor de Tema (ícone `Sun` / `Moon`).
-  - Sino de Notificações com badge de contador.
   - Avatar da usuária com dropdown de perfil e logout.
 
 ---
@@ -82,7 +81,7 @@ Adaptado para uso rápido com uma mão (ergonomia mobile-first):
 
 ### 3.1 Cabeçalho Mobile
 - Fundo em `gradient-hero` com cantos inferiores arredondados `rounded-b-[2rem]`.
-- Contém o avatar da usuária, saudação compacta e botão de notificações.
+- Contém o avatar da usuária, saudação compacta e seletor de tema.
 
 ### 3.2 Barra Inferior Fixa com Efeito Vidro (`BottomNav`)
 - Fixada no rodapé da tela com `backdrop-blur-md` e fundo branco translúcido (`rgba(255,255,255,0.85)` no modo claro).
