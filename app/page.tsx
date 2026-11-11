@@ -1,5 +1,13 @@
-import { Dashboard } from '@/components/dashboard/dashboard'
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
-export default function Page() {
-  return <Dashboard />
+export default async function RootPage() {
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get("fin_session");
+
+  if (sessionCookie?.value) {
+    redirect("/dashboard");
+  } else {
+    redirect("/login");
+  }
 }

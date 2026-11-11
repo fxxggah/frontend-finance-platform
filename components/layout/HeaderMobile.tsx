@@ -1,0 +1,102 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Bell, Sun, Moon, LogOut } from "lucide-react";
+import { currentUser } from "@/lib/mock-data";
+
+export function HeaderMobile() {
+  const router = useRouter();
+  const [greeting, setGreeting] = useState("Olá");
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  useEffect(() => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) {
+      setGreeting("Bom dia");
+    } else if (hour >= 12 && hour < 18) {
+      setGreeting("Boa tarde");
+    } else {
+      setGreeting("Boa noite");
+    }
+
+    const isDark =
+      document.documentElement.classList.contains("dark") ||
+      document.documentElement.getAttribute("data-theme") === "dark";
+    setTheme(isDark ? "dark" : "light");
+  }, []);
+
+  function toggleTheme() {
+    const nextTheme = theme === "light" ? "dark" : "light";
+    setTheme(nextTheme);
+    if (nextTheme === "dark") {
+      document.documentElement.classList.add("dark");
+      document.documentElement.setAttribute("data-theme", "dark");
+      localStorage.setItem("fin_theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      document.documentElement.setAttribute("data-theme", "light");
+      localStorage.setItem("fin_theme", "light");
+    }
+  }
+
+  const firstName = currentUser.name.split(" ")[0];
+
+  return (
+    <header className="lg:hidden relative overflow-hidden bg-gradient-hero text-white rounded-b-[2rem] px-5 pt-6 pb-8 shadow-lg shadow-primary/20">
+      {/* Detalhe estético em overlay radial */}
+      <div
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.15)_0%,transparent_70%)]"
+        aria-hidden="true"
+      />
+
+      <div className="relative z-10 flex items-center justify-between">
+        {/* Identificação e Saudação */}
+        <div className="flex items-center gap-3">
+          <div className="flex size-11 items-center justify-center rounded-2xl bg-white/15 text-sm font-bold text-white backdrop-blur-md shadow-sm border border-white/20">
+            {firstName.charAt(0)}
+          </div>
+          <div>
+            <span className="text-xs font-medium text-white/80">
+              {greeting},
+            </span>
+            <h1 className="text-base font-bold tracking-tight text-white leading-tight">
+              {currentUser.name}
+            </h1>
+          </div>
+        </div>
+
+        {/* Ações Rápidas no Header Mobile */}
+        <div className="flex items-center gap-2">
+          {/* Alternador de Tema Mobile */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            aria-label={theme === "light" ? "Ativar modo escuro" : "Ativar modo claro"}
+            className="flex size-10 items-center justify-center rounded-2xl bg-white/15 text-white backdrop-blur-md border border-white/20 transition-all active:scale-95"
+          >
+            {theme === "light" ? (
+              <Moon className="size-4" aria-hidden="true" />
+            ) : (
+              <Sun className="size-4 text-warning" aria-hidden="true" />
+            )}
+          </button>
+
+          {/* Notificações Mobile */}
+          <button
+            type="button"
+            aria-label="Notificações"
+            className="relative flex size-10 items-center justify-center rounded-2xl bg-white/15 text-white backdrop-blur-md border border-white/20 transition-all active:scale-95"
+          >
+            <Bell className="size-4" aria-hidden="true" />
+            <span className="absolute top-2 right-2 flex size-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75" />
+              <span className="relative inline-flex size-2 rounded-full bg-accent" />
+            </span>
+          </button>
+        </div>
+      </div>
+    </header>
+  );
+}
+
