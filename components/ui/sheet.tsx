@@ -30,7 +30,9 @@ function useSheetContext() {
 
 export interface SheetProps {
   open: boolean;
-  onClose: () => void;
+  onClose?: () => void;
+  onOpenChange?: (open: boolean) => void;
+  title?: string;
   children: ReactNode;
 }
 
@@ -40,18 +42,23 @@ export interface SheetProps {
  * - Cantos superiores `rounded-t-[2rem]`.
  * - Fecha com ESC ou clique no overlay.
  */
-export function Sheet({ open, onClose, children }: SheetProps) {
+export function Sheet({ open, onClose, onOpenChange, title, children }: SheetProps) {
   const id = useId();
   const titleId = `${id}-title`;
+
+  const handleClose = useCallback(() => {
+    if (onClose) onClose();
+    if (onOpenChange) onOpenChange(false);
+  }, [onClose, onOpenChange]);
 
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') handleClose();
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [open, onClose]);
+  }, [open, handleClose]);
 
   useEffect(() => {
     if (open) {
@@ -65,7 +72,7 @@ export function Sheet({ open, onClose, children }: SheetProps) {
   if (!open) return null;
 
   return (
-    <SheetContext.Provider value={{ titleId, onClose }}>
+    <SheetContext.Provider value={{ titleId, onClose: handleClose }}>
       {/* Overlay */}
       <div
         className={cn(
@@ -73,7 +80,7 @@ export function Sheet({ open, onClose, children }: SheetProps) {
           'bg-black/50 backdrop-blur-sm',
           'animate-in fade-in duration-200 motion-reduce:animate-none',
         )}
-        onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+        onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
         aria-hidden="true"
       >
         {/* Painel */}
@@ -92,7 +99,12 @@ export function Sheet({ open, onClose, children }: SheetProps) {
         >
           {/* Handle visual de arrastar */}
           <div className="mx-auto mt-3 h-1 w-10 rounded-full bg-border" aria-hidden="true" />
-          {children}
+          {title && (
+            <SheetHeader>
+              <SheetTitle>{title}</SheetTitle>
+            </SheetHeader>
+          )}
+          {title ? <SheetBody>{children}</SheetBody> : children}
         </div>
       </div>
     </SheetContext.Provider>

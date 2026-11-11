@@ -15,6 +15,8 @@ export interface EmptyStateProps {
   title: string;
   description?: string;
   action?: EmptyStateAction;
+  actionLabel?: string;
+  onAction?: () => void;
   className?: string;
 }
 
@@ -26,8 +28,12 @@ export function EmptyState({
   title,
   description,
   action,
+  actionLabel,
+  onAction,
   className,
 }: EmptyStateProps) {
+  const effectiveAction: EmptyStateAction | undefined =
+    action ?? (actionLabel ? { label: actionLabel, onClick: onAction } : undefined);
   return (
     <div
       role="status"
@@ -52,14 +58,14 @@ export function EmptyState({
         )}
       </div>
 
-      {action && (
+      {effectiveAction && (
         <Button
-          variant={action.variant ?? 'primary'}
+          variant={effectiveAction.variant ?? 'primary'}
           size="md"
-          onClick={action.onClick}
-          {...(action.href ? { as: 'a', href: action.href } : {})}
+          onClick={effectiveAction.onClick}
+          {...(effectiveAction.href ? { as: 'a', href: effectiveAction.href } : {})}
         >
-          {action.label}
+          {effectiveAction.label}
         </Button>
       )}
     </div>

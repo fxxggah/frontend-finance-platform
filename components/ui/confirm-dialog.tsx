@@ -7,7 +7,8 @@ import { cn } from '@/lib/utils';
 
 export interface ConfirmDialogProps {
   open: boolean;
-  onClose: () => void;
+  onClose?: () => void;
+  onOpenChange?: (open: boolean) => void;
   /** Callback executado quando o usuário confirma */
   onConfirm: () => void;
   title: string;
@@ -19,6 +20,7 @@ export interface ConfirmDialogProps {
   cancelLabel?: string;
   /** Estado de carregamento do botão de confirmação */
   isLoading?: boolean;
+  isPending?: boolean;
 }
 
 /**
@@ -28,15 +30,24 @@ export interface ConfirmDialogProps {
 export function ConfirmDialog({
   open,
   onClose,
+  onOpenChange,
   onConfirm,
   title,
   description,
   confirmLabel = 'Confirmar',
   cancelLabel = 'Cancelar',
   isLoading = false,
+  isPending = false,
 }: ConfirmDialogProps) {
+  const handleClose = () => {
+    if (onClose) onClose();
+    if (onOpenChange) onOpenChange(false);
+  };
+
+  const loading = isLoading || isPending;
+
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="max-w-md">
+    <Dialog open={open} onClose={handleClose} maxWidth="max-w-md">
       <DialogHeader>
         <div className="flex items-center gap-3">
           <span
@@ -54,17 +65,11 @@ export function ConfirmDialog({
       </DialogBody>
 
       <DialogFooter>
-        <Button variant="outline" size="md" onClick={onClose} disabled={isLoading}>
+        <Button variant="outline" size="md" onClick={handleClose} disabled={loading}>
           {cancelLabel}
         </Button>
-        <Button
-          variant="danger"
-          size="md"
-          onClick={onConfirm}
-          isLoading={isLoading}
-          loadingText="Excluindo…"
-        >
-          {confirmLabel}
+        <Button variant="danger" size="md" onClick={onConfirm} disabled={loading}>
+          {loading ? 'Processando...' : confirmLabel}
         </Button>
       </DialogFooter>
     </Dialog>

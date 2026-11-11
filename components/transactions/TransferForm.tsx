@@ -37,9 +37,10 @@ type FormData = z.infer<typeof schema>;
 interface TransferFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialFromAccountId?: number;
 }
 
-export function TransferForm({ open, onOpenChange }: TransferFormProps) {
+export function TransferForm({ open, onOpenChange, initialFromAccountId }: TransferFormProps) {
   const { data: accountsData } = useAccounts();
   const createMutation = useCreateTransfer();
 
@@ -52,7 +53,7 @@ export function TransferForm({ open, onOpenChange }: TransferFormProps) {
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      fromAccountId: '',
+      fromAccountId: initialFromAccountId ? String(initialFromAccountId) : '',
       toAccountId: '',
       amount: '',
       date: new Date().toISOString().slice(0, 10),
@@ -61,8 +62,24 @@ export function TransferForm({ open, onOpenChange }: TransferFormProps) {
   });
 
   useEffect(() => {
-    if (!open) reset();
-  }, [open, reset]);
+    if (!open) {
+      reset({
+        fromAccountId: '',
+        toAccountId: '',
+        amount: '',
+        date: new Date().toISOString().slice(0, 10),
+        description: '',
+      });
+    } else if (initialFromAccountId) {
+      reset({
+        fromAccountId: String(initialFromAccountId),
+        toAccountId: '',
+        amount: '',
+        date: new Date().toISOString().slice(0, 10),
+        description: '',
+      });
+    }
+  }, [open, initialFromAccountId, reset]);
 
   async function onSubmit(data: FormData) {
     try {

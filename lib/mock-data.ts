@@ -8,6 +8,10 @@ import type {
   EvolutionResponse,
   ExpenseByCategory,
   Goal,
+  GoalContribution,
+  InvoiceDetail,
+  InvoicePayment,
+  InvoiceSummary,
   Transaction,
   Transfer,
   User,
@@ -56,6 +60,15 @@ export const mockAccounts: Account[] = [
     color: "#4F7BFF",
     icon: "smartphone",
     archived: false,
+  },
+  {
+    id: 4,
+    name: "Poupança Antiga",
+    type: "BANK",
+    balance: 0.0,
+    color: "#64748B",
+    icon: "piggy-bank",
+    archived: true,
   },
 ];
 
@@ -851,6 +864,106 @@ export const evolutionResponse: EvolutionResponse = {
     expense: item.expense,
     balance: item.balance,
   })),
+};
+
+// 11. Faturas de Cartão de Crédito
+export const mockInvoices: InvoiceSummary[] = [
+  {
+    reference: "2026-11",
+    closingDate: "2026-11-25",
+    dueDate: "2026-12-02",
+    total: 630.0,
+    paid: 0.0,
+    status: "OPEN",
+  },
+  {
+    reference: "2026-10",
+    closingDate: "2026-10-25",
+    dueDate: "2026-11-02",
+    total: 1280.5,
+    paid: 500.0,
+    status: "PARTIALLY_PAID",
+  },
+  {
+    reference: "2026-09",
+    closingDate: "2026-09-25",
+    dueDate: "2026-10-02",
+    total: 950.0,
+    paid: 950.0,
+    status: "PAID",
+  },
+  {
+    reference: "2026-08",
+    closingDate: "2026-08-25",
+    dueDate: "2026-09-02",
+    total: 1120.0,
+    paid: 1120.0,
+    status: "PAID",
+  },
+];
+
+// 12. Pagamentos de Faturas
+export const mockInvoicePayments: Record<string, InvoicePayment[]> = {
+  "2026-10": [
+    {
+      id: 1,
+      account: { id: 1, name: "Conta Principal" },
+      amount: 500.0,
+      date: "2026-10-28",
+    },
+  ],
+  "2026-09": [
+    {
+      id: 2,
+      account: { id: 1, name: "Conta Principal" },
+      amount: 950.0,
+      date: "2026-09-30",
+    },
+  ],
+};
+
+// 13. Contribuições de Metas (Aportes/Resgates)
+export const mockGoalContributions: Record<number, GoalContribution[]> = {
+  1: [
+    {
+      id: 1,
+      amount: 5000.0,
+      date: "2026-01-15",
+      notes: "Aporte inicial",
+    },
+    {
+      id: 2,
+      amount: 3500.0,
+      date: "2026-05-10",
+      notes: "Restituição do Imposto de Renda",
+    },
+    {
+      id: 3,
+      amount: 5000.0,
+      date: "2026-08-20",
+      notes: "Bônus semestral",
+    },
+    {
+      id: 4,
+      amount: 5000.0,
+      date: "2026-10-05",
+      notes: "Aporte mensal planejado",
+    },
+  ],
+  2: [
+    {
+      id: 5,
+      amount: 1500.0,
+      date: "2026-06-15",
+      notes: "Início da economia",
+    },
+    {
+      id: 6,
+      amount: 600.0,
+      date: "2026-09-10",
+      notes: "Freelance",
+    },
+  ],
 };
 
 export type { Goal, Transaction };

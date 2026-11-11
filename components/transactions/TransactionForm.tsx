@@ -35,7 +35,7 @@ const schema = z
     destinationType: z.enum(['account', 'card']),
     accountId: z.string().optional(),
     creditCardId: z.string().optional(),
-    installments: z.number().int().min(1).max(24).default(1),
+    installments: z.number().int().min(1).max(24),
   })
   .superRefine((data, ctx) => {
     if (data.destinationType === 'account' && !data.accountId) {

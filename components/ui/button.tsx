@@ -23,6 +23,11 @@ const buttonVariants = cva(
           'bg-primary text-white shadow-sm',
           'hover:opacity-90 active:scale-[0.98]',
         ].join(' '),
+        /** Alias para brand */
+        brand: [
+          'bg-primary text-white shadow-sm',
+          'hover:opacity-90 active:scale-[0.98]',
+        ].join(' '),
         /** Superfície suave + borda — ação secundária */
         secondary: [
           'bg-surface-soft text-text border border-border',

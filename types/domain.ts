@@ -257,8 +257,34 @@ export interface AccountRequest {
   name: string;
   type: AccountType;
   balance?: number;
+  initialBalance?: number;
   color?: string;
   icon?: string;
+}
+
+export interface AccountDeleteResponse {
+  archived: boolean;
+}
+
+export interface CreditCardRequest {
+  name: string;
+  creditLimit: number;
+  closingDay: number;
+  dueDay: number;
+  color?: string;
+  icon?: string;
+}
+
+export interface InvoicePaymentRequest {
+  accountId: number;
+  amount: number;
+  date: string;
+}
+
+export interface GoalContributionRequest {
+  amount: number;
+  date: string;
+  notes?: string;
 }
 
 export interface GoalRequest {
