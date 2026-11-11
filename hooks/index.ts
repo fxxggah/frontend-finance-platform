@@ -20,7 +20,13 @@ export {
   useUpdateAccount,
   useDeleteAccount,
 } from './use-accounts';
-export { useCategories } from './use-categories';
+export {
+  useCategories,
+  useCreateCategory,
+  useUpdateCategory,
+  useDeleteCategory,
+} from './use-categories';
+export { useTheme } from './use-theme';
 export {
   useCreditCards,
   useCreditCard,
