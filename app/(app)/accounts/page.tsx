@@ -125,7 +125,7 @@ export default function AccountsPage() {
         </Card>
       )}
 
-      {/* Grade de Contas Ativas */}
+      Grade de Contas Ativas
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-text">
