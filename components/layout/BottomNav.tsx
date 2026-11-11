@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { Sheet, SheetHeader, SheetTitle, SheetBody } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { logout } from "@/lib/api/endpoints/auth";
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -32,7 +33,7 @@ export function BottomNav() {
 
   async function handleLogout() {
     setIsMoreOpen(false);
-    await fetch("/api/auth/logout", { method: "POST" });
+    await logout();
     router.push("/login");
     router.refresh();
   }

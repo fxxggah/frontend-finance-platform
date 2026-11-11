@@ -34,19 +34,12 @@ export async function loginWithGoogle(data: GoogleLoginRequest): Promise<AuthRes
 
 /**
  * Encerra a sessão do usuário no backend e limpa o token em memória.
- * // POST /auth/logout
+ * O Route Handler lê o refresh token httpOnly e revoga a sessão no backend.
  */
 export async function logout(): Promise<void> {
-  if (USE_MOCK) {
-    await simulateNetworkDelay(250);
-    setAccessToken(null);
-    return;
-  }
-
   try {
-    await apiFetch<void>("/auth/logout", {
-      method: "POST",
-    });
+    const response = await fetch("/api/auth/logout", { method: "POST" });
+    if (!response.ok) throw new Error("Não foi possível encerrar a sessão.");
   } finally {
     setAccessToken(null);
   }

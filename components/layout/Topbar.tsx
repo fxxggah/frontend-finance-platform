@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Sun, Moon, Bell, LogOut, User as UserIcon } from "lucide-react";
 import { currentUser } from "@/lib/mock-data";
+import { logout } from "@/lib/api/endpoints/auth";
 
 export function Topbar() {
   const router = useRouter();
@@ -43,7 +44,7 @@ export function Topbar() {
   }
 
   async function handleLogout() {
-    await fetch("/api/auth/logout", { method: "POST" });
+    await logout();
     router.push("/login");
     router.refresh();
   }
@@ -52,7 +53,7 @@ export function Topbar() {
   const firstName = currentUser.name.split(" ")[0];
 
   return (
-    <header className="sticky top-0 z-20 hidden lg:flex h-20 w-full items-center justify-between border-b border-border bg-surface/80 px-8 backdrop-blur-md">
+    <header className="sticky top-0 z-20 hidden lg:flex h-20 w-full items-center justify-between border-b border-border bg-surface px-8">
       {/* Saudação dinâmica com o nome */}
       <div>
         <h2 className="text-lg font-bold tracking-tight text-text">

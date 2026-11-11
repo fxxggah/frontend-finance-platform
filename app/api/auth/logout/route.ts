@@ -1,14 +1,13 @@
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { revokeSession, clearSessionCookie } from "@/lib/auth/session";
 
-/**
- * POST /api/auth/logout
- * Invalida e remove o cookie de sessão do navegador.
- */
-export async function POST() {
-  const cookieStore = await cookies();
-  cookieStore.delete("fin_session");
-
-  return NextResponse.json({ success: true });
+export async function POST(request: NextRequest) {
+  if (request.headers.get("origin") !== request.nextUrl.origin) {
+    return NextResponse.json({ error: "Origem inválida." }, { status: 403 });
+  }
+  const refreshToken = request.cookies.get("fin_session")?.value;
+  if (refreshToken) await revokeSession(refreshToken).catch(() => undefined);
+  const response = NextResponse.json({ success: true });
+  clearSessionCookie(response);
+  return response;
 }
-

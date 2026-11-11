@@ -1,12 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Bell, Sun, Moon, LogOut } from "lucide-react";
+import { Bell, Sun, Moon } from "lucide-react";
 import { currentUser } from "@/lib/mock-data";
 
 export function HeaderMobile() {
-  const router = useRouter();
   const [greeting, setGreeting] = useState("Olá");
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
@@ -53,7 +51,7 @@ export function HeaderMobile() {
       <div className="relative z-10 flex items-center justify-between">
         {/* Identificação e Saudação */}
         <div className="flex items-center gap-3">
-          <div className="flex size-11 items-center justify-center rounded-2xl bg-white/15 text-sm font-bold text-white backdrop-blur-md shadow-sm border border-white/20">
+          <div className="flex size-11 items-center justify-center rounded-2xl bg-white/15 text-sm font-bold text-white shadow-sm border border-white/20">
             {firstName.charAt(0)}
           </div>
           <div>
@@ -73,7 +71,7 @@ export function HeaderMobile() {
             type="button"
             onClick={toggleTheme}
             aria-label={theme === "light" ? "Ativar modo escuro" : "Ativar modo claro"}
-            className="flex size-10 items-center justify-center rounded-2xl bg-white/15 text-white backdrop-blur-md border border-white/20 transition-all active:scale-95"
+            className="flex size-11 items-center justify-center rounded-2xl bg-white/15 text-white border border-white/20 transition-all active:scale-95"
           >
             {theme === "light" ? (
               <Moon className="size-4" aria-hidden="true" />
@@ -86,7 +84,7 @@ export function HeaderMobile() {
           <button
             type="button"
             aria-label="Notificações"
-            className="relative flex size-10 items-center justify-center rounded-2xl bg-white/15 text-white backdrop-blur-md border border-white/20 transition-all active:scale-95"
+            className="relative flex size-11 items-center justify-center rounded-2xl bg-white/15 text-white border border-white/20 transition-all active:scale-95"
           >
             <Bell className="size-4" aria-hidden="true" />
             <span className="absolute top-2 right-2 flex size-2">

@@ -22,6 +22,7 @@ import { useUiStore } from '@/stores/ui-store';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { logout } from '@/lib/api/endpoints/auth';
 import { currentUser } from '@/lib/mock-data';
 
 // ─── Componentes auxiliares ───────────────────────────────────────────────────
@@ -111,7 +112,7 @@ export default function SettingsPage() {
       // Simulação: apenas faz logout e redireciona
       await new Promise((r) => setTimeout(r, 1000));
       toast.success('Conta excluída. Seus dados foram removidos.');
-      await fetch('/api/auth/logout', { method: 'POST' });
+      await logout();
       router.replace('/login');
     } catch {
       toast.error('Não foi possível excluir a conta. Tente novamente.');
@@ -132,7 +133,7 @@ export default function SettingsPage() {
 
   async function handleLogout() {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      await logout();
       toast.success('Sessão encerrada.');
       router.replace('/login');
     } catch {

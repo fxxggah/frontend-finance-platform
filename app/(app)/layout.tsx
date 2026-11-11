@@ -22,10 +22,10 @@ export default async function AppLayout({
       <Sidebar />
 
       <div className="flex min-h-screen flex-col lg:pl-64">
-        {/* Topbar Desktop */}
+        {/* Cabeçalho global desktop: renderizado uma única vez para todas as rotas. */}
         <Topbar />
 
-        {/* ── Shell Mobile (viewport < 1024px) ── */}
+        {/* Cabeçalho global mobile (viewport < 1024px). */}
         <HeaderMobile />
 
         {/* Conteúdo Principal com padding adaptado para mobile (espaço para o BottomNav) */}

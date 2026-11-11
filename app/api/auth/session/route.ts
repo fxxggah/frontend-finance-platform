@@ -1,47 +1,25 @@
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { refreshSession, setSessionCookie } from "@/lib/auth/session";
 
-/**
- * GET /api/auth/session
- * Lê o estado de autenticação a partir do cookie de sessão httpOnly.
- */
-export async function GET() {
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get("fin_session");
+export async function GET(request: NextRequest) {
+  return NextResponse.json({ authenticated: Boolean(request.cookies.get("fin_session")?.value) });
+}
 
-  if (!sessionCookie?.value) {
-    return NextResponse.json({ authenticated: false, session: null }, { status: 401 });
+export async function POST(request: NextRequest) {
+  if (request.headers.get("origin") !== request.nextUrl.origin) {
+    return NextResponse.json({ error: "Origem inválida." }, { status: 403 });
   }
-
+  const body: unknown = await request.json().catch(() => null);
+  if (!body || typeof body !== "object" || !("refreshToken" in body) ||
+      typeof body.refreshToken !== "string" || !body.refreshToken.trim()) {
+    return NextResponse.json({ error: "Sessão inválida." }, { status: 400 });
+  }
   try {
-    const session = JSON.parse(sessionCookie.value);
-    return NextResponse.json({ authenticated: true, session });
+    const tokens = await refreshSession(body.refreshToken);
+    const response = NextResponse.json({ accessToken: tokens.accessToken });
+    setSessionCookie(response, tokens.refreshToken);
+    return response;
   } catch {
-    return NextResponse.json({
-      authenticated: true,
-      session: { token: sessionCookie.value },
-    });
+    return NextResponse.json({ error: "Não foi possível iniciar a sessão." }, { status: 401 });
   }
 }
-
-/**
- * POST /api/auth/session
- * Grava o cookie seguro de sessão após autenticação bem-sucedida com Google.
- */
-export async function POST(request: Request) {
-  const body = await request.json().catch(() => ({}));
-  const cookieStore = await cookies();
-
-  const sessionData = JSON.stringify(body || { user: "Hellen Carol" });
-
-  cookieStore.set("fin_session", sessionData, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 7 * 24 * 60 * 60, // 7 dias
-  });
-
-  return NextResponse.json({ success: true });
-}
-

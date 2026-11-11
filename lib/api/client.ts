@@ -35,17 +35,24 @@ function buildUrl(path: string, params?: Record<string, string | number | boolea
   return url.toString();
 }
 
-/**
- * Stub/Mock de renovação de token (uma única tentativa).
- */
+let refreshPromise: Promise<boolean> | null = null;
+
 async function attemptTokenRefresh(): Promise<boolean> {
-  try {
-    // No fluxo real, faz POST /api/auth/session ou POST /api/v1/auth/refresh com o refresh token
-    // Retorna true simulando sucesso de renovação se houver credencial
-    return false;
-  } catch {
-    return false;
+  if (!refreshPromise) {
+    refreshPromise = (async () => {
+      try {
+        const response = await fetch("/api/auth/refresh", { method: "POST" });
+        if (!response.ok) return false;
+        const data: { accessToken?: string } = await response.json();
+        if (!data.accessToken) return false;
+        setAccessToken(data.accessToken);
+        return true;
+      } catch {
+        return false;
+      }
+    })().finally(() => { refreshPromise = null; });
   }
+  return refreshPromise;
 }
 
 /**
@@ -60,6 +67,10 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
     headers.set("Content-Type", "application/json");
   }
 
+  const isPublicAuth = path === "/auth/google";
+  if (!isPublicAuth && !getAccessToken() && typeof window !== "undefined") {
+    await attemptTokenRefresh();
+  }
   const token = getAccessToken();
   if (token && !headers.has("Authorization")) {
     headers.set("Authorization", `Bearer ${token}`);
@@ -72,11 +83,17 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
   });
 
   // Intercepta 401 para tentativa única de refresh
-  if (response.status === 401 && !_retry) {
+  if (response.status === 401 && !_retry && !isPublicAuth && typeof window !== "undefined") {
+    // Uma resposta 401 pode vir de um token antigo enviado em paralelo.
+    if (token !== getAccessToken() && getAccessToken()) {
+      return apiFetch<T>(path, { ...options, _retry: true });
+    }
     const refreshed = await attemptTokenRefresh();
     if (refreshed) {
       return apiFetch<T>(path, { ...options, _retry: true });
     }
+    setAccessToken(null);
+    if (window.location.pathname !== "/login") window.location.assign("/login");
   }
 
   // Tratamento de erros estruturados (RFC 7807)

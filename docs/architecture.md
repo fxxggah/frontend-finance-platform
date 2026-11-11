@@ -93,15 +93,17 @@ sequenceDiagram
     Front->>Back: POST /api/v1/auth/google { idToken }
     Back-->>Front: Retorna { accessToken, refreshToken, expiresIn, user }
     Front->>NextRoute: POST /api/auth/session { refreshToken, user }
-    NextRoute-->>Front: Grava cookie 'fin_session' (httpOnly, secure, sameSite=lax)
+    NextRoute->>Back: POST /api/v1/auth/refresh { refreshToken }
+    Back-->>NextRoute: Retorna tokens rotacionados
+    NextRoute-->>Front: Grava refreshToken novo em fin_session (httpOnly, secure, sameSite=lax) e devolve accessToken
     Front->>Front: Guarda accessToken em memória (Session Memory Store)
     Front->>User: Redireciona para /dashboard
 ```
 
 ### Detalhes de Segurança dos Tokens:
 1. **Access Token:** Mantido estritamente em memória do navegador (Zustand ou variável de módulo). Tem validade curta (15 minutos).
-2. **Refresh Token:** Armazenado em cookie `httpOnly`, `secure`, `sameSite=lax`, imune a ataques XSS.
-3. **Renovação Automática (Rotação de Tokens):** Quando qualquer requisição à API retorna `401 Unauthorized`, o cliente HTTP intercepta, faz chamada ao endpoint de refresh (`POST /api/v1/auth/refresh`), armazena o novo access token e repete a requisição original de forma transparente.
+2. **Refresh Token:** Armazenado isoladamente em cookie `httpOnly`, `secure` em produção e `sameSite=lax`. O navegador não lê o token.
+3. **Renovação Automática (Rotação de Tokens):** Quando falta o access token em memória ou uma requisição à API retorna `401 Unauthorized`, o cliente chama `POST /api/auth/refresh`. O Route Handler lê o cookie, chama `POST /api/v1/auth/refresh`, grava o refresh token rotacionado e devolve apenas o novo access token. O cliente repete a requisição original uma única vez.
 
 ---
 
