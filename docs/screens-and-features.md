@@ -51,6 +51,7 @@ Grade com 4 cartões com sparklines e percentual comparativo com o período ante
 4. **Faturas em Aberto:** Valor total acumulado de despesas de cartão pendentes (`creditCardDebt`).
 
 ### 2.4 Gráfico de Fluxo de Caixa (Recharts)
+- No período **Dia** (`period=DAY`), exibe barras agrupadas de Receitas vs. Despesas, como em Relatórios, com tooltip sem destaque cinza de fundo. A escolha considera o período selecionado, não a granularidade da API; os demais períodos mantêm o gráfico de áreas suaves.
 - Gráfico de área suave comparando a evolução acumulada de Receitas vs. Despesas ao longo dos dias do mês.
 - Card com o mesmo gradiente roxo, arcos decorativos e estilo do gráfico de Relatórios; receitas em branco, despesas em rosa e preenchimentos suaves. Eixos e legenda claros para leitura sobre o fundo roxo nos dois temas.
 - Tooltip customizado formatado em BRL, com superfície sólida e texto adaptado ao tema.
@@ -128,7 +129,8 @@ Grade com 4 cartões com sparklines e percentual comparativo com o período ante
   - `PAID` (Paga): Totalmente quitada.
   - `OVERDUE` (Vencida): Fechada e com data de vencimento ultrapassada.
 - **Botão "Pagar Fatura":**
-  - **Bloqueado** para faturas com status `OPEN`.
+  - Disponível também para faturas `OPEN`, até o saldo devedor atual. Bloqueado quando não há saldo restante.
+  - Pagamento antecipado não fecha a fatura: ela permanece `OPEN` até o fechamento e aceita novas compras.
   - Abre modal solicitando a Conta de Origem do pagamento, valor e data.
 
 ---

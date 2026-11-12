@@ -7,6 +7,8 @@ import { join } from 'node:path';
 
 const origin = process.env.SMOKE_URL || 'http://localhost:3005';
 const authOnly = process.argv.includes('--auth-only');
+const transactionsOnly = process.argv.includes('--transactions-only');
+const invoicesOnly = process.argv.includes('--invoices-only');
 const chromePath = process.env.CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 const profile = await mkdtemp(join(tmpdir(), 'fin-ui-'));
 const port = 9227;
@@ -40,6 +42,12 @@ try {
   let refreshScenario = { status: 200, delay: 0 };
   let refreshCalls = 0;
   let privateCalls = 0;
+  const transactionRequests = [];
+  const resourceReads = new Map();
+  let transactionScenario = { status: 201 };
+  let invoiceFixture;
+  let invoicePaymentStatus = 201;
+  const invoicePaymentRequests = [];
   function send(method, params = {}) {
     const id = ++nextId;
     return new Promise((resolve, reject) => {
@@ -47,7 +55,9 @@ try {
       socket.send(JSON.stringify({ id, method, params }));
     });
   }
-  const today = new Date().toISOString().slice(0, 10);
+  const today = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(new Date());
   const reference = today.slice(0, 7);
   function sample(schema, key = '') {
     if (schema.$ref) return sample(spec.components.schemas[schema.$ref.split('/').at(-1)], key);
@@ -108,6 +118,7 @@ try {
         headers.push({ name: 'Set-Cookie', value: 'fin_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0' });
       }
       else if (request.method !== 'OPTIONS') {
+        if (request.method === 'GET') resourceReads.set(url.pathname, (resourceReads.get(url.pathname) || 0) + 1);
         if (!url.pathname.startsWith('/api/v1/auth/')) privateCalls++;
         const route = Object.keys(spec.paths).find(route => new RegExp(`^${route.replace(/\{[^}]+\}/g, '[^/]+')}$`).test(url.pathname));
         const operation = spec.paths[route]?.[request.method.toLowerCase()];
@@ -115,6 +126,36 @@ try {
         const response = Object.entries(operation?.responses || {}).find(([status]) => Number(status) < 300)?.[1];
         const schema = Object.values(response?.content || {})[0]?.schema;
         body = schema ? sample(schema) : undefined;
+        if (invoiceFixture) {
+          if (url.pathname === '/api/v1/credit-cards' && request.method === 'GET') {
+            body = [{ ...sample(spec.components.schemas.CreditCardResponse), id: 1, usedLimit: invoiceFixture.total - invoiceFixture.paid,
+              availableLimit: 5000 - invoiceFixture.total + invoiceFixture.paid, currentInvoice: invoiceFixture }];
+          }
+          if (url.pathname === '/api/v1/credit-cards/1/invoices' && request.method === 'GET') body = [invoiceFixture];
+          if (/\/credit-cards\/1\/invoices\/[^/]+\/payments$/.test(url.pathname) && request.method === 'POST') {
+            const payment = JSON.parse(request.postData);
+            invoicePaymentRequests.push(payment);
+            status = invoicePaymentStatus;
+            if (status === 201) {
+              invoiceFixture.paid = Math.round((invoiceFixture.paid + payment.amount) * 100) / 100;
+              body = undefined;
+            } else body = { status, title: 'Unprocessable Content', detail: 'Saldo da fatura alterado. Confira o valor e tente novamente.' };
+          }
+        }
+        if (url.pathname === '/api/v1/categories' && request.method === 'GET') {
+          const category = sample(spec.components.schemas.CategoryResponse);
+          body = [{ ...category, id: 1, type: 'INCOME' }, { ...category, id: 2, type: 'EXPENSE' }];
+        }
+        if (url.pathname === '/api/v1/transactions' && request.method === 'POST') {
+          transactionRequests.push(JSON.parse(request.postData));
+          if (transactionScenario.networkError) {
+            await send('Fetch.failRequest', { requestId, errorReason: 'ConnectionFailed' });
+            return;
+          }
+          status = transactionScenario.status;
+          if (transactionScenario.delay) await sleep(transactionScenario.delay);
+          if (status >= 400) body = transactionScenario.body;
+        }
       }
       await send('Fetch.fulfillRequest', {
         requestId, responseCode: status,
@@ -138,6 +179,7 @@ try {
   ] });
   async function evaluate(expression) {
     const response = await send('Runtime.evaluate', { expression, returnByValue: true });
+    if (response.exceptionDetails) throw new Error(response.exceptionDetails.exception?.description || response.exceptionDetails.text);
     return response.result.value;
   }
   async function navigate(path) {
@@ -163,7 +205,7 @@ try {
   }
   const loginVisible = `location.pathname === '/login' && document.body.innerText.includes('Suas finanças, num só lugar')`;
   const sessionError = `document.body.innerText.includes('Não foi possível validar sua sessão')`;
-  for (const width of [390, 1440]) {
+  if (!transactionsOnly && !invoicesOnly) for (const width of [390, 1440]) {
     await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: width < 1024 });
     await send('Network.deleteCookies', { name: 'fin_session', url: origin });
     refreshCalls = 0;
@@ -240,7 +282,184 @@ try {
     console.log(`OK ${width}px sessão: sem cookie, 401, 502, 503, retry, logout e recarga`);
   }
   await setSessionCookie();
-  if (!authOnly) for (const width of [390, 1440]) {
+  if (!authOnly && !transactionsOnly) for (const width of [390, 1440]) {
+    await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: width < 1024 });
+    invoiceFixture = { reference, closingDate: '2099-01-25', dueDate: '2099-02-02', total: 1000, paid: 0, status: 'OPEN' };
+    invoicePaymentStatus = 201;
+    const route = `/cards/1/invoices/${reference}`;
+    const payButton = `Array.from(document.querySelectorAll('button')).find(b => b.textContent.trim() === 'Pagar fatura')`;
+    async function fillPayment(amount) {
+      await waitFor(`!!document.querySelector('#pay-account option[value="1"]')`);
+      for (const [selector, value] of [['#pay-account', '1'], ['#pay-amount', amount]]) {
+        await evaluate(`(() => {
+          const element = document.querySelector(${JSON.stringify(selector)});
+          const prototype = element.tagName === 'SELECT' ? HTMLSelectElement.prototype : HTMLInputElement.prototype;
+          Object.getOwnPropertyDescriptor(prototype, 'value').set.call(element, ${JSON.stringify(value)});
+          element.dispatchEvent(new Event('input', { bubbles: true }));
+          element.dispatchEvent(new Event('change', { bubbles: true }));
+        })()`);
+      }
+    }
+    await navigate(route);
+    await waitFor(`!!(${payButton}) && !(${payButton}).disabled`);
+    assert.ok(await evaluate(`document.body.innerText.includes('Você pode antecipar o pagamento')`));
+    await clickButton('Pagar fatura');
+    await fillPayment('1000,01');
+    const beforeInvalid = invoicePaymentRequests.length;
+    await clickButton('Confirmar Pagamento');
+    await waitFor(`document.body.innerText.includes('O valor não pode ser superior ao restante')`);
+    assert.equal(invoicePaymentRequests.length, beforeInvalid);
+    await fillPayment('400,00');
+    const readsBefore = new Map(resourceReads);
+    await clickButton('Confirmar Pagamento');
+    await waitFor(`!document.querySelector('[role="dialog"]') && document.body.innerText.includes('400,00')`);
+    assert.deepEqual(invoicePaymentRequests.at(-1), { accountId: 1, amount: 400, date: today });
+    assert.ok(await evaluate(`document.body.innerText.includes('Aberta') && !(${payButton}).disabled`));
+    assert.ok(resourceReads.get('/api/v1/credit-cards') > (readsBefore.get('/api/v1/credit-cards') || 0));
+    assert.ok(resourceReads.get('/api/v1/credit-cards/1/invoices') > (readsBefore.get('/api/v1/credit-cards/1/invoices') || 0));
+    await navigate(route);
+    await waitFor(`document.body.innerText.includes('400,00')`);
+    await clickButton('Pagar fatura');
+    await fillPayment('600,00');
+    invoicePaymentStatus = 422;
+    const beforeError = invoicePaymentRequests.length;
+    await clickButton('Confirmar Pagamento');
+    await waitFor(`document.body.innerText.includes('Saldo da fatura alterado')`);
+    assert.equal(invoicePaymentRequests.length, beforeError + 1);
+    assert.equal(await evaluate(`document.querySelector('#pay-amount').value`), '600,00');
+    assert.equal(await evaluate(`document.querySelector('#pay-account').value`), '1');
+    invoicePaymentStatus = 201;
+    await clickButton('Confirmar Pagamento');
+    await waitFor(`!document.querySelector('[role="dialog"]') && (${payButton}).disabled`);
+    assert.equal(invoiceFixture.paid, 1000);
+    assert.ok(await evaluate(`document.body.innerText.includes('Aberta')`));
+    assert.ok(await evaluate(`document.documentElement.scrollWidth <= innerWidth`), 'Overflow horizontal na fatura');
+    for (const state of ['loading', 'empty', 'error']) {
+      await navigate(`${route}?state=${state}`);
+      await waitFor(state === 'loading' ? `!!document.querySelector('.animate-pulse')`
+        : `document.body.innerText.includes(${JSON.stringify(state === 'empty' ? 'Nenhuma compra nesta fatura' : 'Erro ao carregar fatura')})`);
+    }
+    console.log(`OK ${width}px antecipação parcial/total, excesso, erro, recarga e estados de fatura`);
+    invoiceFixture = undefined;
+  }
+  if (!authOnly && !invoicesOnly) for (const width of [390, 1440]) {
+    await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: width < 1024 });
+    async function setField(selector, value) {
+      assert.ok(await evaluate(`(() => {
+        const element = document.querySelector(${JSON.stringify(selector)});
+        if (!element) return false;
+        const prototype = element.tagName === 'SELECT' ? HTMLSelectElement.prototype : HTMLInputElement.prototype;
+        Object.getOwnPropertyDescriptor(prototype, 'value').set.call(element, ${JSON.stringify(String(value))});
+        element.dispatchEvent(new Event('input', { bubbles: true }));
+        element.dispatchEvent(new Event('change', { bubbles: true }));
+        return true;
+      })()`), `Campo ausente: ${selector}`);
+    }
+    async function fillCard() {
+      await navigate('/transactions/new');
+      await waitFor(`!!document.querySelector('#accountId option[value="1"]')`);
+      await setField('#amount', '600,00');
+      await setField('#description', 'Compra de regressão');
+      await clickButton('Cartão de crédito');
+      await waitFor(`!!document.querySelector('#categoryId option[value="2"]') && !!document.querySelector('#creditCardId option[value="1"]')`);
+      await setField('#categoryId', 2);
+      await setField('#creditCardId', 1);
+    }
+    for (const [count, mode] of [[1, 'input'], [3, 'input'], [3, 'buttons'], [2, 'input'], [24, 'input']]) {
+      await fillCard();
+      if (mode === 'buttons') for (let i = 1; i < count; i++) await evaluate(`document.querySelector('[aria-label="Aumentar parcelas"]').click()`);
+      else await setField('[name="installments"]', count);
+      const before = transactionRequests.length;
+      const readsBefore = new Map(resourceReads);
+      await clickButton('Registrar');
+      await waitFor(`location.pathname === '/transactions' && !document.querySelector('[role="dialog"]')`);
+      assert.equal(transactionRequests.length, before + 1, 'Deve enviar apenas uma requisição');
+      assert.deepEqual(transactionRequests.at(-1), {
+        type: 'EXPENSE', amount: 600, description: 'Compra de regressão', date: today,
+        categoryId: 2, notes: null, creditCardId: 1, installments: count,
+      });
+      for (const resource of ['/api/v1/accounts', '/api/v1/credit-cards', '/api/v1/transactions']) {
+        assert.ok(resourceReads.get(resource) > (readsBefore.get(resource) || 0), `Consulta não atualizada após cadastro: ${resource}`);
+      }
+      console.log(`OK ${width}px cadastro ${count}x (${mode})`);
+    }
+    for (const invalid of [25, 0, 1.5, '']) {
+      await fillCard();
+      await setField('[name="installments"]', invalid);
+      const beforeInvalid = transactionRequests.length;
+      await clickButton('Registrar');
+      await waitFor(`!!document.querySelector('#installments-error')`);
+      assert.equal(transactionRequests.length, beforeInvalid);
+      assert.equal(await evaluate('document.activeElement.name'), 'installments');
+      assert.ok(await evaluate(`document.querySelector('#installments').getAttribute('aria-invalid') === 'true' && document.querySelector('#installments').getAttribute('aria-describedby') === 'installments-error'`));
+      assert.ok(await evaluate(`document.body.innerText.includes('Revise os campos indicados')`));
+      assert.ok(await evaluate(`!document.querySelector('#installments-error').textContent.includes('expected')`));
+      const correction = invalid === 25 ? 'Diminuir parcelas' : 'Aumentar parcelas';
+      await evaluate(`document.querySelector(${JSON.stringify(`[aria-label="${correction}"]`)}).click()`);
+      await waitFor(`!document.querySelector('#installments-error')`);
+      console.log(`OK ${width}px parcelas inválidas: ${JSON.stringify(invalid)}, foco e correção por botão`);
+    }
+    await fillCard();
+    await setField('[name="installments"]', 25);
+    await clickButton('Registrar');
+    await waitFor(`!!document.querySelector('#installments-error')`);
+    await clickButton('Conta bancária');
+    await setField('#accountId', 1);
+    await clickButton('Registrar');
+    await waitFor(`location.pathname === '/transactions' && !document.querySelector('[role="dialog"]')`);
+    assert.equal(transactionRequests.at(-1).accountId, 1);
+    assert.ok(!('creditCardId' in transactionRequests.at(-1)) && !('installments' in transactionRequests.at(-1)));
+    await fillCard();
+    await setField('[name="installments"]', 3);
+    await clickButton('Conta bancária');
+    await setField('#accountId', 1);
+    await clickButton('Cartão de crédito');
+    await setField('#creditCardId', 1);
+    await setField('[name="installments"]', 3);
+    for (const scenario of [
+      { status: 400, body: { detail: 'Quantidade rejeitada', errors: [{ field: 'installments', message: 'Parcelas rejeitadas pelo servidor' }] } },
+      { status: 400, body: { detail: 'Dados rejeitados pelo servidor', errors: [{ field: 'unknownField', message: 'Campo desconhecido' }] } },
+      { status: 422, body: { detail: 'Operação não permitida pelo servidor' } },
+      { status: 500, body: { detail: 'Falha temporária no servidor' } },
+      { networkError: true },
+    ]) {
+      transactionScenario = scenario;
+      const before = transactionRequests.length;
+      await clickButton('Registrar');
+      const expected = scenario.networkError ? 'Não foi possível conectar ao servidor' : scenario.body.detail;
+      await waitFor(`Array.from(document.querySelectorAll('form [role="alert"]')).some(element => element.textContent.includes(${JSON.stringify(expected)})) && !document.querySelector('button[type="submit"]').disabled`);
+      assert.equal(transactionRequests.length, before + 1);
+      assert.equal(await evaluate(`document.querySelector('#amount').value`), '600,00');
+      assert.equal(await evaluate(`document.querySelector('#description').value`), 'Compra de regressão');
+      assert.equal(await evaluate(`document.querySelector('[name="installments"]').value`), '3');
+      if (scenario.status === 400 && scenario.body.errors[0].field === 'installments') {
+        assert.equal(await evaluate(`document.querySelector('#installments-error').textContent.trim()`), 'Parcelas rejeitadas pelo servidor');
+        assert.equal(await evaluate('document.activeElement.name'), 'installments');
+      }
+      assert.ok(await evaluate('document.documentElement.scrollWidth <= window.innerWidth'));
+      console.log(`OK ${width}px erro ${scenario.status || 'rede'} visível e valores preservados`);
+    }
+    await evaluate(`document.querySelector('form [role="alert"]').scrollIntoView({ block: 'center' })`);
+    const shot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true });
+    await writeFile(join(profile, `transactions-error-${width}.png`), Buffer.from(shot.data, 'base64'));
+    transactionScenario = { status: 201, delay: 350 };
+    const beforeRetry = transactionRequests.length;
+    await clickButton('Registrar');
+    await waitFor(`document.querySelector('button[type="submit"]')?.disabled && document.body.innerText.includes('Salvando...')`);
+    await clickButton('Salvando...');
+    await waitFor(`location.pathname === '/transactions' && !document.querySelector('[role="dialog"]')`);
+    assert.equal(transactionRequests.length, beforeRetry + 1);
+    assert.ok(!('accountId' in transactionRequests.at(-1)));
+    transactionScenario = { status: 201 };
+    console.log(`OK ${width}px troca de destino, nova tentativa e envio único`);
+    for (const state of ['loading', 'empty', 'error']) {
+      await navigate(`/transactions?state=${state}`);
+      await waitFor(state === 'loading' ? `!!document.querySelector('.animate-pulse')`
+        : state === 'empty' ? `/Nenhum|Nenhuma/.test(document.body.innerText)`
+          : `/Erro ao carregar|Não foi possível|não foi possível/.test(document.body.innerText)`);
+      console.log(`OK ${width}px transações ?state=${state}`);
+    }
+    if (transactionsOnly) continue;
     await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: width < 1024 });
     for (const route of ['/dashboard', '/transactions', '/accounts', '/cards', '/goals', '/reports', '/categories', '/settings']) {
       await navigate(route);

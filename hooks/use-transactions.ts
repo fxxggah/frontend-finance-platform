@@ -54,7 +54,7 @@ export function useCreateTransaction() {
       toast.success('Transação registrada com sucesso!');
     },
     onError: (error: unknown) => {
-      if (error instanceof ApiError && error.status === 422) {
+      if (error instanceof ApiError) {
         toast.error(error.detail || 'Não foi possível registrar a transação.');
       } else {
         toast.error('Erro inesperado ao registrar transação.');
@@ -77,7 +77,7 @@ export function useUpdateTransaction() {
       toast.success('Transação atualizada com sucesso!');
     },
     onError: (error: unknown) => {
-      if (error instanceof ApiError && error.status === 422) {
+      if (error instanceof ApiError) {
         toast.error(error.detail || 'Não foi possível atualizar a transação.');
       } else {
         toast.error('Erro inesperado ao atualizar transação.');

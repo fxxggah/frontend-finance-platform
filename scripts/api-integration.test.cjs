@@ -33,6 +33,70 @@ function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 }
 
+test('pagamento antecipado envia somente o contrato e preserva erros ProblemDetail', async () => {
+  const { client } = reset();
+  client.setAccessToken('invoice-test');
+  const cards = require('../lib/api/endpoints/credit-cards.ts');
+  const payment = { accountId: 1, amount: 400, date: '2026-10-20' };
+  global.fetch = async (input, init) => {
+    assert.equal(String(input), 'http://localhost:8080/api/v1/credit-cards/1/invoices/2026-10/payments');
+    assert.equal(init.method, 'POST');
+    assert.deepEqual(JSON.parse(init.body), payment);
+    return new Response(null, { status: 201 });
+  };
+  await cards.payInvoice(1, '2026-10', payment);
+  global.fetch = async () => json({ status: 422, title: 'Unprocessable Content', detail: 'O valor do pagamento não pode ser maior que o saldo restante da fatura.' }, 422);
+  await assert.rejects(cards.payInvoice(1, '2026-10', payment), error => error.status === 422 && error.detail.includes('saldo restante'));
+});
+
+test('mock permite antecipações sucessivas, preserva OPEN e recalcula status no estorno', async () => {
+  reset();
+  process.env.NEXT_PUBLIC_USE_MOCK = 'true';
+  delete require.cache[require.resolve('../lib/config.ts')];
+  const cards = require('../lib/api/endpoints/credit-cards.ts');
+  const request = amount => ({ accountId: 1, amount, date: '2026-10-20' });
+  let invoice = await cards.getInvoiceDetail(1, '2026-11');
+  assert.equal(invoice.status, 'OPEN');
+  await cards.payInvoice(1, invoice.reference, request(400));
+  invoice = await cards.getInvoiceDetail(1, invoice.reference);
+  assert.equal(invoice.paid, 400);
+  assert.equal(invoice.status, 'OPEN');
+  await assert.rejects(cards.payInvoice(1, invoice.reference, request(230.01)), error => error.status === 422);
+  await cards.payInvoice(1, invoice.reference, request(229.99));
+  invoice = await cards.getInvoiceDetail(1, invoice.reference);
+  assert.equal(invoice.paid, 629.99);
+  assert.equal(invoice.status, 'OPEN');
+  await cards.payInvoice(1, invoice.reference, request(0.01));
+  invoice = await cards.getInvoiceDetail(1, invoice.reference);
+  assert.equal(invoice.paid, invoice.total);
+  assert.equal(invoice.status, 'OPEN');
+  await assert.rejects(cards.payInvoice(1, invoice.reference, request(0.01)), error => error.status === 422);
+  for (const amount of [0, -1]) {
+    await assert.rejects(cards.payInvoice(1, invoice.reference, request(amount)), error => error.status === 400);
+  }
+  for (const payment of invoice.payments) await cards.deleteInvoicePayment(1, invoice.reference, payment.id);
+  invoice = await cards.getInvoiceDetail(1, invoice.reference);
+  assert.equal(invoice.paid, 0);
+  assert.equal(invoice.status, 'OPEN');
+  assert.equal(invoice.payments.length, 0);
+  // As fixtures originais não podem ser alteradas pelas mutações do transporte mock.
+  assert.equal(require('../lib/mock-data.ts').mockInvoices[0].paid, 0);
+  await cards.payInvoice(1, '2026-10', request(780.49));
+  invoice = await cards.getInvoiceDetail(1, '2026-10');
+  assert.equal(invoice.status, 'PARTIALLY_PAID');
+  await cards.payInvoice(1, invoice.reference, request(0.01));
+  invoice = await cards.getInvoiceDetail(1, invoice.reference);
+  assert.equal(invoice.status, 'PAID');
+  const payment = invoice.payments.at(-1);
+  await cards.deleteInvoicePayment(1, invoice.reference, payment.id);
+  assert.equal((await cards.getInvoiceDetail(1, invoice.reference)).status, 'PARTIALLY_PAID');
+  invoice = await cards.getInvoiceDetail(1, invoice.reference);
+  for (const item of invoice.payments) await cards.deleteInvoicePayment(1, invoice.reference, item.id);
+  assert.equal((await cards.getInvoiceDetail(1, invoice.reference)).status, 'CLOSED');
+  await cards.deleteInvoicePayment(1, '2026-09', 2);
+  assert.equal((await cards.getInvoiceDetail(1, '2026-09')).status, 'OVERDUE');
+});
+
 test('configuração exige true explícito e normaliza a URL sem duplicar /api/v1', () => {
   for (const [value, expected] of [[undefined, false], ['false', false], ['true', true], ['TRUE', false]]) {
     reset();

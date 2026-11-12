@@ -138,7 +138,7 @@ Cobertura de QA e limites das medições estão em [design-validation.md](./desi
 
 ### 6.2 `components/cards/*.tsx` e `app/(app)/cards/...`
 - Cartões visuais realistas, barras de limite usado vs. disponível (alerta vermelho em estouro).
-- Tela `/cards/[id]/invoices/[ym]` com status da fatura e modal de pagamento (bloqueado para faturas `OPEN`).
+- Tela `/cards/[id]/invoices/[ym]` com status da fatura e modal de pagamento, inclusive antecipado em faturas `OPEN`, até o saldo restante. O status permanece aberto até o fechamento.
 
 ### 6.3 `app/(app)/transfers/page.tsx`
 - Histórico de transferências e formulário com validação (`fromAccountId !== toAccountId`).

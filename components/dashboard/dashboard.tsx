@@ -77,7 +77,7 @@ export function Dashboard() {
       {empty && <div className="mt-9"><EmptyState icon={Wallet} title="Nenhuma movimentação neste período"
         description="Registre uma transação para acompanhar suas finanças."
         actionLabel="Nova transação" onAction={() => router.push('/transactions/new')} /></div>}
-      <FinancialSections points={empty ? [] : evolution.data.points} categories={empty ? [] : categories.data}
+      <FinancialSections points={empty ? [] : evolution.data.points} period={period} categories={empty ? [] : categories.data}
         totalExpense={summary.data.totalExpense} goals={goals.data}
         transactions={recent.data} showCharts={!empty} />
     </PageContainer>

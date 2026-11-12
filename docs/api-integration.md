@@ -29,12 +29,26 @@ controladas. `SMOKE_URL` e `CHROME_PATH` permitem alterar o servidor e o execut�
 Essa verificação cobre telas, estados, navegação e envio das simulações; a
 autenticação Google e os dados de uma conta real exigem a validação manual abaixo.
 
+`node scripts/ui-smoke.mjs --transactions-only` executa a regressão do cadastro
+de despesas no cartão em 390 e 1440 px: envio em 1x, 2x, 3x e 24x, seleção por
+digitação e botões, parcelas inválidas com foco e mensagem, troca de destino,
+erros 400/422/500 e de conexão, preservação dos campos, nova tentativa sem
+duplicidade e estados `?state=loading|empty|error`. As respostas são controladas;
+esse teste não comprova a aceitação de uma compra pelo backend real.
+
 `node scripts/ui-smoke.mjs --auth-only` executa somente a regressão de sessão
 em 390 e 1440 px: acesso sem cookie, cookie rejeitado, 502/503, recuperação,
 logout, login Google com SDK/transporte controlados e recarga, além dos estados
 `?state=loading|empty|error` do dashboard autenticado. Esse teste não usa credenciais
 Google reais nem altera dados do backend; o envio do login é ignorado se o client ID
 OAuth não estiver configurado no build.
+
+`node scripts/ui-smoke.mjs --invoices-only` valida antecipação parcial e total
+em faturas abertas, rejeição de um centavo acima do restante, atualização do
+resumo após recarga, erro com campos preservados e estados `?state=loading|empty|error`
+em 390 e 1440 px. Usa transporte controlado; não grava pagamentos reais.
+O backend deve ser atualizado antes do frontend para aceitar pagamentos em `OPEN`.
+O contrato mantém payload, resposta e tipos; não é necessário regenerar os tipos.
 
 ## Ambiente
 

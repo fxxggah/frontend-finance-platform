@@ -37,7 +37,20 @@ export default function InvoiceDetailPage({ params }: PageProps) {
   const [paymentToRefund, setPaymentToRefund] = useState<number | null>(null);
 
   const showLoading = devState === 'loading' || (isLoading && devState !== 'empty' && devState !== 'error');
-  const showError = devState === 'error' || (isError && devState !== 'loading');
+  const showError = devState === 'error' || (isError && devState !== 'loading' && devState !== 'empty');
+
+  if (devState === 'empty') {
+    return (
+      <PageContainer className="space-y-6">
+        <PageHeader title="Fatura" description="Compras, pagamentos e informações da fatura." />
+        <EmptyState
+          icon={ShoppingBag}
+          title="Nenhuma compra nesta fatura"
+          description="As compras desta competência aparecerão aqui."
+        />
+      </PageContainer>
+    );
+  }
 
   if (showError) {
     return (
@@ -117,11 +130,11 @@ export default function InvoiceDetailPage({ params }: PageProps) {
               </p>
             </div>
 
-            {/* Botão de Pagamento com trava para OPEN */}
+            {/* Pagamento disponível enquanto houver saldo devedor */}
             <div className="flex flex-col items-start sm:items-end gap-1.5">
               <Button
                 variant="brand"
-                disabled={isOpen || remaining <= 0}
+                disabled={remaining <= 0}
                 onClick={() => setIsPayOpen(true)}
                 className="gap-2"
               >
@@ -130,7 +143,7 @@ export default function InvoiceDetailPage({ params }: PageProps) {
               </Button>
               {isOpen && (
                 <span className="text-[11px] text-text-muted">
-                  A fatura só fica disponível para pagamento após o fechamento ({formatDate(invoice.closingDate)}).
+                  Você pode antecipar o pagamento.
                 </span>
               )}
             </div>

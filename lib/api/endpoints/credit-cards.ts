@@ -5,6 +5,7 @@ import {
   mockInvoices,
   mockInvoicePayments,
   mockTransactions,
+  TODAY,
 } from "@/lib/mock-data";
 import { listTransactions } from "./transactions";
 import { ApiError } from "@/lib/api/errors";
@@ -17,8 +18,17 @@ import type {
 } from "@/types";
 
 let localCards = [...mockCreditCards];
-let localInvoices = [...mockInvoices];
-let localPayments = { ...mockInvoicePayments };
+const localInvoices = structuredClone(mockInvoices);
+const localPayments = structuredClone(mockInvoicePayments);
+
+// Apenas o transporte mock calcula status; no modo real ele vem da API.
+function updateMockInvoiceStatus(invoice: InvoiceSummary): void {
+  if (TODAY <= invoice.closingDate) invoice.status = "OPEN";
+  else if (Math.round(invoice.paid * 100) >= Math.round(invoice.total * 100)) invoice.status = "PAID";
+  else if (TODAY > invoice.dueDate) invoice.status = "OVERDUE";
+  else if (invoice.paid > 0) invoice.status = "PARTIALLY_PAID";
+  else invoice.status = "CLOSED";
+}
 
 /**
  * Retorna os cartões de crédito cadastrados com limites e dados da fatura atual.
@@ -237,7 +247,7 @@ export async function getInvoiceDetail(
 }
 
 /**
- * Registra o pagamento de uma fatura fechada ou vencida.
+ * Registra pagamento parcial ou total, inclusive antes do fechamento.
  * POST /api/v1/credit-cards/{id}/invoices/{reference}/payments
  */
 export async function payInvoice(
@@ -256,16 +266,19 @@ export async function payInvoice(
       });
     }
 
-    if (invoice.status === "OPEN") {
+    if (!Number.isFinite(data.amount) || data.amount <= 0) {
       throw new ApiError({
-        status: 422,
-        title: "Unprocessable Content",
-        detail: "Não é possível registrar pagamento em fatura aberta",
+        status: 400,
+        title: "Bad Request",
+        detail: "O valor deve ser maior que zero",
+        errors: [{ field: "amount", message: "O valor deve ser maior que zero" }],
       });
     }
 
-    const remaining = invoice.total - invoice.paid;
-    if (data.amount > remaining + 0.001) {
+    const amountCents = Math.round(data.amount * 100);
+    const paidCents = Math.round(invoice.paid * 100);
+    const remainingCents = Math.round(invoice.total * 100) - paidCents;
+    if (amountCents > remainingCents) {
       throw new ApiError({
         status: 422,
         title: "Unprocessable Content",
@@ -273,12 +286,8 @@ export async function payInvoice(
       });
     }
 
-    invoice.paid += data.amount;
-    if (invoice.paid >= invoice.total - 0.01) {
-      invoice.status = "PAID";
-    } else {
-      invoice.status = "PARTIALLY_PAID";
-    }
+    invoice.paid = (paidCents + amountCents) / 100;
+    updateMockInvoiceStatus(invoice);
 
     if (!localPayments[reference]) {
       localPayments[reference] = [];
@@ -316,12 +325,8 @@ export async function deleteInvoicePayment(
     const payment = list.find((p) => p.id === paymentId);
 
     if (payment && invoice) {
-      invoice.paid = Math.max(0, invoice.paid - payment.amount);
-      if (invoice.paid === 0) {
-        invoice.status = "CLOSED";
-      } else {
-        invoice.status = "PARTIALLY_PAID";
-      }
+      invoice.paid = Math.max(0, Math.round(invoice.paid * 100) - Math.round(payment.amount * 100)) / 100;
+      updateMockInvoiceStatus(invoice);
       localPayments[reference] = list.filter((p) => p.id !== paymentId);
     }
     return;

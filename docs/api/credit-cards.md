@@ -241,11 +241,11 @@ Não se aplica (`GET`).
 
 ## 6. Realizar Pagamento de Fatura
 
-Registra o pagamento (total ou parcial) de uma fatura fechada ou vencida, debitando o valor da conta bancária informada.
+Registra o pagamento (total ou parcial) de uma fatura, inclusive antes do fechamento, debitando o valor da conta bancária informada.
 
 > [!WARNING]
 > Regras de Negócio de Pagamento:
-> 1. Não é permitido pagar faturas com status `OPEN` (em aberto antes do fechamento).
+> 1. Pagamentos antecipados são permitidos em faturas `OPEN`. O status permanece `OPEN` até o fechamento, inclusive, e novas compras continuam na mesma competência conforme o calendário do cartão.
 > 2. O valor do pagamento somado aos pagamentos anteriores não pode ultrapassar o total da fatura.
 
 - **Método HTTP:** `POST`
@@ -274,13 +274,13 @@ Não há conteúdo no corpo da resposta (`null`/vazio).
 ### Tratamento de Erros
 - **`400 Bad Request`**: Valor inválido ou conta ausente.
 - **`404 Not Found`**: Cartão ou conta não localizados.
-- **`422 Unprocessable Content`**: Fatura ainda aberta (`OPEN`) ou pagamento que excede o total da fatura.
+- **`422 Unprocessable Content`**: Pagamento que excede o saldo devedor atual da fatura ou conta de origem arquivada.
   ```json
   {
     "type": "about:blank",
     "title": "Unprocessable Content",
     "status": 422,
-    "detail": "Não é possível registrar pagamento em fatura aberta ou valor excede o saldo da fatura"
+    "detail": "O valor do pagamento não pode ser maior que o saldo restante da fatura."
   }
   ```
 

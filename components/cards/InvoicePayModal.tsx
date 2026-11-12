@@ -42,7 +42,7 @@ export function InvoicePayModal({ open, onClose, cardId, invoice }: InvoicePayMo
       .refine((v) => {
         const clean = v.replace(/\./g, '').replace(',', '.');
         const num = parseFloat(clean);
-        return num <= remaining + 0.01;
+        return Math.round(num * 100) <= Math.round(remaining * 100);
       }, `O valor não pode ser superior ao restante (${formatMoney(remaining)})`),
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida'),
   });
@@ -54,6 +54,7 @@ export function InvoicePayModal({ open, onClose, cardId, invoice }: InvoicePayMo
     handleSubmit,
     reset,
     setError,
+    clearErrors,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -81,6 +82,7 @@ export function InvoicePayModal({ open, onClose, cardId, invoice }: InvoicePayMo
   }, [open, remaining, reset]);
 
   async function onSubmit(data: FormData) {
+    clearErrors('root');
     const value = parseFloat(data.amount.replace(/\./g, '').replace(',', '.'));
     try {
     await payMutation.mutateAsync({
@@ -90,6 +92,9 @@ export function InvoicePayModal({ open, onClose, cardId, invoice }: InvoicePayMo
     });
     onClose();
     } catch (error) {
+      setError('root.server', {
+        message: error instanceof ApiError ? error.detail : 'Não foi possível registrar o pagamento. Tente novamente.',
+      });
       if (error instanceof ApiError) {
         for (const field of error.errors) {
           if (field.field in data) setError(field.field as keyof FormData, { message: field.message });
@@ -108,6 +113,11 @@ export function InvoicePayModal({ open, onClose, cardId, invoice }: InvoicePayMo
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         <DialogBody className="space-y-4">
+          {errors.root?.server?.message && (
+            <p role="alert" className="rounded-xl border border-expense bg-expense-soft p-3 text-sm text-expense">
+              {errors.root.server.message}
+            </p>
+          )}
           {/* Resumo do Saldo Devedor */}
           <div className="rounded-2xl bg-surface-soft p-4 border border-border flex items-center justify-between">
             <div>

@@ -4,6 +4,8 @@ import { useId, useMemo } from 'react';
 import {
   AreaChart,
   Area,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   Tooltip,
@@ -15,10 +17,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formatMoney } from '@/lib/format/money';
 import { formatCompactMoney } from '@/lib/format/money';
 import { formatShortDate } from '@/lib/format/date';
-import type { EvolutionPoint } from '@/types';
+import type { EvolutionPoint, Period } from '@/types';
 
 interface CashFlowChartProps {
   points: EvolutionPoint[];
+  period: Period;
   isLoading?: boolean;
   periodLabel?: string;
 }
@@ -48,8 +51,10 @@ function ChartTooltip({
   );
 }
 
-export function CashFlowChart({ points, isLoading, periodLabel }: CashFlowChartProps) {
+export function CashFlowChart({ points, period, isLoading, periodLabel }: CashFlowChartProps) {
   const gradientId = useId();
+  const isDayPeriod = period === 'DAY';
+  const Chart = isDayPeriod ? BarChart : AreaChart;
   const data = useMemo(
     () =>
       points.map((p) => ({
@@ -91,7 +96,7 @@ export function CashFlowChart({ points, isLoading, periodLabel }: CashFlowChartP
 
       <div className="mt-4 h-64 sm:h-72 w-full pt-2 tabular-nums">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+          <Chart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id={`${gradientId}-income`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="var(--color-white)" stopOpacity={0.24} />
@@ -123,24 +128,47 @@ export function CashFlowChart({ points, isLoading, periodLabel }: CashFlowChartP
               width={62}
               tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.7)' }}
             />
-            <Tooltip content={<ChartTooltip />} />
-            <Area
-              type="monotone"
-              dataKey="income"
-              stroke="var(--color-white)"
-              strokeWidth={2.5}
-              fill={`url(#${gradientId}-income)`}
-              isAnimationActive={false}
-            />
-            <Area
-              type="monotone"
-              dataKey="expense"
-              stroke="var(--color-rose-300)"
-              strokeWidth={2.5}
-              fill={`url(#${gradientId}-expense)`}
-              isAnimationActive={false}
-            />
-          </AreaChart>
+            <Tooltip content={<ChartTooltip />} cursor={isDayPeriod ? false : undefined} />
+            {isDayPeriod ? (
+              <>
+                <Bar
+                  dataKey="income"
+                  name="Receita"
+                  fill="var(--color-white)"
+                  radius={[6, 6, 0, 0]}
+                  maxBarSize={32}
+                  isAnimationActive={false}
+                />
+                <Bar
+                  dataKey="expense"
+                  name="Despesa"
+                  fill="var(--color-rose-300)"
+                  radius={[6, 6, 0, 0]}
+                  maxBarSize={32}
+                  isAnimationActive={false}
+                />
+              </>
+            ) : (
+              <>
+                <Area
+                  type="monotone"
+                  dataKey="income"
+                  stroke="var(--color-white)"
+                  strokeWidth={2.5}
+                  fill={`url(#${gradientId}-income)`}
+                  isAnimationActive={false}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="expense"
+                  stroke="var(--color-rose-300)"
+                  strokeWidth={2.5}
+                  fill={`url(#${gradientId}-expense)`}
+                  isAnimationActive={false}
+                />
+              </>
+            )}
+          </Chart>
         </ResponsiveContainer>
       </div>
     </Card>
