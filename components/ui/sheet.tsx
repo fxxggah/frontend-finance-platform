@@ -36,6 +36,8 @@ export interface SheetProps {
   onClose?: () => void;
   onOpenChange?: (open: boolean) => void;
   title?: string;
+  /** Centraliza como dialog a partir de 1024px, mantendo o bottom sheet no mobile. */
+  desktopDialog?: boolean;
   children: ReactNode;
 }
 
@@ -45,7 +47,7 @@ export interface SheetProps {
  * - Cantos superiores `rounded-t-[2rem]`.
  * - Fecha com ESC ou clique no overlay.
  */
-export function Sheet({ open, onClose, onOpenChange, title, children }: SheetProps) {
+export function Sheet({ open, onClose, onOpenChange, title, desktopDialog = false, children }: SheetProps) {
   const id = useId();
   const titleId = `${id}-title`;
   const panelRef = useRef<HTMLDivElement>(null);
@@ -66,6 +68,7 @@ export function Sheet({ open, onClose, onOpenChange, title, children }: SheetPro
       <div
         className={cn(
           'fixed inset-0 z-50 flex items-end',
+          desktopDialog && 'lg:items-center lg:justify-center lg:p-6',
           'bg-black/50',
           'animate-in fade-in duration-200 motion-reduce:animate-none',
         )}
@@ -82,14 +85,17 @@ export function Sheet({ open, onClose, onOpenChange, title, children }: SheetPro
             'relative z-10 mx-auto w-full max-w-3xl outline-none',
             styles.glass,
             'rounded-t-[2rem]',
+            desktopDialog && 'lg:max-w-lg lg:rounded-2xl',
             'shadow-[0_-8px_40px_-8px_rgba(20,23,46,0.22)]',
-            'animate-in slide-in-from-bottom duration-300 motion-reduce:animate-none',
+            desktopDialog
+              ? 'animate-in max-lg:slide-in-from-bottom lg:zoom-in-95 duration-200 motion-reduce:animate-none'
+              : 'animate-in slide-in-from-bottom duration-300 motion-reduce:animate-none',
             'max-h-[90dvh] overflow-y-auto',
           )}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Handle visual de arrastar */}
-          <div className="mx-auto mt-3 h-1 w-10 rounded-full bg-border" aria-hidden="true" />
+          <div className={cn('mx-auto mt-3 h-1 w-10 rounded-full bg-border', desktopDialog && 'lg:hidden')} aria-hidden="true" />
           {title && (
             <SheetHeader>
               <SheetTitle>{title}</SheetTitle>

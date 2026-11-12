@@ -186,6 +186,7 @@ export function TransactionForm({
 
   return (
     <Sheet
+      desktopDialog
       open={open}
       onOpenChange={onOpenChange}
       title={editing ? 'Editar transação' : 'Nova transação'}
