@@ -1,7 +1,9 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 import {
+  AreaChart,
+  Area,
   BarChart,
   Bar,
   XAxis,
@@ -13,11 +15,12 @@ import {
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatMoney } from '@/lib/format/money';
-import type { EvolutionPoint, Granularity } from '@/types';
+import type { EvolutionPoint, Granularity, Period } from '@/types';
 
-interface EvolutionBarChartProps {
+interface EvolutionAreaChartProps {
   points: EvolutionPoint[];
   granularity: Granularity;
+  period: Period;
   isLoading?: boolean;
 }
 
@@ -27,7 +30,7 @@ const GRANULARITY_LABELS: Record<Granularity, string> = {
   MONTH: 'Por mês',
 };
 
-function BarTooltip({
+function ChartTooltip({
   active,
   payload,
   label,
@@ -39,18 +42,21 @@ function BarTooltip({
   if (!active || !payload?.length) return null;
   return (
     <div className="rounded-2xl border border-border bg-surface p-3 text-xs text-text shadow-default">
-      <p className="mb-2 font-bold text-white/90">{label}</p>
+      <p className="mb-2 font-bold text-text">{label}</p>
       {payload.map((item) => (
-        <p key={item.dataKey} className="flex items-center justify-between gap-4 text-white/80">
+        <p key={item.dataKey} className="flex items-center justify-between gap-4 text-text-muted">
           <span>{item.dataKey === 'income' ? 'Receitas:' : 'Despesas:'}</span>
-          <strong className="tabular-nums text-white">{formatMoney(item.value ?? 0)}</strong>
+          <strong className="tabular-nums text-text">{formatMoney(item.value ?? 0)}</strong>
         </p>
       ))}
     </div>
   );
 }
 
-export function EvolutionBarChart({ points, granularity, isLoading }: EvolutionBarChartProps) {
+export function EvolutionAreaChart({ points, granularity, period, isLoading }: EvolutionAreaChartProps) {
+  const gradientId = useId();
+  const isDayPeriod = period === 'DAY';
+  const Chart = isDayPeriod ? BarChart : AreaChart;
   const chartData = useMemo(
     () =>
       points.map((p) => ({
@@ -93,15 +99,25 @@ export function EvolutionBarChart({ points, granularity, isLoading }: EvolutionB
           <span>Receitas</span>
         </span>
         <span className="flex items-center gap-2">
-          <span className="size-3 rounded-full bg-[#FDA4AF] shadow-sm" />
+          <span className="size-3 rounded-full bg-rose-300 shadow-sm" />
           <span>Despesas</span>
         </span>
       </div>
 
-      {/* Gráfico de Barras Agrupadas */}
+      {/* Barras no período Dia; áreas suaves nos demais períodos. */}
       <div className="h-64 sm:h-72 w-full pt-2">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+          <Chart data={chartData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+            <defs>
+              <linearGradient id={`${gradientId}-income`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="var(--color-white)" stopOpacity={0.24} />
+                <stop offset="100%" stopColor="var(--color-white)" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id={`${gradientId}-expense`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="var(--color-rose-300)" stopOpacity={0.18} />
+                <stop offset="100%" stopColor="var(--color-rose-300)" stopOpacity={0} />
+              </linearGradient>
+            </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.12)" vertical={false} />
             <XAxis
               dataKey="label"
@@ -117,10 +133,49 @@ export function EvolutionBarChart({ points, granularity, isLoading }: EvolutionB
               axisLine={false}
               tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v))}
             />
-            <Tooltip content={<BarTooltip />} />
-            <Bar dataKey="income" name="Receita" fill="#FFFFFF" radius={[6, 6, 0, 0]} maxBarSize={32} />
-            <Bar dataKey="expense" name="Despesa" fill="#FDA4AF" radius={[6, 6, 0, 0]} maxBarSize={32} />
-          </BarChart>
+            <Tooltip content={<ChartTooltip />} cursor={isDayPeriod ? false : undefined} />
+            {isDayPeriod ? (
+              <>
+                <Bar
+                  dataKey="income"
+                  name="Receita"
+                  fill="var(--color-white)"
+                  radius={[6, 6, 0, 0]}
+                  maxBarSize={32}
+                  isAnimationActive={false}
+                />
+                <Bar
+                  dataKey="expense"
+                  name="Despesa"
+                  fill="var(--color-rose-300)"
+                  radius={[6, 6, 0, 0]}
+                  maxBarSize={32}
+                  isAnimationActive={false}
+                />
+              </>
+            ) : (
+              <>
+                <Area
+                  type="monotone"
+                  dataKey="income"
+                  name="Receita"
+                  stroke="var(--color-white)"
+                  strokeWidth={2.5}
+                  fill={`url(#${gradientId}-income)`}
+                  isAnimationActive={false}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="expense"
+                  name="Despesa"
+                  stroke="var(--color-rose-300)"
+                  strokeWidth={2.5}
+                  fill={`url(#${gradientId}-expense)`}
+                  isAnimationActive={false}
+                />
+              </>
+            )}
+          </Chart>
         </ResponsiveContainer>
       </div>
     </Card>

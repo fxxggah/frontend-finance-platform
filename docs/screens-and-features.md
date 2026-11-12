@@ -52,7 +52,8 @@ Grade com 4 cartões com sparklines e percentual comparativo com o período ante
 
 ### 2.4 Gráfico de Fluxo de Caixa (Recharts)
 - Gráfico de área suave comparando a evolução acumulada de Receitas vs. Despesas ao longo dos dias do mês.
-- Tooltip customizado formatado em BRL com cores semânticas (`--color-income` e `--color-expense`).
+- Card com o mesmo gradiente roxo, arcos decorativos e estilo do gráfico de Relatórios; receitas em branco, despesas em rosa e preenchimentos suaves. Eixos e legenda claros para leitura sobre o fundo roxo nos dois temas.
+- Tooltip customizado formatado em BRL, com superfície sólida e texto adaptado ao tema.
 
 ### 2.5 Gráfico de Despesas por Categoria (Rosca / Donut)
 - Gráfico em formato de rosca com o total de despesas centralizado no meio.
@@ -148,7 +149,7 @@ Suporta 3 categorias de metas essenciais:
 ## 7. Módulo de Relatórios Analíticos (`/reports`)
 
 - **Taxa de Poupança do Período:** Cálculo automático `((saldoLíquido / receitas) * 100)` com termômetro visual.
-- **Comparativo Mensal:** Gráfico de barras agrupadas (Receitas vs. Despesas) dos últimos 6 meses.
+- **Evolução Comparativa:** Gráfico de barras agrupadas (Receitas vs. Despesas) quando o período selecionado é **Dia** (`period=DAY`); nos demais períodos, usa áreas suaves, do mesmo tipo usado no fluxo de caixa do Início. A escolha do tipo depende do período selecionado, não da granularidade retornada pela API. Mantém o card com gradiente roxo, receitas em branco e despesas em rosa.
 - **Insights Financeiros Automáticos:** Card gerado por lógica pura (`lib/insights.ts`), trazendo dicas contextuais (ex.: *"Você gastou 15% menos em Alimentação este mês em relação a setembro"*).
 
 ---

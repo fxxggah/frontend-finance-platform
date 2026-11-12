@@ -10,7 +10,7 @@ import { Card } from '@/components/ui/card';
 import { Select } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
-import { EvolutionBarChart } from '@/components/reports/EvolutionBarChart';
+import { EvolutionAreaChart } from '@/components/reports/EvolutionAreaChart';
 import { SummaryKpis } from '@/components/reports/SummaryKpis';
 import { CategoryBreakdown } from '@/components/reports/CategoryBreakdown';
 import { CumulativeBalanceChart } from '@/components/reports/CumulativeBalanceChart';
@@ -238,8 +238,9 @@ export default function ReportsPage() {
           {/* Layout Principal Desktop: 2/3 Gráfico de Evolução + 1/3 Cards de Resumo */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
             <div className="lg:col-span-2">
-              <EvolutionBarChart
+              <EvolutionAreaChart
                 points={points}
+                period={period}
                 granularity={evolution?.granularity || 'DAY'}
                 isLoading={showLoading}
               />

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 import {
   AreaChart,
   Area,
@@ -41,7 +41,7 @@ function ChartTooltip({
           <span className="font-semibold text-text">
             {item.dataKey === 'income' ? 'Receitas' : 'Despesas'}:
           </span>
-          {formatMoney(item.value ?? 0)}
+          <span className="tabular-nums">{formatMoney(item.value ?? 0)}</span>
         </p>
       ))}
     </div>
@@ -49,6 +49,7 @@ function ChartTooltip({
 }
 
 export function CashFlowChart({ points, isLoading, periodLabel }: CashFlowChartProps) {
+  const gradientId = useId();
   const data = useMemo(
     () =>
       points.map((p) => ({
@@ -60,50 +61,50 @@ export function CashFlowChart({ points, isLoading, periodLabel }: CashFlowChartP
   );
 
   if (isLoading) {
-    return <Skeleton className="h-[340px] w-full rounded-3xl" />;
+    return <Skeleton className="h-[380px] sm:h-[412px] w-full rounded-3xl" />;
   }
 
   return (
-    <Card variant="chart" className="">
+    <Card variant="brand" padding="lg">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-base font-semibold tracking-tight text-text">Fluxo de caixa</h2>
-          <p className="mt-1 text-xs text-text-muted">Receitas e despesas no período</p>
+          <h2 className="text-lg font-semibold tracking-tight text-white">Fluxo de caixa</h2>
+          <p className="mt-1 text-xs text-white/80">Receitas e despesas no período</p>
         </div>
         {periodLabel && (
-          <span className="rounded-xl bg-surface-soft px-3 py-2 text-xs font-semibold text-text-muted">
+          <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white/95">
             {periodLabel}
           </span>
         )}
       </div>
 
-      <div className="mt-5 flex gap-5 text-xs font-semibold">
+      <div className="mt-5 flex gap-6 text-xs text-white/90">
         <span className="flex items-center gap-2">
-          <i className="size-2 rounded-full bg-primary" />
+          <i className="size-3 rounded-full bg-white shadow-sm" />
           Receitas
         </span>
         <span className="flex items-center gap-2">
-          <i className="size-2 rounded-full bg-expense" />
+          <i className="size-3 rounded-full bg-rose-300 shadow-sm" />
           Despesas
         </span>
       </div>
 
-      <div className="mt-4 h-64 w-full">
+      <div className="mt-4 h-64 sm:h-72 w-full pt-2 tabular-nums">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
             <defs>
-              <linearGradient id="income-fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.24} />
-                <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0} />
+              <linearGradient id={`${gradientId}-income`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="var(--color-white)" stopOpacity={0.24} />
+                <stop offset="100%" stopColor="var(--color-white)" stopOpacity={0} />
               </linearGradient>
-              <linearGradient id="expense-fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--color-expense)" stopOpacity={0.18} />
-                <stop offset="100%" stopColor="var(--color-expense)" stopOpacity={0} />
+              <linearGradient id={`${gradientId}-expense`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="var(--color-rose-300)" stopOpacity={0.18} />
+                <stop offset="100%" stopColor="var(--color-rose-300)" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid
-              strokeDasharray="4 4"
-              stroke="var(--color-border)"
+              strokeDasharray="3 3"
+              stroke="rgba(255,255,255,0.12)"
               horizontal
               vertical={false}
             />
@@ -113,30 +114,30 @@ export function CashFlowChart({ points, isLoading, periodLabel }: CashFlowChartP
               tickLine={false}
               axisLine={false}
               interval={Math.max(0, Math.floor(data.length / 6) - 1)}
-              tick={{ fontSize: 11, fill: 'var(--color-text-muted)' }}
+              tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.7)' }}
             />
             <YAxis
               tickFormatter={(v) => formatCompactMoney(v)}
               tickLine={false}
               axisLine={false}
               width={62}
-              tick={{ fontSize: 10, fill: 'var(--color-text-muted)' }}
+              tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.7)' }}
             />
             <Tooltip content={<ChartTooltip />} />
             <Area
               type="monotone"
               dataKey="income"
-              stroke="var(--color-primary)"
+              stroke="var(--color-white)"
               strokeWidth={2.5}
-              fill="url(#income-fill)"
+              fill={`url(#${gradientId}-income)`}
               isAnimationActive={false}
             />
             <Area
               type="monotone"
               dataKey="expense"
-              stroke="var(--color-expense)"
+              stroke="var(--color-rose-300)"
               strokeWidth={2.5}
-              fill="url(#expense-fill)"
+              fill={`url(#${gradientId}-expense)`}
               isAnimationActive={false}
             />
           </AreaChart>

@@ -89,7 +89,7 @@ export function CategoryBreakdown({ categories, total, isLoading }: CategoryBrea
                   />
                 ))}
               </Pie>
-              <Tooltip content={<CustomDonutTooltip />} />
+              <Tooltip content={<CustomDonutTooltip />} wrapperStyle={{ zIndex: 10 }} />
             </PieChart>
           </ResponsiveContainer>
 
