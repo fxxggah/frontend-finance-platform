@@ -11,7 +11,8 @@ import { PeriodSelect } from './PeriodSelect';
 import { FinancialSections } from './financial-sections';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
-import { useDashboardSummary, useEvolution, useExpensesByCategory, useRecentTransactions } from '@/hooks/use-dashboard';
+import { useRecentTransactions } from '@/hooks/use-dashboard';
+import { useDashboardPeriod } from '@/hooks/use-dashboard-period';
 import { useAccounts } from '@/hooks/use-accounts';
 import { useGoals } from '@/hooks/use-goals';
 import { usePeriodParams } from '@/hooks/use-period-params';
@@ -20,18 +21,20 @@ import { useDevState } from '@/hooks/use-dev-state';
 export function Dashboard() {
   const router = useRouter();
   const state = useDevState();
-  const { period, date, from, to } = usePeriodParams();
-  const filters = { from, to };
-  const summary = useDashboardSummary(period, date, filters);
+  const periodParams = usePeriodParams();
+  const periodData = useDashboardPeriod(periodParams);
   const accounts = useAccounts();
-  const evolution = useEvolution(period, date, filters);
-  const categories = useExpensesByCategory(period, date, filters);
   const recent = useRecentTransactions();
   const goals = useGoals(undefined, 'ACTIVE');
-  const queries = [summary, accounts, evolution, categories, recent, goals];
-  const loading = state === 'loading' || (!state && queries.some(query => query.isPending));
+  const queries = [accounts, recent, goals];
+  const loading = state === 'loading' || (!state && (
+    (!periodData.data && !periodData.isError) || queries.some(query => query.isPending)
+  ));
   const error = state === 'error' || (!state && queries.some(query => query.isError));
-  const retry = () => { queries.forEach(query => { void query.refetch(); }); };
+  const retry = () => {
+    periodData.retry();
+    queries.forEach(query => { void query.refetch(); });
+  };
 
   if (loading) return (
     <PageContainer className="space-y-6" role="status" aria-label="Carregando início">
@@ -53,14 +56,15 @@ export function Dashboard() {
     description="Registre uma transação para acompanhar suas finanças." actionLabel="Nova transação"
     onAction={() => router.push('/transactions/new')} /></div>;
 
-  if (error || !summary.data || !accounts.data || !evolution.data || !categories.data || !recent.data || !goals.data) return (
+  if (error || !periodData.data || !accounts.data || !recent.data || !goals.data) return (
     <div className={styles.state}><EmptyState icon={AlertCircle} title="Não foi possível carregar seus dados"
       description="Verifique sua conexão e tente novamente." actionLabel="Tentar novamente" onAction={retry} /></div>
   );
 
+  const { summary, evolution, categories, period } = periodData.data;
   const empty = (
-    summary.data.totalIncome === 0 && summary.data.totalExpense === 0 &&
-    categories.data.length === 0
+    summary.totalIncome === 0 && summary.totalExpense === 0 &&
+    categories.length === 0
   );
 
   return (
@@ -68,17 +72,18 @@ export function Dashboard() {
       <PageHeader className="mb-7" title="Início" eyebrow="Visão geral" />
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1.7fr)_minmax(300px,1fr)]">
         <section aria-label="Saldo e resumo financeiro" className="min-w-0">
-          <HeroBalanceCard summary={summary.data} period={period} totalBalance={accounts.data.totalBalance} creditCardDebt={accounts.data.creditCardDebt} />
+          <HeroBalanceCard summary={summary} period={period} totalBalance={accounts.data.totalBalance} creditCardDebt={accounts.data.creditCardDebt} />
         </section>
-        <PeriodSelect from={summary.data.from} to={summary.data.to} />
+        <PeriodSelect from={summary.from} to={summary.to} isUpdating={periodData.isFetching}
+          hasUpdateError={periodData.isError} onRetry={periodData.retry} />
       </div>
       <div className="mt-4"><QuickActions /></div>
-      <KpiCards summary={summary.data} period={period} creditCardDebt={accounts.data.creditCardDebt} />
+      <KpiCards summary={summary} period={period} creditCardDebt={accounts.data.creditCardDebt} />
       {empty && <div className="mt-9"><EmptyState icon={Wallet} title="Nenhuma movimentação neste período"
         description="Registre uma transação para acompanhar suas finanças."
         actionLabel="Nova transação" onAction={() => router.push('/transactions/new')} /></div>}
-      <FinancialSections points={empty ? [] : evolution.data.points} period={period} categories={empty ? [] : categories.data}
-        totalExpense={summary.data.totalExpense} goals={goals.data}
+      <FinancialSections points={empty ? [] : evolution.points} period={period} categories={empty ? [] : categories}
+        totalExpense={summary.totalExpense} goals={goals.data}
         transactions={recent.data} showCharts={!empty} />
     </PageContainer>
   );

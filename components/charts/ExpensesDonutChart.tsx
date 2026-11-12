@@ -74,7 +74,7 @@ export function ExpensesDonutChart({ categories, total, isLoading }: ExpensesDon
                   />
                 ))}
               </Pie>
-              <Tooltip content={<DonutTooltip />} />
+              <Tooltip content={<DonutTooltip />} wrapperStyle={{ zIndex: 10 }} />
             </PieChart>
           </ResponsiveContainer>
           {/* Total no centro */}

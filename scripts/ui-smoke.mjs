@@ -9,6 +9,7 @@ const origin = process.env.SMOKE_URL || 'http://localhost:3005';
 const authOnly = process.argv.includes('--auth-only');
 const transactionsOnly = process.argv.includes('--transactions-only');
 const invoicesOnly = process.argv.includes('--invoices-only');
+const dashboardOnly = process.argv.includes('--dashboard-only');
 const chromePath = process.env.CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 const profile = await mkdtemp(join(tmpdir(), 'fin-ui-'));
 const port = 9227;
@@ -46,6 +47,7 @@ try {
   const resourceReads = new Map();
   let transactionScenario = { status: 201 };
   let invoiceFixture;
+  let dashboardFailure = false;
   let invoicePaymentStatus = 201;
   const invoicePaymentRequests = [];
   function send(method, params = {}) {
@@ -126,6 +128,19 @@ try {
         const response = Object.entries(operation?.responses || {}).find(([status]) => Number(status) < 300)?.[1];
         const schema = Object.values(response?.content || {})[0]?.schema;
         body = schema ? sample(schema) : undefined;
+        if (dashboardOnly && request.method === 'GET' && /\/dashboard\/(summary|evolution|expenses-by-category)$/.test(url.pathname)) {
+          const period = url.searchParams.get('period') || 'MONTH';
+          const amount = { MONTH: 1111, DAY: 2222, WEEK: 3333, YEAR: 4444, CUSTOM: 5555 }[period];
+          const from = url.searchParams.get('from') || url.searchParams.get('date') || today;
+          const to = url.searchParams.get('to') || from;
+          if (url.pathname.endsWith('/summary')) body = { ...body, period, from, to, totalIncome: amount, totalExpense: period === 'CUSTOM' ? 0 : 100, balance: amount - 100 };
+          if (url.pathname.endsWith('/expenses-by-category')) body = period === 'CUSTOM' ? [] : [{ ...body[0], name: `Categoria ${period}`, total: 100 }];
+          if (period === 'CUSTOM' && url.pathname.endsWith('/summary')) body = { ...body, totalIncome: 0, balance: 0 };
+          // Respostas fora de ordem e uma falha isolada, sem tocar no backend.
+          const shouldFail = dashboardFailure && period === 'YEAR' && url.pathname.endsWith('/evolution');
+          await sleep(url.pathname.endsWith('/summary') ? 100 : url.pathname.endsWith('/evolution') ? 1600 : 700);
+          if (shouldFail) { status = 503; body = { status, title: 'Falha de teste', detail: 'Evolução indisponível' }; }
+        }
         if (invoiceFixture) {
           if (url.pathname === '/api/v1/credit-cards' && request.method === 'GET') {
             body = [{ ...sample(spec.components.schemas.CreditCardResponse), id: 1, usedLimit: invoiceFixture.total - invoiceFixture.paid,
@@ -205,7 +220,75 @@ try {
   }
   const loginVisible = `location.pathname === '/login' && document.body.innerText.includes('Suas finanças, num só lugar')`;
   const sessionError = `document.body.innerText.includes('Não foi possível validar sua sessão')`;
-  if (!transactionsOnly && !invoicesOnly) for (const width of [390, 1440]) {
+  if (dashboardOnly) for (const width of [390, 1440]) {
+    await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: width < 1024 });
+    await setSessionCookie();
+    await navigate('/dashboard?period=MONTH&date=2026-10-15');
+    await waitFor(`document.body.innerText.includes('1.111,00')`);
+    const reads = Object.fromEntries(resourceReads);
+    await evaluate(`window.periodSelector = Array.from(document.querySelectorAll('main button')).find(b => b.textContent.trim() === 'Dia'); window.hero = document.querySelector('section[aria-label="Saldo e resumo financeiro"]'); window.periodDocument = document; window.scrollTo(0, 180)`);
+    const scroll = await evaluate('window.scrollY');
+    await evaluate('window.periodSelector.focus(); window.periodSelector.click()');
+    await waitFor(`document.body.innerText.includes('Atualizando período…')`);
+    await sleep(350); // O resumo novo já chegou, a evolução ainda não.
+    assert.ok(await evaluate(`window.periodSelector.isConnected && window.hero.isConnected && window.periodDocument === document`), 'Não deve desmontar o seletor/Hero nem recarregar o documento');
+    assert.ok(await evaluate(`document.activeElement === window.periodSelector`), 'Deve manter foco');
+    assert.equal(await evaluate('window.scrollY'), scroll, 'Deve preservar rolagem');
+    assert.ok(await evaluate(`document.body.innerText.includes('1.111,00') && document.body.innerText.includes('Receitas do mês') && document.body.innerText.includes('Categoria MONTH') && !document.body.innerText.includes('2.222,00')`), 'Não deve misturar períodos');
+    assert.ok(!await evaluate(`!!document.querySelector('[aria-label="Carregando início"]')`));
+    await waitFor(`document.body.innerText.includes('2.222,00') && document.body.innerText.includes('Categoria DAY')`);
+    await clickButton('Semana');
+    await waitFor(`new URLSearchParams(location.search).get('period') === 'WEEK'`);
+    await clickButton('Mês');
+    await waitFor(`document.body.innerText.includes('1.111,00') && !document.body.innerText.includes('Atualizando período…')`);
+    await sleep(1800);
+    assert.ok(!await evaluate(`document.body.innerText.includes('3.333,00')`), 'Resposta atrasada não pode substituir a última seleção');
+    await evaluate('history.back()');
+    await waitFor(`document.body.innerText.includes('3.333,00')`);
+    await evaluate('history.forward()');
+    await waitFor(`document.body.innerText.includes('1.111,00')`);
+    dashboardFailure = true;
+    await clickButton('Ano');
+    await waitFor(`document.body.innerText.includes('Falha ao atualizar.')`);
+    assert.ok(await evaluate(`document.body.innerText.includes('1.111,00') && !document.body.innerText.includes('4.444,00') && window.periodSelector.isConnected`), 'Falha parcial deve preservar o conjunto anterior');
+    const errorShot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true });
+    await writeFile(join(profile, `period-error-${width}.png`), Buffer.from(errorShot.data, 'base64'));
+    dashboardFailure = false;
+    await clickButton('Tentar novamente');
+    await waitFor(`document.body.innerText.includes('4.444,00') && document.body.innerText.includes('Categoria YEAR')`);
+    await clickButton('Personalizado');
+    await waitFor(`document.querySelectorAll('main input[type="date"]').length === 2`);
+    await evaluate(`(() => { const input = document.querySelector('main input[type="date"]'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, '2026-10-01'); input.dispatchEvent(new Event('input', { bubbles: true })); input.dispatchEvent(new Event('change', { bubbles: true })); })()`);
+    await waitFor(`new URLSearchParams(location.search).get('from') === '2026-10-01'`);
+    assert.equal(await evaluate(`document.querySelector('main input[type="date"]').value`), '2026-10-01');
+    await waitFor(`document.body.innerText.includes('Nenhuma movimentação neste período') && !document.body.innerText.includes('Atualizando período…')`);
+    assert.ok(await evaluate(`document.body.innerText.includes('01/10/2026')`), 'Intervalo exibido deve vir da resposta atual');
+    for (const path of ['/api/v1/accounts', '/api/v1/goals', '/api/v1/dashboard/recent-transactions']) {
+      assert.equal(resourceReads.get(path), reads[path], `Mudança de período não deve recarregar ${path}`);
+    }
+    assert.ok(await evaluate('document.documentElement.scrollWidth <= window.innerWidth'), 'Sem overflow');
+    const shot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true });
+    await writeFile(join(profile, `period-${width}.png`), Buffer.from(shot.data, 'base64'));
+    for (const [state, expression] of [
+      ['loading', `!!document.querySelector('[aria-label="Carregando início"]')`],
+      ['empty', `document.body.innerText.includes('Seu próximo passo começa aqui')`],
+      ['error', `document.body.innerText.includes('Não foi possível carregar seus dados')`],
+    ]) {
+      await navigate(`/dashboard?state=${state}`);
+      await waitFor(expression);
+      assert.ok(await evaluate('document.documentElement.scrollWidth <= window.innerWidth'));
+      // Os estados forçados renderizam antes dos dados; concluir o transporte antes de sair da página.
+      await sleep(1800);
+    }
+    dashboardFailure = true;
+    await navigate('/dashboard?period=YEAR');
+    await waitFor(`document.body.innerText.includes('Não foi possível carregar seus dados')`);
+    dashboardFailure = false;
+    await clickButton('Tentar novamente');
+    await waitFor(`document.body.innerText.includes('4.444,00')`);
+    console.log(`OK ${width}px período: retenção, conjunto completo, foco, rolagem, corrida, histórico, erro, retry, personalizado, vazio e ?state=`);
+  }
+  if (!dashboardOnly && !transactionsOnly && !invoicesOnly) for (const width of [390, 1440]) {
     await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: width < 1024 });
     await send('Network.deleteCookies', { name: 'fin_session', url: origin });
     refreshCalls = 0;
@@ -229,10 +312,14 @@ try {
 
     for (const status of [503, 502]) {
       await setSessionCookie();
-      refreshScenario = { status, delay: 500 };
+      refreshScenario = { status, delay: 1800 };
       await send('Page.navigate', { url: `${origin}/dashboard` });
       await waitFor(`document.body.innerText.includes('Carregando sessão...')`);
       assert.equal(privateCalls, 0, 'Shell não pode consultar enquanto verifica');
+      assert.ok(await evaluate('document.documentElement.scrollWidth <= window.innerWidth'), 'Espera de sessão não deve causar overflow');
+      assert.ok(await evaluate(`document.body.innerText.includes('Aguarde um instante')`));
+      const loadingShot = await send('Page.captureScreenshot', { format: 'png' });
+      await writeFile(join(profile, `auth-loading-${status}-${width}.png`), Buffer.from(loadingShot.data, 'base64'));
       await waitFor(sessionError);
       assert.equal(privateCalls, 0, 'Falha de sessão não pode consultar dados privados');
       assert.ok(await evaluate('document.documentElement.scrollWidth <= window.innerWidth'));
@@ -282,7 +369,7 @@ try {
     console.log(`OK ${width}px sessão: sem cookie, 401, 502, 503, retry, logout e recarga`);
   }
   await setSessionCookie();
-  if (!authOnly && !transactionsOnly) for (const width of [390, 1440]) {
+  if (!dashboardOnly && !authOnly && !transactionsOnly) for (const width of [390, 1440]) {
     await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: width < 1024 });
     invoiceFixture = { reference, closingDate: '2099-01-25', dueDate: '2099-02-02', total: 1000, paid: 0, status: 'OPEN' };
     invoicePaymentStatus = 201;
@@ -342,7 +429,7 @@ try {
     console.log(`OK ${width}px antecipação parcial/total, excesso, erro, recarga e estados de fatura`);
     invoiceFixture = undefined;
   }
-  if (!authOnly && !invoicesOnly) for (const width of [390, 1440]) {
+  if (!dashboardOnly && !authOnly && !invoicesOnly) for (const width of [390, 1440]) {
     await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: width < 1024 });
     async function setField(selector, value) {
       assert.ok(await evaluate(`(() => {

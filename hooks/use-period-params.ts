@@ -51,7 +51,7 @@ export function usePeriodParams(): PeriodParams & { setPeriod: (p: Partial<Perio
         next.delete('to');
       }
       next.delete('page');
-      router.push(`${pathname}?${next.toString()}`);
+      router.push(`${pathname}?${next.toString()}`, { scroll: false });
     },
     [searchParams, router, pathname, period, date, from, to]
   );

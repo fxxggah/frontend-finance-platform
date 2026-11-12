@@ -75,6 +75,8 @@ Somente barras compactas e a BottomNav usam `backdrop-filter`. Barras de ações
 
 Transições novas são de até 200ms e respeitam `prefers-reduced-motion`. Controles interativos têm área mínima de 44px, foco visível e indicação textual de estado. Dialogs e sheets contêm o foco, fecham com Escape e restauram o foco ao acionador quando ele continua montado.
 
+A espera de validação/encerramento da sessão usa `SessionLoading`, com marca FIN, `Card panel` sólido e indicador de carregamento indeterminado, sem porcentagem ou barra estimada. A animação respeita movimento reduzido e não há atraso artificial na navegação. Erros preservam as ações de recuperação do `SessionBoundary`.
+
 Dialogs e sheets usam portal no `document.body` após a hidratação, evitando que o contexto visual das páginas prenda o overlay abaixo da Topbar ou BottomNav. O alvo do portal tem snapshot SSR estável; a camada estática das páginas continua sem providers adicionais.
 
 ### Validação visual local

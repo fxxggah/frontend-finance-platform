@@ -52,7 +52,7 @@ Se a documentação e o código divergirem, **não escolha em silêncio**: avise
 
 1. **Zero Hardcoded Data em Telas:** Nenhuma tela ou página deve embutir arrays ou dados mockados estáticos no JSX. Toda tela consome hooks customizados do TanStack Query integrados a `lib/services/` ou `lib/api/endpoints/`.
 2. **Flag `USE_MOCK` Centralizada:** A alternância entre o backend real e a base determinística de mock é feita exclusivamente pela constante `USE_MOCK` em `lib/config.ts`.
-3. **O Frontend Exibe o que o Backend Calcula:** Saldo consolidado, fatura de cartão, limites disponíveis, progresso de meta e calendário de períodos (`from`/`to`) vêm calculados da API. O front nunca recalcula regras de domínio.
+3. **O Frontend Exibe o que o Backend Calcula:** Saldo Total, fatura de cartão, limites disponíveis, progresso de meta e calendário de períodos (`from`/`to`) vêm calculados da API. O front nunca recalcula regras de domínio.
 4. **Dinheiro e Formatação BRL:** Sempre utilize a função utilitária `formatMoney()` com `Intl.NumberFormat pt-BR` e classes `tabular-nums`. Nunca faça concatenação manual de string como `"R$ " + valor`.
 5. **Tokens de Cores Semânticos:** Nunca use valores hexadecimais soltos nas classes do Tailwind (`bg-[#5B3DF5]`). Utilize sempre os tokens configurados (`bg-bg`, `bg-surface`, `bg-primary`, `text-income`, `text-expense`, etc.).
 6. **Glassmorphism Restrito:** Efeito vidro (`backdrop-blur` com fundo translúcido) é restrito à pílula de atalhos rápidos do Hero e à barra inferior `BottomNav` mobile. O restante da interface deve ser sólido.

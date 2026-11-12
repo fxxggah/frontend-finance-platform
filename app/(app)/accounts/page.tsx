@@ -101,7 +101,7 @@ export default function AccountsPage() {
         <Card variant="brand" padding="lg" className="flex flex-col justify-between">
           <div>
             <span className="text-xs font-semibold uppercase tracking-wider text-white/80">
-              Saldo Consolidado
+              Saldo Total
             </span>
             <div className="mt-2 text-3xl sm:text-4xl font-semibold tabular-nums tracking-tight text-white">
               {formatMoney(totalBalance)}

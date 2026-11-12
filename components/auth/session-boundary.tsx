@@ -3,7 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { SessionLoading } from "@/components/auth/session-loading";
 import { Button } from "@/components/ui/button";
 import { ensureAccessToken, setAccessToken } from "@/lib/api/client";
 import { logout } from "@/lib/api/endpoints/auth";
@@ -71,23 +71,24 @@ export function SessionBoundary({ children, mode, hasSessionCookie }: SessionBou
     return children;
   }
 
+  if (state !== "error") {
+    return (
+      <SessionLoading
+        key={`${state === "signing-out" ? "signing-out" : "verifying"}-${attempt}`}
+        signingOut={state === "signing-out"}
+        complete={state === "authenticated" || state === "anonymous"}
+      />
+    );
+  }
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-bg px-4 py-8 text-text">
       <div className="w-full max-w-md rounded-3xl border border-border bg-surface p-6 text-center sm:p-8">
-        {state === "error" ? (
-          <>
-            <p role="alert" className="text-sm text-text-muted">Não foi possível validar sua sessão. Tente novamente.</p>
-            <div className="mt-6 flex flex-col gap-3">
-              <Button onClick={() => { setState("verifying"); setAttempt(value => value + 1); }}>Tentar novamente</Button>
-              <Button variant="outline" onClick={() => void signInAgain()}>Entrar novamente</Button>
-            </div>
-          </>
-        ) : (
-          <p role="status" className="flex items-center justify-center gap-2 text-sm text-text-muted">
-            <Loader2 className="size-5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
-            {state === "signing-out" ? "Encerrando sessão..." : "Carregando sessão..."}
-          </p>
-        )}
+        <p role="alert" className="text-sm text-text-muted">Não foi possível validar sua sessão. Tente novamente.</p>
+        <div className="mt-6 flex flex-col gap-3">
+          <Button onClick={() => { setState("verifying"); setAttempt(value => value + 1); }}>Tentar novamente</Button>
+          <Button variant="outline" onClick={() => void signInAgain()}>Entrar novamente</Button>
+        </div>
       </div>
     </main>
   );

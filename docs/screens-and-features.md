@@ -25,6 +25,16 @@ A tela principal do usuário reúne visão consolidada, atalhos rápidos e métr
 
 **Referência visual global:** o Início utiliza composição com Hero e seletor de período lado a lado a partir de 1280px, barra independente de ações rápidas, quatro indicadores, gráficos, movimentações recentes e metas. Em telas menores, os painéis se empilham e os atalhos usam duas colunas abaixo de 640px. Seus padrões foram extraídos para a UI compartilhada e aplicados a todas as áreas, conforme `design-system.md`, preservando dados e contratos existentes.
 
+### Atualização do período
+
+- O skeleton completo aparece somente na primeira carga sem resultados e em `?state=loading`.
+- Ao trocar período ou data, o seletor continua disponível e informa “Atualizando período…”. O último conjunto completo de resumo, evolução e categorias permanece visível até todas as consultas atuais concluírem com sucesso, sem misturar períodos.
+- As datas do resumo vêm da API e identificam os dados efetivamente exibidos. Os rótulos dos indicadores e o tipo de gráfico acompanham esses dados; os controles refletem imediatamente a seleção solicitada, inclusive De/Até no personalizado.
+- Em falha de atualização, os dados anteriores são preservados com aviso e botão “Tentar novamente”. Sem resultados anteriores, permanece o erro completo. `?state=empty|error` mantém os estados forçados.
+- O seletor tem altura natural quando empilhado, sem reservar espaço vazio para avisos. As mensagens ocupam espaço apenas durante atualização ou falha; a região acessível permanece montada. A altura acompanha o Hero somente na composição lado a lado (`xl`).
+- A troca preserva a rolagem e o histórico da URL. Contas, metas e movimentações recentes não são recarregadas pela mudança de período. A retenção é opcional nos hooks compartilhados e habilitada apenas no Início.
+- Validação automatizada: com a aplicação em modo real rodando na porta 3005, executar `node scripts/ui-smoke.mjs --dashboard-only` (ou definir `SMOKE_URL`). O Chrome intercepta a API com respostas controladas, sem alterar dados reais, e verifica mobile/desktop, respostas fora de ordem, falha parcial, recuperação, histórico, foco, rolagem, personalizado e estados `?state=`.
+
 ### 2.1 Cartão de Saldo Principal (Hero)
 - **Visual:** Fundo gradiente `gradient-hero` (violeta para azul elétrico), bordas `rounded-3xl`.
 - **Conteúdo:**
@@ -60,6 +70,7 @@ Grade com 4 cartões com sparklines e percentual comparativo com o período ante
 
 ### 2.5 Gráfico de Despesas por Categoria (Rosca / Donut)
 - Gráfico em formato de rosca com o total de despesas centralizado no meio.
+- O tooltip fica acima do total central (`z-index: 10`), seguindo o gráfico de categorias de Relatórios, para evitar sobreposição de textos ao passar o mouse nas fatias.
 - Legenda lateral ou inferior com nome, cor, ícone (`CategoryIcon`), valor e percentual (`%`) de cada categoria.
 
 ### 2.6 Carrossel / Grid de Metas em Andamento
@@ -104,7 +115,7 @@ Grade com 4 cartões com sparklines e percentual comparativo com o período ante
 
 ## 4. Tela de Contas Bancárias (`/accounts`)
 
-- **Topo:** Card de destaque exibindo o Saldo Consolidado (`totalBalance`) e dívida em cartões.
+- **Topo:** Card de destaque exibindo o Saldo Total (`totalBalance`) e dívida em cartões.
 - **Grade de Contas Ativas:**
   - Cada card exibe: Nome, Tipo (`BANK`, `CASH`, `DIGITAL_WALLET`), ícone customizado, cor e saldo atualizado.
   - Menu de ações (três pontos): "Editar conta", "Transferir desta conta", "Arquivar/Excluir".
