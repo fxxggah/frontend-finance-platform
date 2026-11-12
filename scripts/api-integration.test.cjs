@@ -21,7 +21,7 @@ require.extensions['.ts'] = (module, filename) => {
 };
 function reset() {
   for (const key of Object.keys(require.cache)) {
-    if (key.startsWith(path.join(root, 'lib'))) delete require.cache[key];
+    if (['lib', 'app'].some(directory => key.startsWith(path.join(root, directory)))) delete require.cache[key];
   }
   process.env.NEXT_PUBLIC_USE_MOCK = 'false';
   process.env.NEXT_PUBLIC_API_URL = 'http://localhost:8080';
@@ -198,6 +198,154 @@ test('erros do backend nunca viram uma resposta mockada no modo real', async () 
   global.fetch = async () => json({ title: 'Falha', detail: 'Backend indisponível' }, 500);
   const { getSummary } = require('../lib/api/endpoints/dashboard.ts');
   await assert.rejects(getSummary(), error => error.status === 500 && error.detail === 'Backend indisponível');
+});
+
+test('barreira recupera sessão sem redirecionar e compartilha refresh com consultas', async () => {
+  const { client, redirects } = reset();
+  let calls = 0;
+  global.fetch = async input => {
+    if (String(input) === '/api/auth/refresh') {
+      calls++;
+      await new Promise(resolve => setImmediate(resolve));
+      return json({ accessToken: 'validated-access' });
+    }
+    return json({ name: 'Pessoa' });
+  };
+  await Promise.all([client.ensureAccessToken(), client.ensureAccessToken(), client.apiFetch('/users/me')]);
+  await client.ensureAccessToken();
+  assert.equal(calls, 1);
+  assert.equal(client.getAccessToken(), 'validated-access');
+  assert.deepEqual(redirects, []);
+  client.setAccessToken(null);
+  global.fetch = async () => json({ detail: 'Expirou' }, 401);
+  await assert.rejects(client.ensureAccessToken(), error => error.status === 401);
+  assert.deepEqual(redirects, [], 'A barreira deve decidir a navegação inicial');
+  await assert.rejects(client.apiFetch('/users/me'), error => error.status === 401);
+  assert.deepEqual(redirects, ['/login']);
+});
+
+test('resposta incompleta ou JSON inválido no BFF não autentica o cliente', async () => {
+  for (const response of [json({}), json({ accessToken: 123 }), new Response('invalid-json')]) {
+    const { client } = reset();
+    global.fetch = async () => response;
+    await assert.rejects(client.ensureAccessToken(), error => error.status === 502);
+    assert.equal(client.getAccessToken(), null);
+  }
+});
+
+function authRequest(operation, { cookie = 'private-refresh-token', origin = 'http://localhost:3005', body } = {}) {
+  const { NextRequest } = require('next/server');
+  return new NextRequest(`http://localhost:3005/api/auth/${operation}`, {
+    method: 'POST',
+    headers: { origin, ...(cookie ? { cookie: `fin_session=${cookie}` } : {}), 'Content-Type': 'application/json' },
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+  });
+}
+
+test('BFF sem cookie rejeita sem chamar backend e bloqueia origem externa', async () => {
+  reset();
+  const { POST } = require('../app/api/auth/refresh/route.ts');
+  global.fetch = async () => { throw new Error('Backend não deveria ser chamado'); };
+  const response = await POST(authRequest('refresh', { cookie: null }));
+  assert.equal(response.status, 401);
+  assert.equal((await response.json()).status, 401);
+  assert.equal(response.cookies.get('fin_session').value, '');
+  const forbidden = await POST(authRequest('refresh', { origin: 'https://external.example' }));
+  assert.equal(forbidden.status, 403);
+});
+
+test('BFF rotaciona cookie httpOnly e devolve somente access token', async () => {
+  reset();
+  global.fetch = async (input, init) => {
+    assert.equal(String(input), 'http://localhost:8080/api/v1/auth/refresh');
+    assert.deepEqual(JSON.parse(init.body), { refreshToken: 'private-refresh-token' });
+    assert.ok(init.signal instanceof AbortSignal);
+    return json({ accessToken: 'new-access', refreshToken: 'rotated-private-token', expiresIn: 900 });
+  };
+  const { POST } = require('../app/api/auth/refresh/route.ts');
+  const response = await POST(authRequest('refresh'));
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { accessToken: 'new-access' });
+  assert.equal(response.cookies.get('fin_session').value, 'rotated-private-token');
+  assert.match(response.headers.get('set-cookie'), /httponly/i);
+});
+
+test('refresh e criação de sessão classificam falhas sem expor segredos', async t => {
+  const logs = [];
+  t.mock.method(console, 'error', (...args) => logs.push(args));
+  for (const operation of ['refresh', 'session']) {
+    for (const [upstream, expected, category] of [[400, 401, 'rejected'], [401, 401, 'rejected'], [503, 503, 'upstream_http'], [403, 502, 'upstream_http'], [200, 502, 'invalid_response'], ['network', 503, 'network'], ['json', 502, 'invalid_response']]) {
+      reset();
+      global.fetch = async () => {
+        if (upstream === 'network') throw new Error('private-refresh-token');
+        if (upstream === 'json') return new Response('invalid-json');
+        return json({ detail: 'private-refresh-token' }, upstream);
+      };
+      const { POST } = require(`../app/api/auth/${operation}/route.ts`);
+      const response = await POST(authRequest(operation, { body: { refreshToken: 'private-refresh-token' } }));
+      assert.equal(response.status, expected, `${operation}: ${upstream}`);
+      const problem = await response.json();
+      assert.equal(problem.status, expected);
+      assert.equal(problem.type, 'about:blank');
+      assert.equal(response.cookies.get('fin_session')?.value, expected === 401 ? '' : undefined);
+      assert.equal(logs.at(-1)[1].category, category);
+      assert.equal(logs.at(-1)[1].operation, operation);
+      assert.ok(!JSON.stringify(problem).includes('private-refresh-token'));
+    }
+  }
+  assert.ok(!JSON.stringify(logs).includes('private-refresh-token'));
+});
+
+test('mock inválido retorna 401 e remove o cookie', async t => {
+  reset();
+  t.mock.method(console, 'error', () => {});
+  process.env.NEXT_PUBLIC_USE_MOCK = 'true';
+  delete require.cache[require.resolve('../lib/config.ts')];
+  const { POST } = require('../app/api/auth/refresh/route.ts');
+  const response = await POST(authRequest('refresh'));
+  assert.equal(response.status, 401);
+  assert.equal(response.cookies.get('fin_session').value, '');
+});
+
+test('timeout de 10s preserva sessão no refresh e logout limpa cookie apesar da falha remota', async t => {
+  reset();
+  const logs = [];
+  t.mock.method(console, 'error', (...args) => logs.push(args));
+  t.mock.method(AbortSignal, 'timeout', duration => {
+    assert.equal(duration, 10_000);
+    const controller = new AbortController();
+    controller.abort();
+    return controller.signal;
+  });
+  global.fetch = async (_input, init) => { init.signal.throwIfAborted(); };
+  const refresh = require('../app/api/auth/refresh/route.ts');
+  const response = await refresh.POST(authRequest('refresh'));
+  assert.equal(response.status, 503);
+  assert.equal(response.cookies.get('fin_session'), undefined);
+  assert.equal(logs.at(-1)[1].category, 'timeout');
+  const logout = require('../app/api/auth/logout/route.ts');
+  const ended = await logout.POST(authRequest('logout'));
+  assert.equal(ended.status, 200);
+  assert.equal(ended.cookies.get('fin_session').value, '');
+  assert.equal(logs.at(-1)[1].operation, 'logout');
+});
+
+test('logout invalida refresh pendente antes de concluir a chamada remota', async () => {
+  const { client } = reset();
+  const auth = require('../lib/api/endpoints/auth.ts');
+  let completeRefresh;
+  let completeLogout;
+  global.fetch = input => new Promise(resolve => {
+    if (String(input) === '/api/auth/refresh') completeRefresh = resolve;
+    else completeLogout = resolve;
+  });
+  const pending = client.ensureAccessToken();
+  const ending = auth.logout();
+  completeRefresh(json({ accessToken: 'late-access' }));
+  await assert.rejects(pending, error => error.status === 401);
+  assert.equal(client.getAccessToken(), null);
+  completeLogout(json({ success: true }));
+  await ending;
 });
 
 after(() => {

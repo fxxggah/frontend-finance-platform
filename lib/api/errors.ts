@@ -31,7 +31,7 @@ export class ApiError extends Error {
     this.instance = problem.instance;
 
     // Mantém compatibilidade adequada da cadeia de protótipos
-    Object.setPrototypeOf(this, ApiError.prototype);
+    Object.setPrototypeOf(this, new.target.prototype);
   }
 
   /**

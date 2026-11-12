@@ -6,3 +6,28 @@
   flex-direction: column;
   justify-content: space-between;
 }
+
+.googleButtonFrame {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 56px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  border-radius: 9999px;
+  padding: 4px 8px;
+  background: var(--color-surface-soft);
+  transition: border-color 200ms, box-shadow 200ms, opacity 200ms;
+}
+
+.googleButtonFrame:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .googleButtonFrame {
+    transition: none;
+  }
+}

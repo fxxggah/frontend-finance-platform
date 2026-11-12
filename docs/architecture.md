@@ -106,6 +106,7 @@ sequenceDiagram
 1. **Access Token:** Mantido estritamente em memória do navegador (Zustand ou variável de módulo). Tem validade curta (15 minutos).
 2. **Refresh Token:** Armazenado isoladamente em cookie `httpOnly`, `secure` em produção e `sameSite=lax`. O navegador não lê o token.
 3. **Renovação Automática (Rotação de Tokens):** Quando falta o access token em memória ou uma requisição à API retorna `401 Unauthorized`, o cliente chama `POST /api/auth/refresh`. O Route Handler lê o cookie, chama `POST /api/v1/auth/refresh`, grava o refresh token rotacionado e devolve apenas o novo access token. O cliente repete a requisição original uma única vez.
+4. **Validação inicial:** `fin_session` presente é uma sessão candidata. `SessionBoundary` usa `ensureAccessToken`, compartilhando a promessa de refresh do cliente HTTP, antes de montar o shell e suas consultas. A recuperação inicial não navega por conta própria: a barreira libera a área privada, encaminha ao login em 401 ou oferece recuperação em falhas temporárias. Em `/login`, sem cookie não há refresh; com cookie válido, encaminha ao dashboard. Tokens não são rotacionados no middleware nem em Server Components.
 
 ---
 
@@ -208,23 +209,19 @@ O arquivo `middleware.ts` na raiz do projeto protege o grupo de rotas autenticad
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const PUBLIC_ROUTES = ['/login'];
+const PROTECTED_PREFIXES = ['/dashboard', '/transactions', '/accounts', '/cards', '/goals', '/reports', '/categories', '/simulations', '/settings'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const sessionCookie = request.cookies.get('fin_session');
-  const isAuthenticated = Boolean(sessionCookie?.value);
+  const hasSessionCookie = Boolean(sessionCookie?.value);
+  const isProtected = PROTECTED_PREFIXES.some(prefix => pathname === prefix || pathname.startsWith(`${prefix}/`));
 
   // 1. Usuário não autenticado tentando acessar rota privada
-  if (!isAuthenticated && !PUBLIC_ROUTES.includes(pathname)) {
+  if (!hasSessionCookie && isProtected) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('from', pathname);
     return NextResponse.redirect(loginUrl);
-  }
-
-  // 2. Usuário autenticado tentando acessar a tela de login
-  if (isAuthenticated && PUBLIC_ROUTES.includes(pathname)) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
   return NextResponse.next();
@@ -234,6 +231,12 @@ export const config = {
   matcher: ['/((?!_next/static|_next/image|favicon.ico|api/auth).*)'],
 };
 ```
+
+O middleware não redireciona `/login` apenas pela presença do cookie. A validação
+e o redirecionamento são responsabilidade da barreira de sessão, usando o BFF.
+Erros de autenticação removem o cookie; 502/503 preservam a sessão candidata e
+oferecem nova tentativa ou encerramento explícito. Consulte
+[api-integration.md](./api-integration.md) para os status e o timeout do BFF.
 
 ---
 

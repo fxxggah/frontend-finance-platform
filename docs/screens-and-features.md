@@ -11,7 +11,7 @@ Este documento estabelece as especificações completas de interface, regras de 
   - Fundo limpo `bg-bg` com dois blobs decorativos suaves em tons azul e violeta.
   - Card sólido centralizado (`bg-surface`, `rounded-3xl`, `shadow-card`, sem bordas agressivas).
   - Marca **FIN** acompanhada do subtítulo: *"Suas finanças, num só lugar"*.
-  - Botão de ação proeminente: **"Entrar com Google"** (com ícone SVG oficial do Google).
+  - Botão oficial do Google com texto **"Continuar com o Google"**, formato de pílula e moldura sólida com tokens do FIN. A largura acompanha o espaço interno do card via `ResizeObserver`; o botão é ampliado proporcionalmente para atingir 44px de altura e mantém o estilo oficial do SDK.
   - Nota de rodapé sobre privacidade e criptografia de ponta a ponta.
 - **Comportamento:**
   - Integração com o Google Identity Services. Ao receber o `idToken`, envia para `POST /api/v1/auth/google`.

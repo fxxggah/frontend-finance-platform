@@ -15,18 +15,21 @@ import { useQueryClient } from "@tanstack/react-query";
 interface GoogleCredentialResponse { credential?: string }
 interface GoogleIdentity {
   initialize(config: { client_id: string; callback: (response: GoogleCredentialResponse) => void }): void;
-  renderButton(element: HTMLElement, options: { type: "standard"; theme: "outline"; size: "large"; text: "signin_with"; width: number; locale: "pt-BR" }): void;
+  renderButton(element: HTMLElement, options: { type: "standard"; theme: "outline"; size: "large"; text: "continue_with"; shape: "pill"; logo_alignment: "left"; width: number; locale: "pt-BR" }): void;
 }
 declare global {
   interface Window { google?: { accounts: { id: GoogleIdentity } } }
 }
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+// O tamanho large do SDK tem 40px; escala proporcional mantém o alvo de toque em 44px.
+const GOOGLE_BUTTON_SCALE = 1.1;
 
 export default function LoginPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const googleButtonRef = useRef<HTMLDivElement>(null);
+  const googleButtonContainerRef = useRef<HTMLDivElement>(null);
   const pendingRef = useRef(false);
   const [scriptReady, setScriptReady] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -65,10 +68,11 @@ export default function LoginPage() {
   }, [router, queryClient]);
 
   useEffect(() => {
-    if (USE_MOCK || !scriptReady || !GOOGLE_CLIENT_ID || !googleButtonRef.current || !window.google) return;
+    if (USE_MOCK || !scriptReady || !GOOGLE_CLIENT_ID || !googleButtonRef.current || !googleButtonContainerRef.current || !window.google) return;
     const element = googleButtonRef.current;
-    element.replaceChildren();
-    window.google.accounts.id.initialize({
+    const container = googleButtonContainerRef.current;
+    const identity = window.google.accounts.id;
+    identity.initialize({
       client_id: GOOGLE_CLIENT_ID,
       callback: (response) => {
         if (!response.credential) {
@@ -78,14 +82,23 @@ export default function LoginPage() {
         void finishLogin(response.credential);
       },
     });
-    window.google.accounts.id.renderButton(element, {
-      type: "standard", theme: "outline", size: "large", text: "signin_with",
-      width: Math.min(element.clientWidth, 360), locale: "pt-BR",
+    let renderedWidth = 0;
+    const observer = new ResizeObserver(([entry]) => {
+      const width = Math.min(Math.floor(entry.contentRect.width / GOOGLE_BUTTON_SCALE), 400);
+      if (width <= 0 || width === renderedWidth) return;
+      renderedWidth = width;
+      element.replaceChildren();
+      identity.renderButton(element, {
+        type: "standard", theme: "outline", size: "large", text: "continue_with",
+        shape: "pill", logo_alignment: "left", width, locale: "pt-BR",
+      });
     });
+    observer.observe(container);
+    return () => { observer.disconnect(); element.replaceChildren(); };
   }, [scriptReady, finishLogin]);
 
   return (
-    <main className={`${styles.layout} grid min-h-screen w-full items-center gap-8 px-4 py-8 sm:px-8 lg:grid-cols-2 lg:gap-12 lg:px-16 xl:px-24`}>
+    <main className={`${styles.layout} grid min-h-screen w-full min-w-0 grid-cols-1 items-center gap-8 px-4 py-8 sm:px-8 lg:grid-cols-2 lg:gap-12 lg:px-16 xl:px-24`}>
       <Card variant="brand" className={`${styles.intro} hidden p-10 lg:flex xl:p-14`}>
         <div className="flex items-center gap-3 text-xl font-semibold tracking-tight text-white"><span className="size-4 rotate-45 rounded-sm bg-white" aria-hidden="true" />FIN</div>
         <div className="relative max-w-md">
@@ -115,14 +128,16 @@ export default function LoginPage() {
 
         {USE_MOCK ? (
           <button type="button" disabled={isLoading} onClick={() => void finishLogin("mock-google-id-token")}
-            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-border bg-surface px-4 font-semibold text-text hover:bg-surface-soft disabled:opacity-60">
+            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-border bg-surface px-4 font-semibold text-text hover:bg-surface-soft disabled:opacity-60">
             {isLoading && <Loader2 className="size-5 animate-spin" aria-hidden="true" />}
             {isLoading ? "Entrando..." : "Entrar com Google (demonstração)"}
           </button>
         ) : (
-          <div className="flex min-h-12 w-full flex-col items-center justify-center gap-3" aria-busy={isLoading}>
-            {isLoading ? <p role="status" className="flex items-center gap-2 text-sm text-text-muted"><Loader2 className="size-5 animate-spin" aria-hidden="true" />Entrando...</p> : null}
-            <div ref={googleButtonRef} className={isLoading ? "pointer-events-none opacity-50" : "w-full text-center"} aria-label="Entrar com Google" />
+          <div className="flex min-h-12 w-full min-w-0 flex-col items-center justify-center gap-3" aria-busy={isLoading}>
+            <div ref={googleButtonContainerRef} className={`${styles.googleButtonFrame} ${isLoading ? "opacity-60" : ""}`}>
+              <div ref={googleButtonRef} className="min-w-0 shrink-0" style={{ zoom: GOOGLE_BUTTON_SCALE }} inert={isLoading} />
+            </div>
+            {isLoading ? <p role="status" className="flex items-center gap-2 text-sm text-text-muted"><Loader2 className="size-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />Entrando...</p> : null}
             {GOOGLE_CLIENT_ID && !scriptReady && !errorMessage && <p role="status" className="text-sm text-text-muted">Carregando botão do Google...</p>}
             {!GOOGLE_CLIENT_ID && <p role="alert" className="text-sm text-expense">Configure NEXT_PUBLIC_GOOGLE_CLIENT_ID para entrar.</p>}
           </div>

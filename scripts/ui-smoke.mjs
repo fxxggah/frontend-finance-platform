@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const origin = process.env.SMOKE_URL || 'http://localhost:3005';
+const authOnly = process.argv.includes('--auth-only');
 const chromePath = process.env.CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 const profile = await mkdtemp(join(tmpdir(), 'fin-ui-'));
 const port = 9227;
@@ -36,6 +37,9 @@ try {
   });
   const exceptions = [];
   const contractErrors = [];
+  let refreshScenario = { status: 200, delay: 0 };
+  let refreshCalls = 0;
+  let privateCalls = 0;
   function send(method, params = {}) {
     const id = ++nextId;
     return new Promise((resolve, reject) => {
@@ -73,9 +77,38 @@ try {
     } else if (message.method === 'Fetch.requestPaused') {
       const { request, requestId } = message.params;
       const url = new URL(request.url);
+      if (url.hostname === 'accounts.google.com') {
+        await send('Fetch.fulfillRequest', {
+          requestId, responseCode: 200,
+          responseHeaders: [{ name: 'Content-Type', value: 'application/javascript' }],
+          body: Buffer.from(`window.google = { accounts: { id: {
+            initialize(config) { this.callback = config.callback; },
+            renderButton(element) { const button = document.createElement('button'); button.textContent = 'Entrar com Google (teste)'; button.onclick = () => this.callback({ credential: 'controlled-google-credential' }); element.appendChild(button); }
+          } } };`).toString('base64'),
+        });
+        return;
+      }
       let body;
-      if (url.pathname === '/api/auth/refresh') body = { accessToken: 'validation-access' };
+      let status = 200;
+      const headers = [];
+      if (url.pathname === '/api/auth/refresh') {
+        refreshCalls++;
+        const scenario = refreshScenario;
+        if (scenario.delay) await sleep(scenario.delay);
+        status = scenario.status;
+        body = status === 200 ? { accessToken: 'validation-access' } : { status, title: 'Falha de sessão', detail: 'Resposta controlada' };
+        if (status === 401) headers.push({ name: 'Set-Cookie', value: 'fin_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0' });
+      }
+      else if (url.pathname === '/api/auth/session') {
+        body = { accessToken: 'validation-access' };
+        headers.push({ name: 'Set-Cookie', value: 'fin_session=validation-cookie; Path=/; HttpOnly; SameSite=Lax' });
+      }
+      else if (url.pathname === '/api/auth/logout') {
+        body = { success: true };
+        headers.push({ name: 'Set-Cookie', value: 'fin_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0' });
+      }
       else if (request.method !== 'OPTIONS') {
+        if (!url.pathname.startsWith('/api/v1/auth/')) privateCalls++;
         const route = Object.keys(spec.paths).find(route => new RegExp(`^${route.replace(/\{[^}]+\}/g, '[^/]+')}$`).test(url.pathname));
         const operation = spec.paths[route]?.[request.method.toLowerCase()];
         if (!operation) contractErrors.push(`${request.method} ${url.pathname}`);
@@ -84,8 +117,9 @@ try {
         body = schema ? sample(schema) : undefined;
       }
       await send('Fetch.fulfillRequest', {
-        requestId, responseCode: 200,
+        requestId, responseCode: status,
         responseHeaders: [
+          ...headers,
           { name: 'Content-Type', value: 'application/json' },
           { name: 'Access-Control-Allow-Origin', value: origin },
           { name: 'Access-Control-Allow-Headers', value: 'authorization,content-type,accept' },
@@ -98,9 +132,9 @@ try {
   await send('Page.enable');
   await send('Runtime.enable');
   await send('Network.enable');
-  await send('Network.setCookie', { name: 'fin_session', value: 'validation-cookie', url: origin, httpOnly: true, sameSite: 'Lax' });
   await send('Fetch.enable', { patterns: [
-    { urlPattern: 'http://localhost:8080/*' }, { urlPattern: `${origin}/api/auth/refresh` },
+    { urlPattern: 'http://localhost:8080/*' }, { urlPattern: `${origin}/api/auth/*` },
+    { urlPattern: 'https://accounts.google.com/gsi/client*' },
   ] });
   async function evaluate(expression) {
     const response = await send('Runtime.evaluate', { expression, returnByValue: true });
@@ -114,7 +148,99 @@ try {
     }
     throw new Error(`Página não estabilizou: ${path}\n${await evaluate('document.body.innerText')}`);
   }
+  async function waitFor(expression) {
+    for (let i = 0; i < 100; i++) {
+      await sleep(100);
+      if (await evaluate(`document.readyState === 'complete' && (${expression})`)) return;
+    }
+    throw new Error(`Condição não atingida: ${expression}\n${await evaluate('document.body.innerText')}`);
+  }
+  async function setSessionCookie() {
+    await send('Network.setCookie', { name: 'fin_session', value: 'validation-cookie', url: origin, httpOnly: true, sameSite: 'Lax' });
+  }
+  async function clickButton(text) {
+    assert.ok(await evaluate(`(() => { const button = Array.from(document.querySelectorAll('button')).find(button => button.textContent.trim() === ${JSON.stringify(text)}); button?.click(); return !!button; })()`), `Botão ausente: ${text}`);
+  }
+  const loginVisible = `location.pathname === '/login' && document.body.innerText.includes('Suas finanças, num só lugar')`;
+  const sessionError = `document.body.innerText.includes('Não foi possível validar sua sessão')`;
   for (const width of [390, 1440]) {
+    await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: width < 1024 });
+    await send('Network.deleteCookies', { name: 'fin_session', url: origin });
+    refreshCalls = 0;
+    privateCalls = 0;
+    for (const route of ['/', '/dashboard', '/login']) {
+      await send('Page.navigate', { url: `${origin}${route}` });
+      await waitFor(loginVisible);
+    }
+    assert.equal(refreshCalls, 0, 'Sem cookie não deve renovar');
+    assert.equal(privateCalls, 0, 'Sem sessão não deve consultar dados privados');
+
+    for (const route of ['/', '/dashboard', '/login']) {
+      await setSessionCookie();
+      refreshScenario = { status: 401, delay: 0 };
+      await send('Page.navigate', { url: `${origin}${route}` });
+      await waitFor(loginVisible);
+      const cookies = await send('Network.getCookies', { urls: [origin] });
+      assert.ok(!cookies.cookies.some(cookie => cookie.name === 'fin_session'), '401 deve remover cookie');
+      assert.equal(privateCalls, 0);
+    }
+
+    for (const status of [503, 502]) {
+      await setSessionCookie();
+      refreshScenario = { status, delay: 500 };
+      await send('Page.navigate', { url: `${origin}/dashboard` });
+      await waitFor(`document.body.innerText.includes('Verificando sessão...')`);
+      assert.equal(privateCalls, 0, 'Shell não pode consultar enquanto verifica');
+      await waitFor(sessionError);
+      assert.equal(privateCalls, 0, 'Falha de sessão não pode consultar dados privados');
+      assert.ok(await evaluate('document.documentElement.scrollWidth <= window.innerWidth'));
+      assert.ok(await evaluate('Array.from(document.querySelectorAll("button")).every(button => button.getBoundingClientRect().height >= 44)'));
+      const shot = await send('Page.captureScreenshot', { format: 'png' });
+      await writeFile(join(profile, `auth-session-${status}-${width}.png`), Buffer.from(shot.data, 'base64'));
+      const cookies = await send('Network.getCookies', { urls: [origin] });
+      assert.ok(cookies.cookies.some(cookie => cookie.name === 'fin_session'), 'Falha temporária deve preservar cookie');
+      await clickButton('Entrar novamente');
+      await waitFor(loginVisible);
+    }
+
+    await setSessionCookie();
+    refreshScenario = { status: 503, delay: 0 };
+    await send('Page.navigate', { url: `${origin}/login` });
+    await waitFor(sessionError);
+    refreshScenario = { status: 200, delay: 0 };
+    await clickButton('Tentar novamente');
+    await waitFor(`location.pathname === '/dashboard' && document.body.innerText.includes('Pessoa de Validação')`);
+    await navigate('/dashboard'); // Recarga recupera o token novamente.
+    await navigate('/login'); // Cookie válido encaminha ao dashboard.
+    assert.equal(await evaluate('location.pathname'), '/dashboard');
+    assert.ok(await evaluate('document.documentElement.scrollWidth <= window.innerWidth'));
+    for (const [state, expression] of [
+      ['loading', `!!document.querySelector('[aria-label="Carregando início"]')`],
+      ['empty', `document.body.innerText.includes('Seu próximo passo começa aqui')`],
+      ['error', `document.body.innerText.includes('Não foi possível carregar seus dados')`],
+    ]) {
+      await navigate(`/dashboard?state=${state}`);
+      await waitFor(expression);
+      assert.ok(await evaluate('document.documentElement.scrollWidth <= window.innerWidth'));
+      const shot = await send('Page.captureScreenshot', { format: 'png' });
+      await writeFile(join(profile, `auth-dashboard-${state}-${width}.png`), Buffer.from(shot.data, 'base64'));
+      console.log(`OK ${width}px dashboard autenticado ?state=${state}`);
+    }
+
+    await send('Network.deleteCookies', { name: 'fin_session', url: origin });
+    await send('Page.navigate', { url: `${origin}/login` });
+    await waitFor(loginVisible);
+    if (!await evaluate(`document.body.innerText.includes('Configure NEXT_PUBLIC_GOOGLE_CLIENT_ID')`)) {
+      await waitFor(`document.body.innerText.includes('Entrar com Google (teste)')`);
+      await clickButton('Entrar com Google (teste)');
+      await waitFor(`location.pathname === '/dashboard' && document.body.innerText.includes('Pessoa de Validação')`);
+      await navigate('/dashboard');
+      console.log(`OK ${width}px login Google com transporte controlado e recarga`);
+    } else console.log(`SKIP ${width}px login Google: client ID ausente`);
+    console.log(`OK ${width}px sessão: sem cookie, 401, 502, 503, retry, logout e recarga`);
+  }
+  await setSessionCookie();
+  if (!authOnly) for (const width of [390, 1440]) {
     await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: width < 1024 });
     for (const route of ['/dashboard', '/transactions', '/accounts', '/cards', '/goals', '/reports', '/categories', '/settings']) {
       await navigate(route);

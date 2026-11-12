@@ -29,6 +29,13 @@ controladas. `SMOKE_URL` e `CHROME_PATH` permitem alterar o servidor e o execut�
 Essa verificação cobre telas, estados, navegação e envio das simulações; a
 autenticação Google e os dados de uma conta real exigem a validação manual abaixo.
 
+`node scripts/ui-smoke.mjs --auth-only` executa somente a regressão de sessão
+em 390 e 1440 px: acesso sem cookie, cookie rejeitado, 502/503, recuperação,
+logout, login Google com SDK/transporte controlados e recarga, além dos estados
+`?state=loading|empty|error` do dashboard autenticado. Esse teste não usa credenciais
+Google reais nem altera dados do backend; o envio do login é ignorado se o client ID
+OAuth não estiver configurado no build.
+
 ## Ambiente
 
 ```dotenv
@@ -49,6 +56,23 @@ O access token fica em memória. Ao recarregar a página, o cliente chama o BFF
 rotaciona o token no Spring e devolve somente o access token. Consultas paralelas
 compartilham uma renovação. Cada requisição privada envia `Authorization: Bearer`.
 Um 401 permite uma repetição; indisponibilidade de rede não apaga o cookie.
+
+O cookie é apenas uma sessão candidata. Middleware e layout servidor bloqueiam
+rotas privadas sem cookie, mas sua presença não autentica o usuário. A barreira
+`SessionBoundary` recupera o access token antes de montar o shell e as consultas
+financeiras. `/login` sem cookie mostra o formulário sem refresh; com cookie,
+valida a sessão antes de encaminhar ao dashboard. A rota `/` encaminha ao login
+ou à barreira do dashboard conforme a presença do cookie. O GET de
+`/api/auth/session` informa somente presença de cookie, não validade remota.
+
+Uma rejeição de sessão remove cookie, token em memória e cache. Falhas temporárias
+bloqueiam a área privada e exibem “Tentar novamente” e “Entrar novamente”. A segunda
+ação encerra a sessão antes de mostrar o formulário. O refresh e a revogação remota
+têm timeout de 10 segundos; falhas de revogação não impedem limpar o cookie local.
+O BFF de refresh/criação de sessão responde `ProblemDetail`: 401 para rejeição
+(400/401 remoto), 503 para indisponibilidade/rede/timeout e 502 para resposta
+inválida ou status remoto inesperado. Só 401 apaga o cookie automaticamente.
+Logs `[auth]` registram operação, categoria e status remoto, sem dados de tokens.
 
 Topbar, HeaderMobile e Configurações compartilham `useCurrentUser` para
 `GET /users/me`, incluindo a foto de `pictureUrl`. Não exibem uma pessoa fictícia

@@ -58,11 +58,11 @@ async function refreshAccessToken(): Promise<void> {
         cache: "no-store",
       });
       if (!response.ok) {
-        if (response.status === 401) redirectToLogin();
         throw await responseError(response);
       }
-      const data: { accessToken?: string } = await response.json();
-      if (!data.accessToken) throw new ApiError({
+      const data: unknown = await response.json().catch(() => null);
+      if (!data || typeof data !== "object" || !("accessToken" in data) ||
+          typeof data.accessToken !== "string" || !data.accessToken.trim()) throw new ApiError({
         status: 502, title: "Sessão inválida", detail: "O servidor não retornou um token de acesso.",
       });
       if (generation !== sessionGeneration) throw new ApiError({
@@ -74,6 +74,20 @@ async function refreshAccessToken(): Promise<void> {
   return refreshPromise;
 }
 
+/** Recupera a sessão sem navegar; a barreira inicial decide como tratar o resultado. */
+export async function ensureAccessToken(): Promise<void> {
+  if (!getAccessToken()) await refreshAccessToken();
+}
+
+async function refreshForRequest(): Promise<void> {
+  try {
+    await refreshAccessToken();
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) redirectToLogin();
+    throw error;
+  }
+}
+
 /** Chamadas privadas usam o access token em memória, recuperado do cookie httpOnly pelo BFF. */
 export async function apiFetch<T>(path: ApiPath, options: RequestOptions = {}): Promise<T> {
   const { params, _retry, ...fetchInit } = options;
@@ -83,7 +97,7 @@ export async function apiFetch<T>(path: ApiPath, options: RequestOptions = {}): 
   });
 
   const isPublicAuth = path.startsWith("/auth/");
-  if (!isPublicAuth && !getAccessToken() && typeof window !== "undefined") await refreshAccessToken();
+  if (!isPublicAuth && !getAccessToken() && typeof window !== "undefined") await refreshForRequest();
 
   const headers = new Headers(fetchInit.headers);
   headers.set("Accept", "application/json");
@@ -96,7 +110,7 @@ export async function apiFetch<T>(path: ApiPath, options: RequestOptions = {}): 
   const response = await fetchApi(url, { ...fetchInit, headers, cache: "no-store" });
   if (response.status === 401 && !isPublicAuth && typeof window !== "undefined") {
     if (!_retry) {
-      if (token === getAccessToken() || !getAccessToken()) await refreshAccessToken();
+      if (token === getAccessToken() || !getAccessToken()) await refreshForRequest();
       return apiFetch<T>(path, { ...options, _retry: true });
     }
     await fetch("/api/auth/logout", { method: "POST" }).catch(() => undefined);

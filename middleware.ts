@@ -1,9 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-// Rotas públicas que não exigem sessão ativa
-const PUBLIC_ROUTES = ["/login"];
-
 // Prefixos das rotas privadas pertencentes à área autenticada (app)
 const PROTECTED_PREFIXES = [
   "/dashboard",
@@ -20,21 +17,16 @@ const PROTECTED_PREFIXES = [
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const sessionCookie = request.cookies.get("fin_session");
-  const isAuthenticated = Boolean(sessionCookie?.value);
+  // O cookie indica uma sessão candidata; a barreira client valida pelo BFF.
+  const hasSessionCookie = Boolean(sessionCookie?.value);
 
-  const isProtected = PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
-  const isPublic = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
+  const isProtected = PROTECTED_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 
   // 1. Usuário não autenticado tentando acessar rota privada sob a área (app)
-  if (!isAuthenticated && isProtected) {
+  if (!hasSessionCookie && isProtected) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(loginUrl);
-  }
-
-  // 2. Usuário já autenticado tentando acessar a tela de login
-  if (isAuthenticated && isPublic) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   return NextResponse.next();
