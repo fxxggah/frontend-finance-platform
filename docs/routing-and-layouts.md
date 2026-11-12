@@ -117,6 +117,7 @@ Componente presente no topo das telas analíticas (Dashboard, Relatórios, Trans
   Valores removidos ou inválidos na URL são normalizados para `MONTH`.
   O OpenAPI e seus tipos gerados continuam descrevendo todos os valores do backend.
 - **Exibição do Intervalo Resolvido:** O componente sempre exibe ao lado do seletor o texto com as datas resolvidas (ex.: `"1 a 31 de out. de 2026"`), **extraídas diretamente dos campos `from` e `to` da resposta da API**. O frontend nunca recalcula calendários complexos.
+- **Controles no Início:** `DAY` usa calendário de dia, `MONTH` usa seleção nativa de mês/ano, `WEEK` usa seleção nativa de semana ISO (segunda a domingo) e `YEAR` aceita apenas o ano, aplicado ao sair do campo ou pressionar Enter. `CUSTOM` mantém as datas De/Até. Mês, semana e ano são serializados em uma data de referência `date`, sem alterar o contrato da API; o intervalo exibido continua vindo de `from`/`to` da resposta.
 - **Sincronização via URL:**
   ```
   /dashboard?period=MONTH&date=2026-10-31

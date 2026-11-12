@@ -6,6 +6,7 @@ import { formatDate } from '@/lib/format/date';
 import { PERIOD_OPTIONS } from '@/lib/periods';
 import { CalendarDays } from 'lucide-react';
 import styles from '@/components/ui/surfaces.module.css';
+import { PeriodReferenceInput } from './PeriodReferenceInput';
 
 export function PeriodSelect({ from, to }: { from: string; to: string }) {
   const { period, date, setPeriod } = usePeriodParams();
@@ -37,11 +38,10 @@ export function PeriodSelect({ from, to }: { from: string; to: string }) {
             if (event.target.value) setPeriod({ period, from, to: event.target.value });
           }} className="mt-1 min-h-11 w-full rounded-xl border border-border bg-surface px-2 text-text" />
         </label>
-      </div> : <label className="mt-auto block text-xs text-text-muted">Data de referência
-        <input type="date" value={date} onChange={event => {
-          if (event.target.value) setPeriod({ date: event.target.value });
-        }} className="mt-1 min-h-11 w-full rounded-xl border border-border bg-surface px-2 text-text" />
-      </label>}
+      </div> : <div className="mt-auto min-w-0">
+        <PeriodReferenceInput key={`${period}-${date}`} period={period} date={date}
+          onDateChange={reference => setPeriod({ date: reference })} />
+      </div>}
     </Card>
   );
 }
