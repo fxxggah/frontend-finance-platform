@@ -91,6 +91,7 @@ Grade com 4 cartões com sparklines e percentual comparativo com o período ante
 
 ### 3.3 Formulário de Cadastro e Edição (`/transactions/new` ou Modal)
 - **Modal responsivo:** Cadastro e edição usam bottom sheet abaixo de 1024px e dialog centralizado a partir de 1024px (`lg`), com largura máxima de 512px, altura máxima de 90dvh e rolagem interna. A alça aparece apenas no mobile; redimensionar preserva os campos preenchidos.
+- **Nova transferência:** O formulário de transferência entre contas usa o mesmo comportamento responsivo do modal de transações.
 - **Seleção Dinâmica:** Conta Bancária **OU** Cartão de Crédito.
   - Selecionar Cartão de Crédito força o tipo para `EXPENSE` (cartão não aceita receita).
   - Ao selecionar Cartão, habilita o seletor de parcelas (1x a 24x).

@@ -85,7 +85,7 @@ export function SessionBoundary({ children, mode, hasSessionCookie }: SessionBou
         ) : (
           <p role="status" className="flex items-center justify-center gap-2 text-sm text-text-muted">
             <Loader2 className="size-5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
-            {state === "signing-out" ? "Encerrando sessão..." : "Verificando sessão..."}
+            {state === "signing-out" ? "Encerrando sessão..." : "Carregando sessão..."}
           </p>
         )}
       </div>

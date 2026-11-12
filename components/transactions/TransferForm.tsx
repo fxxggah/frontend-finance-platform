@@ -104,7 +104,7 @@ export function TransferForm({ open, onOpenChange, initialFromAccountId }: Trans
   const accounts = accountsData?.accounts ?? [];
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange} title="Nova transferência">
+    <Sheet desktopDialog open={open} onOpenChange={onOpenChange} title="Nova transferência">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         <div>
           <label className="mb-1.5 block text-xs font-semibold text-text-muted" htmlFor="fromAccountId">

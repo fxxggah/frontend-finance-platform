@@ -231,7 +231,7 @@ try {
       await setSessionCookie();
       refreshScenario = { status, delay: 500 };
       await send('Page.navigate', { url: `${origin}/dashboard` });
-      await waitFor(`document.body.innerText.includes('Verificando sessão...')`);
+      await waitFor(`document.body.innerText.includes('Carregando sessão...')`);
       assert.equal(privateCalls, 0, 'Shell não pode consultar enquanto verifica');
       await waitFor(sessionError);
       assert.equal(privateCalls, 0, 'Falha de sessão não pode consultar dados privados');
