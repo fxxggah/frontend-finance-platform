@@ -133,7 +133,7 @@ Para testes consistentes sem backend, os dados mockados seguem a persona e métr
   - `Carteira Física` (CASH): R$ 320,60, `#0E9F6E`, ícone `wallet`.
   - `Reserva Digital` (DIGITAL_WALLET): R$ 5.942,00, `#4F7BFF`, ícone `smartphone`.
   - `Poupança Antiga` (BANK): `archived: true`.
-  - **Patrimônio Total (`totalBalance`):** `R$ 18.742,90`.
+  - **Saldo Total (`totalBalance`):** `R$ 18.742,90`.
   - **Dívida Consolidada em Cartões (`creditCardDebt`):** `R$ 2.315,40`.
 - **Cartão Violeta:**
   - Limite: R$ 6.000,00 | Usado: R$ 4.115,40 | Disponível: R$ 1.884,60.

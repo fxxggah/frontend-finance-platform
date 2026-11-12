@@ -5,14 +5,13 @@ import { cn } from '@/lib/utils';
 import type { CreditCard } from '@/types';
 
 interface VisualCardProps {
-  card: Pick<CreditCard, 'id' | 'name' | 'color' | 'icon'> & { lastDigits?: string };
+  card: Pick<CreditCard, 'name' | 'color' | 'icon'>;
   className?: string;
   size?: 'sm' | 'md' | 'lg';
 }
 
 export function VisualCard({ card, className, size = 'md' }: VisualCardProps) {
   const baseColor = card.color || '#5B3DF5';
-  const lastDigits = card.lastDigits || String(1000 + (card.id * 314) % 9000);
 
   return (
     <div
@@ -21,6 +20,7 @@ export function VisualCard({ card, className, size = 'md' }: VisualCardProps) {
         size === 'sm' && 'h-36 p-4',
         size === 'md' && 'h-48 p-6',
         size === 'lg' && 'h-56 p-7',
+        'lg:mx-auto lg:aspect-[1.586/1] lg:h-auto lg:w-full lg:max-w-sm lg:shrink-0',
         className
       )}
       style={{
@@ -54,9 +54,11 @@ export function VisualCard({ card, className, size = 'md' }: VisualCardProps) {
       </div>
 
       {/* Meio: Dígitos mascarados */}
-      <div className="relative z-10 tracking-widest font-mono text-sm sm:text-base text-white/90">
-        <span>•••• •••• •••• </span>
-        <span className="font-semibold text-white">{lastDigits}</span>
+      <div
+        className="relative z-10 tracking-widest font-mono text-sm sm:text-base text-white/90"
+        aria-hidden="true"
+      >
+        <span>•••• •••• •••• ••••</span>
       </div>
 
       {/* Base: Nome do titular / cartão */}

@@ -95,17 +95,17 @@ export default function CreditCardDetailPage({ params }: PageProps) {
       <PageHeader title={card?.name ?? 'Detalhes do cartão'} description="Limites, datas e faturas do seu cartão." />
       {/* Topo: Cartão Visual + Métricas */}
       {showLoading || !card ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Skeleton className="h-56 rounded-3xl md:col-span-1" />
-          <Skeleton className="h-56 rounded-3xl md:col-span-2" />
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+          <Skeleton className="h-56 rounded-3xl md:col-span-1 lg:col-span-2" />
+          <Skeleton className="h-56 rounded-3xl md:col-span-2 lg:col-span-3" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-1">
-            <VisualCard card={card} size="lg" className="h-full min-h-[220px]" />
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+          <div className="md:col-span-1 lg:col-span-2 lg:self-center">
+            <VisualCard card={card} size="lg" className="h-full min-h-[220px] lg:min-h-0 lg:p-5" />
           </div>
 
-          <Card className="p-6 md:col-span-2 flex flex-col justify-between space-y-4">
+          <Card className="p-6 md:col-span-2 lg:col-span-3 flex flex-col justify-between space-y-4">
             <div>
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold uppercase tracking-wider text-text-muted">

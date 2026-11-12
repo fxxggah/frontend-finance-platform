@@ -194,7 +194,7 @@ export default function InvestmentSimulatorPage() {
   return (
     <PageContainer className="space-y-6">
       {/* Cabeçalho */}
-      <PageHeader title="Simulador de Investimentos" description={<>Projete o crescimento do seu patrimônio</>} />
+      <PageHeader title="Simulador de Investimentos" description={<>Projete o crescimento do seu Saldo</>} />
 
       <DisclaimerBanner />
 

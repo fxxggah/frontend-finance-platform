@@ -374,7 +374,7 @@ export interface paths {
         };
         /**
          * Listar contas
-         * @description Retorna a lista de contas do usuário logado, incluindo o saldo dinâmico de cada uma e o patrimônio total (totalBalance). Permite filtrar ou incluir contas arquivadas.
+         * @description Retorna a lista de contas do usuário logado, incluindo o saldo dinâmico de cada uma e o Saldo total (totalBalance). Permite filtrar ou incluir contas arquivadas.
          */
         get: operations["list_4"];
         put?: never;

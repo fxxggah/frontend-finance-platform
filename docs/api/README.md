@@ -134,7 +134,7 @@ export interface ProblemDetail {
 |---|---|---|
 | **Autenticação** | [`auth.md`](./auth.md) | Login Google, Renovação com Refresh Token e Logout |
 | **Usuário** | [`users.md`](./users.md) | Perfil do usuário e exclusão de conta (LGPD) |
-| **Contas** | [`accounts.md`](./accounts.md) | Contas correntes, carteiras físicas, saldos e patrimônio |
+| **Contas** | [`accounts.md`](./accounts.md) | Contas correntes, carteiras físicas, saldos e Saldo |
 | **Categorias** | [`categories.md`](./categories.md) | Categorias de receitas e despesas com cores e ícones |
 | **Transações** | [`transactions.md`](./transactions.md) | Receitas e despesas simples ou parceladas com filtros dinâmicos |
 | **Transferências** | [`transfers.md`](./transfers.md) | Movimentações financeiras entre contas internas |

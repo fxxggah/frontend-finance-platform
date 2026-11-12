@@ -56,9 +56,9 @@ export default function TransfersPage() {
     <PageContainer className="space-y-8">
       {/* Cabeçalho */}
       <PageHeader title="Transferências" description={<>Histórico e movimentações financeiras entre suas contas</>} action={<><Button variant="brand" onClick={() => setIsFormOpen(true)} className="self-start sm:self-auto gap-2">
-          <Plus size={18} />
-          <span>Nova transferência</span>
-        </Button></>} />
+        <Plus size={18} />
+        <span>Nova transferência</span>
+      </Button></>} />
 
       {/* Nota Conceitual Obrigatória */}
       <div className="flex items-start gap-3 rounded-2xl border border-border bg-surface-soft p-4 text-xs text-text-muted leading-relaxed">
@@ -66,7 +66,7 @@ export default function TransfersPage() {
         <div>
           <p className="font-semibold text-text">Transferências não contam como receita nem despesa</p>
           <p className="mt-0.5 text-text-muted">
-            Ao transferir dinheiro de uma conta para outra, o patrimônio total permanece inalterado. Somente os saldos individuais das contas de origem e destino são recalculados.
+            Ao transferir dinheiro de uma conta para outra, o Saldo total permanece inalterado. Somente os saldos individuais das contas de origem e destino são recalculados.
           </p>
         </div>
       </div>

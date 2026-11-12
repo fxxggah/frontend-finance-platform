@@ -36,7 +36,7 @@ export interface AccountDeleteResponse {
 
 ## 1. Listar Contas
 
-Retorna a lista de contas pertencentes ao usuário autenticado, acompanhadas do patrimônio total (`totalBalance`) e da dívida total em cartões de crédito (`creditCardDebt`).
+Retorna a lista de contas pertencentes ao usuário autenticado, acompanhadas do Saldo total (`totalBalance`) e da dívida total em cartões de crédito (`creditCardDebt`).
 
 - **Método HTTP:** `GET`
 - **Rota:** `/api/v1/accounts`

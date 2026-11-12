@@ -133,7 +133,7 @@ Cobertura de QA e limites das medições estão em [design-validation.md](./desi
 *Objetivo: Implementar as seções secundárias de gestão.*
 
 ### 6.1 `app/(app)/accounts/page.tsx`
-- Cartão superior com patrimônio e dívida de cartões.
+- Cartão superior com Saldo e dívida de cartões.
 - Grade de contas com menu de opções e bloqueio de exclusão da última conta ativa.
 
 ### 6.2 `components/cards/*.tsx` e `app/(app)/cards/...`

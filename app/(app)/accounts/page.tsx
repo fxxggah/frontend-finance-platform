@@ -90,9 +90,9 @@ export default function AccountsPage() {
     <PageContainer className="space-y-8">
       {/* Cabeçalho da página */}
       <PageHeader title="Minhas Contas" description={<>Gerencie suas contas bancárias, carteiras físicas e reservas financeiras</>} action={<><Button variant="brand" onClick={handleOpenCreate} className="self-start sm:self-auto gap-2">
-          <Plus size={18} />
-          <span>Nova conta</span>
-        </Button></>} />
+        <Plus size={18} />
+        <span>Nova conta</span>
+      </Button></>} />
 
       {/* Topo: Card tipo BRAND consolidado */}
       {showLoading ? (
@@ -101,7 +101,7 @@ export default function AccountsPage() {
         <Card variant="brand" padding="lg" className="flex flex-col justify-between">
           <div>
             <span className="text-xs font-semibold uppercase tracking-wider text-white/80">
-              Patrimônio Consolidado
+              Saldo Consolidado
             </span>
             <div className="mt-2 text-3xl sm:text-4xl font-semibold tabular-nums tracking-tight text-white">
               {formatMoney(totalBalance)}

@@ -10,7 +10,7 @@ Todas as rotas exigem autenticação via cabeçalho `Authorization: Bearer <acce
 
 ## 1. Simulação de Investimento (Juros Compostos)
 
-Projeta o patrimônio acumulado ao longo dos anos a partir de um valor inicial e aportes mensais com taxa de juros anual composta.
+Projeta o Saldo acumulado ao longo dos anos a partir de um valor inicial e aportes mensais com taxa de juros anual composta.
 
 - **Método HTTP:** `POST`
 - **Rota:** `/api/v1/simulations/investment`

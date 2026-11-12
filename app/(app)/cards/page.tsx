@@ -192,7 +192,7 @@ export default function CreditCardsPage() {
 
                   <Link href={`/cards/${card.id}`}>
                     <Button variant="brand" size="sm" className="gap-1.5 text-xs">
-                      <span>Ver histórico</span>
+                      <span>Ver mais</span>
                       <ChevronRight size={14} />
                     </Button>
                   </Link>

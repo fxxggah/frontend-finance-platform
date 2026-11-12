@@ -46,7 +46,7 @@ export function Topbar() {
           {greeting}{firstName ? `, ${firstName}!` : '!'}
         </h2>
         <p className="text-xs text-text-muted">
-          Tenha uma visão clara do seu patrimônio e despesas hoje.
+          Tenha uma visão clara do seu Saldo e despesas hoje.
         </p>
       </div>
 

@@ -143,7 +143,7 @@ export default function InvoiceDetailPage({ params }: PageProps) {
               </Button>
               {isOpen && (
                 <span className="text-[11px] text-text-muted">
-                  Você pode antecipar o pagamento.
+                  Você pode antecipar sua fatura.
                 </span>
               )}
             </div>

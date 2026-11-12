@@ -27,7 +27,7 @@ export function HeroBalanceCard({ summary, period, totalBalance, creditCardDebt 
       <div className="relative flex flex-1 flex-col p-6 sm:p-8">
         {/* Título e botão de visibilidade */}
         <div className="flex items-center justify-between">
-          <p className={`${styles.eyebrow} text-white/85`}>Patrimônio total</p>
+          <p className={`${styles.eyebrow} text-white/85`}>Saldo total</p>
           <button
             aria-label={isBalanceVisible ? 'Ocultar saldo' : 'Mostrar saldo'}
             onClick={toggleBalanceVisibility}
@@ -50,26 +50,26 @@ export function HeroBalanceCard({ summary, period, totalBalance, creditCardDebt 
           <ArrowUpRight className="size-3.5" aria-hidden="true" />
         </Link>
       </div>
-        <div className={`${styles.heroStats} relative grid grid-cols-2 gap-4 px-6 py-5 sm:px-8`}>
-          <div>
-            <div className="flex items-center gap-1.5 text-xs text-white/85">
-              <ArrowDownLeft className="size-3 text-white" />
-              Receitas {PERIOD_SUFFIXES[period]}
-            </div>
-            <p className="mt-2 tabular-nums text-base font-semibold text-white">
-              {isBalanceVisible ? formatMoney(summary.totalIncome, { showSign: true }) : '••••'}
-            </p>
+      <div className={`${styles.heroStats} relative grid grid-cols-2 gap-4 px-6 py-5 sm:px-8`}>
+        <div>
+          <div className="flex items-center gap-1.5 text-xs text-white/85">
+            <ArrowDownLeft className="size-3 text-white" />
+            Receitas {PERIOD_SUFFIXES[period]}
           </div>
-          <div>
-            <div className="flex items-center gap-1.5 text-xs text-white/85">
-              <ArrowUpRight className="size-3 text-white" />
-              Despesas {PERIOD_SUFFIXES[period]}
-            </div>
-            <p className="mt-2 tabular-nums text-base font-semibold text-white">
-              {isBalanceVisible ? formatMoney(-Math.abs(summary.totalExpense), { showSign: true }) : '••••'}
-            </p>
-          </div>
+          <p className="mt-2 tabular-nums text-base font-semibold text-white">
+            {isBalanceVisible ? formatMoney(summary.totalIncome, { showSign: true }) : '••••'}
+          </p>
         </div>
+        <div>
+          <div className="flex items-center gap-1.5 text-xs text-white/85">
+            <ArrowUpRight className="size-3 text-white" />
+            Despesas {PERIOD_SUFFIXES[period]}
+          </div>
+          <p className="mt-2 tabular-nums text-base font-semibold text-white">
+            {isBalanceVisible ? formatMoney(-Math.abs(summary.totalExpense), { showSign: true }) : '••••'}
+          </p>
+        </div>
+      </div>
 
     </Card>
   );

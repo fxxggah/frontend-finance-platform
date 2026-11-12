@@ -96,7 +96,7 @@ Login e logout limpam o cache do React Query para evitar dados da sessão anteri
 ## Telas e consultas
 
 - Início: resumo, evolução, categorias e transações recentes do dashboard,
-  patrimônio de `/accounts` e metas ativas de `/goals`.
+  Saldo de `/accounts` e metas ativas de `/goals`.
 - Relatórios: reutiliza os endpoints de dashboard; não existe módulo `/reports`
   no OpenAPI. Filtros de conta, cartão e intervalo fazem parte da consulta e do cache.
 - Transações: `/transactions` e `/transactions/new` reutilizam formulários,

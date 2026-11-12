@@ -28,7 +28,7 @@ A tela principal do usuário reúne visão consolidada, atalhos rápidos e métr
 ### 2.1 Cartão de Saldo Principal (Hero)
 - **Visual:** Fundo gradiente `gradient-hero` (violeta para azul elétrico), bordas `rounded-3xl`.
 - **Conteúdo:**
-  - Título "Patrimônio Total" ou "Saldo Geral".
+  - Título "Saldo Total" ou "Saldo Geral".
   - Valor do saldo com botão de alternância de visibilidade (ícone `Eye` / `EyeOff`), permitindo ocultar como `"R$ •••••"`.
   - Duas pílulas secundárias internas:
     - 🟢 "Receitas do mês": Exibe total de entradas.
@@ -104,7 +104,7 @@ Grade com 4 cartões com sparklines e percentual comparativo com o período ante
 
 ## 4. Tela de Contas Bancárias (`/accounts`)
 
-- **Topo:** Card de destaque exibindo o Patrimônio Consolidado (`totalBalance`) e dívida em cartões.
+- **Topo:** Card de destaque exibindo o Saldo Consolidado (`totalBalance`) e dívida em cartões.
 - **Grade de Contas Ativas:**
   - Cada card exibe: Nome, Tipo (`BANK`, `CASH`, `DIGITAL_WALLET`), ícone customizado, cor e saldo atualizado.
   - Menu de ações (três pontos): "Editar conta", "Transferir desta conta", "Arquivar/Excluir".
@@ -118,6 +118,7 @@ Grade com 4 cartões com sparklines e percentual comparativo com o período ante
 
 ### 5.1 Visão Geral dos Cartões
 - Renderização visual realista do cartão com cores personalizadas (sem logos de marcas terceiras).
+- Numeração apenas decorativa, sempre mascarada como `•••• •••• •••• ••••`, sem gerar dígitos a partir do ID. No desktop (a partir de 1024px), o cartão fica centralizado, com largura máxima de 384px e proporção de cartão físico (1,586:1); o layout mobile é preservado.
 - Barra de progresso de limite:
   - Limite Usado vs. Limite Disponível.
   - Alerta em vermelho caso o limite disponível seja negativo (estouro de limite).

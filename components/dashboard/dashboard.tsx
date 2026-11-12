@@ -67,7 +67,7 @@ export function Dashboard() {
     <PageContainer>
       <PageHeader className="mb-7" title="Início" eyebrow="Visão geral" />
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1.7fr)_minmax(300px,1fr)]">
-        <section aria-label="Patrimônio e resumo financeiro" className="min-w-0">
+        <section aria-label="Saldo e resumo financeiro" className="min-w-0">
           <HeroBalanceCard summary={summary.data} period={period} totalBalance={accounts.data.totalBalance} creditCardDebt={accounts.data.creditCardDebt} />
         </section>
         <PeriodSelect from={summary.data.from} to={summary.data.to} />
