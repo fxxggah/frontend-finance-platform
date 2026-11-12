@@ -44,6 +44,8 @@ A tela principal do usuário reúne visão consolidada, atalhos rápidos e métr
   4. 💳 **Pagar fatura:** Redireciona diretamente para a aba de cartões (`/cards`).
 
 ### 2.3 Cards de Indicadores (KPIs)
+Os títulos de receitas e despesas, tanto no Hero quanto nos KPIs, acompanham o período selecionado: "do dia", "da semana", "do mês" ou "do ano". Para intervalos personalizados (`CUSTOM`), usam "do período".
+
 Grade com 4 cartões com sparklines e percentual comparativo com o período anterior:
 1. **Receitas:** Total do período + variação % (`incomeChangePct`).
 2. **Despesas:** Total do período + variação % (`expenseChangePct`).

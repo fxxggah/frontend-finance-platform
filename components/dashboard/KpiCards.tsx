@@ -5,9 +5,11 @@ import { MetricCard } from '@/components/ui/metric-card';
 import type { LucideIcon } from 'lucide-react';
 import { formatMoney } from '@/lib/format/money';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { DashboardSummary } from '@/types';
+import type { DashboardSummary, Period } from '@/types';
+import { PERIOD_SUFFIXES } from '@/lib/periods';
 
 interface KpiCardsProps {
+  period: Period;
   summary: DashboardSummary;
   creditCardDebt: number;
   isLoading?: boolean;
@@ -51,7 +53,7 @@ function KpiCard({
   );
 }
 
-export function KpiCards({ summary, creditCardDebt, isLoading }: KpiCardsProps) {
+export function KpiCards({ summary, period, creditCardDebt, isLoading }: KpiCardsProps) {
   if (isLoading) {
     return (
       <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-5 lg:mt-9 lg:grid-cols-4">
@@ -65,7 +67,7 @@ export function KpiCards({ summary, creditCardDebt, isLoading }: KpiCardsProps) 
   return (
     <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-5 lg:mt-9 lg:grid-cols-4">
       <KpiCard
-        label="Receitas do período"
+        label={`Receitas ${PERIOD_SUFFIXES[period]}`}
         value={summary.totalIncome}
         change={summary.previous.incomeChangePct}
         icon={TrendingUp}
@@ -73,7 +75,7 @@ export function KpiCards({ summary, creditCardDebt, isLoading }: KpiCardsProps) 
         description="Entradas nas suas contas"
       />
       <KpiCard
-        label="Despesas do período"
+        label={`Despesas ${PERIOD_SUFFIXES[period]}`}
         value={-Math.abs(summary.totalExpense)}
         change={summary.previous.expenseChangePct}
         icon={TrendingDown}

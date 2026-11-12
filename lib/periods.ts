@@ -1,5 +1,13 @@
 import type { Period } from '@/types';
 
+export const PERIOD_SUFFIXES = {
+  DAY: 'do dia',
+  WEEK: 'da semana',
+  MONTH: 'do mês',
+  YEAR: 'do ano',
+  CUSTOM: 'do período',
+} as const satisfies Record<Period, string>;
+
 export const PERIOD_OPTIONS = [
   { value: 'DAY', label: 'Dia' },
   { value: 'WEEK', label: 'Semana' },

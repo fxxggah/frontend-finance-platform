@@ -4,18 +4,20 @@ import { ArrowDownLeft, ArrowUpRight, Eye, EyeOff, CreditCard } from 'lucide-rea
 import { Card } from '@/components/ui/card';
 import { formatMoney } from '@/lib/format/money';
 import { useUiStore } from '@/stores/ui-store';
-import type { DashboardSummary } from '@/types';
+import type { DashboardSummary, Period } from '@/types';
+import { PERIOD_SUFFIXES } from '@/lib/periods';
 import Link from 'next/link';
 import styles from '@/components/ui/surfaces.module.css';
 import layout from './dashboard.module.css';
 
 interface HeroBalanceCardProps {
+  period: Period;
   summary: DashboardSummary;
   totalBalance: number;
   creditCardDebt: number;
 }
 
-export function HeroBalanceCard({ summary, totalBalance, creditCardDebt }: HeroBalanceCardProps) {
+export function HeroBalanceCard({ summary, period, totalBalance, creditCardDebt }: HeroBalanceCardProps) {
   const isBalanceVisible = useUiStore((s) => s.isBalanceVisible);
   const toggleBalanceVisibility = useUiStore((s) => s.toggleBalanceVisibility);
 
@@ -52,7 +54,7 @@ export function HeroBalanceCard({ summary, totalBalance, creditCardDebt }: HeroB
           <div>
             <div className="flex items-center gap-1.5 text-xs text-white/85">
               <ArrowDownLeft className="size-3 text-white" />
-              Receitas do período
+              Receitas {PERIOD_SUFFIXES[period]}
             </div>
             <p className="mt-2 tabular-nums text-base font-semibold text-white">
               {isBalanceVisible ? formatMoney(summary.totalIncome, { showSign: true }) : '••••'}
@@ -61,7 +63,7 @@ export function HeroBalanceCard({ summary, totalBalance, creditCardDebt }: HeroB
           <div>
             <div className="flex items-center gap-1.5 text-xs text-white/85">
               <ArrowUpRight className="size-3 text-white" />
-              Despesas do período
+              Despesas {PERIOD_SUFFIXES[period]}
             </div>
             <p className="mt-2 tabular-nums text-base font-semibold text-white">
               {isBalanceVisible ? formatMoney(-Math.abs(summary.totalExpense), { showSign: true }) : '••••'}

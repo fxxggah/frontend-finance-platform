@@ -68,12 +68,12 @@ export function Dashboard() {
       <PageHeader className="mb-7" title="Início" eyebrow="Visão geral" />
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1.7fr)_minmax(300px,1fr)]">
         <section aria-label="Patrimônio e resumo financeiro" className="min-w-0">
-          <HeroBalanceCard summary={summary.data} totalBalance={accounts.data.totalBalance} creditCardDebt={accounts.data.creditCardDebt} />
+          <HeroBalanceCard summary={summary.data} period={period} totalBalance={accounts.data.totalBalance} creditCardDebt={accounts.data.creditCardDebt} />
         </section>
         <PeriodSelect from={summary.data.from} to={summary.data.to} />
       </div>
       <div className="mt-4"><QuickActions /></div>
-      <KpiCards summary={summary.data} creditCardDebt={accounts.data.creditCardDebt} />
+      <KpiCards summary={summary.data} period={period} creditCardDebt={accounts.data.creditCardDebt} />
       {empty && <div className="mt-9"><EmptyState icon={Wallet} title="Nenhuma movimentação neste período"
         description="Registre uma transação para acompanhar suas finanças."
         actionLabel="Nova transação" onAction={() => router.push('/transactions/new')} /></div>}
