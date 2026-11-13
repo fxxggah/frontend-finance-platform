@@ -1,5 +1,43 @@
 export const TABULAR_NUMS_CLASS = "tabular-nums";
 
+const inputMoneyFormatter = new Intl.NumberFormat('pt-BR', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+/** Formats a value in reais, without the currency symbol. */
+export function formatMoneyInput(value: number): string {
+  return Number.isFinite(value) ? inputMoneyFormatter.format(value) : '';
+}
+
+/** Parses a complete pt-BR amount; empty or malformed input is invalid. */
+export function parseMoneyInput(value: string): number {
+  if (!/^-?(?:\d+|\d{1,3}(?:\.\d{3})+)(?:,\d{1,2})?$/.test(value)) return NaN;
+  return Number(value.replace(/\./g, '').replace(',', '.'));
+}
+
+/** Digits represent integer cents, never successive floating point additions. */
+export function maskMoneyInput(value: string, allowNegative = false): string | null {
+  if (!/^-?[\d.,]*$/.test(value) || (!allowNegative && value.startsWith('-'))) return null;
+  const digits = value.replace(/\D/g, '');
+  if (!digits) return allowNegative && value === '-' ? '-' : '';
+  const cents = Number(digits);
+  if (!Number.isSafeInteger(cents)) return null;
+  const formatted = formatMoneyInput(cents / 100);
+  if (Number(formatted.replace(/\D/g, '')) !== cents) return null;
+  return `${value.startsWith('-') ? '-' : ''}${formatted}`;
+}
+
+/** Clipboard accepts raw cents or a complete Brazilian amount, optionally with R$. */
+export function moneyPasteDigits(value: string, allowNegative = false): string | null {
+  const text = value.trim().replace(/^(-?)\s*R\$\s*/, '$1');
+  if (text.startsWith('-') && !allowNegative) return null;
+  if (/^-?\d+$/.test(text)) return text;
+  if (!/^-?(?:\d+|\d{1,3}(?:\.\d{3})+)(?:,\d{1,2})?$/.test(text)) return null;
+  const [integer, fraction = '00'] = text.split(',');
+  return integer.replace(/\./g, '') + fraction.padEnd(2, '0');
+}
+
 export interface FormatMoneyOptions {
   showSign?: boolean;
   signDisplay?: "always" | "auto" | "never";

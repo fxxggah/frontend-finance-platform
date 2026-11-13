@@ -116,6 +116,29 @@ export function formatMoney(
 }
 ```
 
+### Entrada de valores monetários
+
+Todos os inputs em R$ usam `CurrencyInput`, baseado no `Input` compartilhado,
+com `type="text"`, teclado numérico, `tabular-nums` e `Controller` do React Hook Form.
+O símbolo R$ fica no rótulo. A digitação representa centavos: `1` → `0,01`,
+`12` → `0,12`, `123456` → `1.234,56`. Vírgula e milhares são automáticos.
+Campos vazios mantêm placeholder `0,00`; os valores padrão dos formulários são preservados.
+Letras são bloqueadas. Colagem aceita dígitos em centavos ou valores pt-BR,
+inclusive `R$ 1.234,56`; conteúdo inválido é rejeitado integralmente.
+
+`formatMoneyInput` formata números em reais sem símbolo; `parseMoneyInput` converte
+texto pt-BR completo em número e retorna `NaN` para vazio ou formato inválido.
+`maskMoneyInput` trabalha com dígitos em centavos e rejeita valores além da precisão
+inteira segura. O estado dos formulários existentes continua textual; simulações
+adaptam o componente ao estado numérico, usando `NaN` para campos vazios.
+Somente o saldo de contas habilita `allowNegative`, com botão acessível para
+alternar o sinal também no teclado numérico mobile; metas definem o sinal pela
+operação de aporte/resgate. Percentuais, parcelas e prazos não usam essa máscara.
+
+Validar com `node --test scripts/money-input.test.cjs` e `node scripts/ui-smoke.mjs`
+(digitação real e transporte controlado em 390px e 1440px), além de `pnpm test:api`
+e `pnpm build`.
+
 ### 5.2 Datas (`lib/format/date.ts`)
 - **Data por extenso:** `"31 de outubro de 2026"`
 - **Data curta:** `"31/10/2026"` ou `"31 de out."`

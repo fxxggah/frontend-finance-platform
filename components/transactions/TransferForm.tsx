@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Sheet } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { CurrencyInput } from '@/components/ui/currency-input';
+import { parseMoneyInput } from '@/lib/format/money';
 import { Select } from '@/components/ui/select';
 import { useAccounts } from '@/hooks/use-accounts';
 import { useCreateTransfer } from '@/hooks/use-transfers';
@@ -21,8 +23,7 @@ const schema = z
       .string()
       .min(1, 'Informe o valor')
       .refine((v) => {
-        const clean = v.replace(/\./g, '').replace(',', '.');
-        const n = parseFloat(clean);
+        const n = parseMoneyInput(v);
         return !isNaN(n) && n > 0;
       }, 'O valor deve ser maior que zero'),
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida'),
@@ -47,6 +48,7 @@ export function TransferForm({ open, onOpenChange, initialFromAccountId }: Trans
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     setError,
@@ -87,7 +89,7 @@ export function TransferForm({ open, onOpenChange, initialFromAccountId }: Trans
       await createMutation.mutateAsync({
         fromAccountId: parseInt(data.fromAccountId),
         toAccountId: parseInt(data.toAccountId),
-        amount: parseFloat(data.amount.replace(/\./g, '').replace(',', '.')),
+        amount: parseMoneyInput(data.amount),
         date: data.date,
         description: data.description || null,
       });
@@ -144,13 +146,20 @@ export function TransferForm({ open, onOpenChange, initialFromAccountId }: Trans
           <label className="mb-1.5 block text-xs font-semibold text-text-muted" htmlFor="transfer-amount">
             Valor (R$)
           </label>
-          <Input
-            id="transfer-amount"
-            inputMode="decimal"
-            placeholder="0,00"
-            {...register('amount')}
-            className="tabular-nums text-lg font-bold"
-            aria-invalid={!!errors.amount}
+          <Controller
+            name="amount"
+            control={control}
+            render={({ field }) => (
+              <CurrencyInput
+                {...field}
+                value={field.value ?? ''}
+                onValueChange={field.onChange}
+                id="transfer-amount"
+                placeholder="0,00"
+                className="tabular-nums text-lg font-bold"
+                aria-invalid={!!errors.amount}
+              />
+            )}
           />
           {errors.amount && <p className="mt-1 text-xs text-expense">{errors.amount.message}</p>}
         </div>

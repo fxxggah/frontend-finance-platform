@@ -1,15 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { PlusCircle, MinusCircle } from 'lucide-react';
 import { Dialog, DialogHeader, DialogTitle, DialogBody, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import { useAddGoalContribution } from '@/hooks/use-goals';
-import { formatMoney } from '@/lib/format/money';
+import { formatMoney, parseMoneyInput } from '@/lib/format/money';
 import { cn } from '@/lib/utils';
 import type { Goal } from '@/types';
 
@@ -29,8 +30,7 @@ export function GoalContributionModal({ open, onClose, goal }: GoalContributionM
         .string()
         .min(1, 'Informe o valor')
         .refine((v) => {
-          const clean = v.replace(/\./g, '').replace(',', '.');
-          const num = parseFloat(clean);
+          const num = parseMoneyInput(v);
           return !isNaN(num) && num > 0;
         }, 'O valor deve ser maior que zero'),
       date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida'),
@@ -39,8 +39,7 @@ export function GoalContributionModal({ open, onClose, goal }: GoalContributionM
     .refine(
       (data) => {
         if (operationType === 'WITHDRAWAL') {
-          const clean = data.amount.replace(/\./g, '').replace(',', '.');
-          const num = parseFloat(clean);
+          const num = parseMoneyInput(data.amount);
           return goal.currentAmount - num >= 0;
         }
         return true;
@@ -55,6 +54,7 @@ type FormData = z.infer<typeof schema>;
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
@@ -79,7 +79,7 @@ type FormData = z.infer<typeof schema>;
   }, [open, reset]);
 
   async function onSubmit(data: FormData) {
-    const rawVal = parseFloat(data.amount.replace(/\./g, '').replace(',', '.'));
+    const rawVal = parseMoneyInput(data.amount);
     const finalAmount = operationType === 'WITHDRAWAL' ? -Math.abs(rawVal) : Math.abs(rawVal);
 
     await addMutation.mutateAsync({
@@ -142,12 +142,20 @@ type FormData = z.infer<typeof schema>;
             <label htmlFor="contrib-amount" className="mb-1 block text-xs font-semibold text-text-muted">
               Valor da movimentação (R$) *
             </label>
-            <Input
-              id="contrib-amount"
-              placeholder="0,00"
-              className="tabular-nums"
-              {...register('amount')}
-              error={errors.amount?.message}
+            <Controller
+              name="amount"
+              control={control}
+              render={({ field }) => (
+                <CurrencyInput
+                  {...field}
+                  value={field.value ?? ''}
+                  onValueChange={field.onChange}
+                  id="contrib-amount"
+                  placeholder="0,00"
+                  className="tabular-nums"
+                  error={errors.amount?.message}
+                />
+              )}
             />
           </div>
 

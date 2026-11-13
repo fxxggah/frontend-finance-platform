@@ -2,14 +2,15 @@
 
 import { PageContainer, PageHeader } from '@/components/ui/page';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Calculator, AlertTriangle, ChevronDown, ChevronUp, Info } from 'lucide-react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { formatMoney } from '@/lib/format/money';
+import { CurrencyInput } from '@/components/ui/currency-input';
+import { formatMoney, formatMoneyInput, parseMoneyInput } from '@/lib/format/money';
 import { useDebtSimulation } from '@/hooks/use-simulations';
 import { ApiError } from '@/lib/api/errors';
 import type { DebtResult } from '@/types';
@@ -164,6 +165,7 @@ export default function DebtSimulatorPage() {
 
   const {
     register,
+    control,
     handleSubmit,
     setError,
     formState: { errors },
@@ -205,14 +207,19 @@ export default function DebtSimulatorPage() {
       <div className="rounded-2xl border border-border bg-surface p-5">
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
           <div className="grid gap-4 sm:grid-cols-3">
-            <Input
-              label="Saldo devedor (R$)"
-              type="number"
-              min={0.01}
-              step={0.01}
-              placeholder="10.000,00"
-              error={errors.debtAmount?.message}
-              {...register('debtAmount', { valueAsNumber: true })}
+            <Controller
+              name="debtAmount"
+              control={control}
+              render={({ field }) => (
+                <CurrencyInput
+                  {...field}
+                  value={formatMoneyInput(field.value)}
+                  onValueChange={(value) => field.onChange(parseMoneyInput(value))}
+                  label="Saldo devedor (R$)"
+                  placeholder="10.000,00"
+                  error={errors.debtAmount?.message}
+                />
+              )}
             />
             <Input
               label="Taxa de juros mensal (%)"
@@ -223,14 +230,19 @@ export default function DebtSimulatorPage() {
               error={errors.monthlyInterestRate?.message}
               {...register('monthlyInterestRate', { valueAsNumber: true })}
             />
-            <Input
-              label="Pagamento mensal (R$)"
-              type="number"
-              min={0.01}
-              step={0.01}
-              placeholder="600,00"
-              error={errors.monthlyPayment?.message}
-              {...register('monthlyPayment', { valueAsNumber: true })}
+            <Controller
+              name="monthlyPayment"
+              control={control}
+              render={({ field }) => (
+                <CurrencyInput
+                  {...field}
+                  value={formatMoneyInput(field.value)}
+                  onValueChange={(value) => field.onChange(parseMoneyInput(value))}
+                  label="Pagamento mensal (R$)"
+                  placeholder="600,00"
+                  error={errors.monthlyPayment?.message}
+                />
+              )}
             />
           </div>
 

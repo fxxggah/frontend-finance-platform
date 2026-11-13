@@ -1,13 +1,15 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Info } from 'lucide-react';
 import { Dialog, DialogHeader, DialogTitle, DialogBody, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { CurrencyInput } from '@/components/ui/currency-input';
+import { formatMoneyInput, parseMoneyInput } from '@/lib/format/money';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { IconPicker } from '@/components/ui/icon-picker';
 import { useCreateCreditCard, useUpdateCreditCard } from '@/hooks/use-credit-cards';
@@ -19,8 +21,7 @@ const schema = z.object({
     .string()
     .min(1, 'Informe o limite')
     .refine((v) => {
-      const clean = v.replace(/\./g, '').replace(',', '.');
-      const num = parseFloat(clean);
+      const num = parseMoneyInput(v);
       return !isNaN(num) && num > 0;
     }, 'O limite deve ser maior que zero'),
   closingDay: z
@@ -52,6 +53,7 @@ export function CreditCardFormModal({ open, onClose, card }: CreditCardFormModal
 
   const {
     register,
+    control,
     handleSubmit,
     setValue,
     watch,
@@ -88,10 +90,7 @@ export function CreditCardFormModal({ open, onClose, card }: CreditCardFormModal
     if (card) {
       reset({
         name: card.name,
-        creditLimit: card.creditLimit.toLocaleString('pt-BR', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        }),
+        creditLimit: formatMoneyInput(card.creditLimit),
         closingDay: card.closingDay,
         dueDay: card.dueDay,
         color: card.color,
@@ -110,7 +109,7 @@ export function CreditCardFormModal({ open, onClose, card }: CreditCardFormModal
   }, [open, card, reset]);
 
   async function onSubmit(data: FormData) {
-    const limit = parseFloat(data.creditLimit.replace(/\./g, '').replace(',', '.'));
+    const limit = parseMoneyInput(data.creditLimit);
 
     if (isEditing && card) {
       await updateMutation.mutateAsync({
@@ -163,12 +162,20 @@ export function CreditCardFormModal({ open, onClose, card }: CreditCardFormModal
             <label htmlFor="card-limit" className="mb-1 block text-xs font-semibold text-text-muted">
               Limite total de crédito (R$) *
             </label>
-            <Input
-              id="card-limit"
-              placeholder="0,00"
-              className="tabular-nums"
-              {...register('creditLimit')}
-              error={errors.creditLimit?.message}
+            <Controller
+              name="creditLimit"
+              control={control}
+              render={({ field }) => (
+                <CurrencyInput
+                  {...field}
+                  value={field.value ?? ''}
+                  onValueChange={field.onChange}
+                  id="card-limit"
+                  placeholder="0,00"
+                  className="tabular-nums"
+                  error={errors.creditLimit?.message}
+                />
+              )}
             />
           </div>
 

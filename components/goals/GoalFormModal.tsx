@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { PiggyBank, TrendingUp, AlertTriangle, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Dialog, DialogHeader, DialogTitle, DialogBody, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { CurrencyInput } from '@/components/ui/currency-input';
+import { formatMoneyInput, parseMoneyInput } from '@/lib/format/money';
 import { Select } from '@/components/ui/select';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { IconPicker } from '@/components/ui/icon-picker';
@@ -26,8 +28,7 @@ const step2Schema = z
       .string()
       .min(1, 'Informe o valor')
       .refine((v) => {
-        const clean = v.replace(/\./g, '').replace(',', '.');
-        const num = parseFloat(clean);
+        const num = parseMoneyInput(v);
         return !isNaN(num) && num > 0;
       }, 'O valor deve ser maior que zero'),
     categoryId: z.string().optional(),
@@ -69,6 +70,7 @@ export function GoalFormModal({ open, onClose, goal }: GoalFormModalProps) {
 
   const {
     register,
+    control,
     handleSubmit,
     setValue,
     watch,
@@ -106,10 +108,7 @@ export function GoalFormModal({ open, onClose, goal }: GoalFormModalProps) {
       reset({
         type: goal.type,
         name: goal.name,
-        targetAmount: goal.targetAmount.toLocaleString('pt-BR', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        }),
+        targetAmount: formatMoneyInput(goal.targetAmount),
         categoryId: goal.category ? String(goal.category.id) : '',
         startDate: goal.startDate || '',
         endDate: goal.endDate || '',
@@ -156,7 +155,7 @@ export function GoalFormModal({ open, onClose, goal }: GoalFormModalProps) {
   }
 
   async function onSubmit(data: FormData) {
-    const target = parseFloat(data.targetAmount.replace(/\./g, '').replace(',', '.'));
+    const target = parseMoneyInput(data.targetAmount);
     const catId = data.categoryId ? parseInt(data.categoryId, 10) : null;
 
     try {
@@ -315,12 +314,20 @@ export function GoalFormModal({ open, onClose, goal }: GoalFormModalProps) {
               <label htmlFor="goal-target" className="mb-1 block text-xs font-semibold text-text-muted">
                 {selectedType === 'EXPENSE' ? 'Limite de gasto no período (R$) *' : 'Valor alvo (R$) *'}
               </label>
-              <Input
-                id="goal-target"
-                placeholder="0,00"
-                className="tabular-nums"
-                {...register('targetAmount')}
-                error={errors.targetAmount?.message}
+              <Controller
+                name="targetAmount"
+                control={control}
+                render={({ field }) => (
+                  <CurrencyInput
+                    {...field}
+                    value={field.value ?? ''}
+                    onValueChange={field.onChange}
+                    id="goal-target"
+                    placeholder="0,00"
+                    className="tabular-nums"
+                    error={errors.targetAmount?.message}
+                  />
+                )}
               />
             </div>
 

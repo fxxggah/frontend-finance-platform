@@ -2,7 +2,7 @@
 
 import { PageContainer, PageHeader } from '@/components/ui/page';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
@@ -16,7 +16,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { formatMoney } from '@/lib/format/money';
+import { CurrencyInput } from '@/components/ui/currency-input';
+import { formatMoney, formatMoneyInput, parseMoneyInput } from '@/lib/format/money';
 import { useInvestmentSimulation } from '@/hooks/use-simulations';
 import { ApiError } from '@/lib/api/errors';
 import type { InvestmentResult } from '@/types';
@@ -163,6 +164,7 @@ export default function InvestmentSimulatorPage() {
 
   const {
     register,
+    control,
     handleSubmit,
     setError,
     formState: { errors },
@@ -202,23 +204,33 @@ export default function InvestmentSimulatorPage() {
       <Card variant="panel" className="p-5 sm:p-6">
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
           <div className="grid gap-4 sm:grid-cols-2">
-            <Input
-              label="Valor inicial (R$)"
-              type="number"
-              min={0}
-              step={0.01}
-              placeholder="1.000,00"
-              error={errors.initialAmount?.message}
-              {...register('initialAmount', { valueAsNumber: true })}
+            <Controller
+              name="initialAmount"
+              control={control}
+              render={({ field }) => (
+                <CurrencyInput
+                  {...field}
+                  value={formatMoneyInput(field.value)}
+                  onValueChange={(value) => field.onChange(parseMoneyInput(value))}
+                  label="Valor inicial (R$)"
+                  placeholder="1.000,00"
+                  error={errors.initialAmount?.message}
+                />
+              )}
             />
-            <Input
-              label="Aporte mensal (R$)"
-              type="number"
-              min={0}
-              step={0.01}
-              placeholder="500,00"
-              error={errors.monthlyContribution?.message}
-              {...register('monthlyContribution', { valueAsNumber: true })}
+            <Controller
+              name="monthlyContribution"
+              control={control}
+              render={({ field }) => (
+                <CurrencyInput
+                  {...field}
+                  value={formatMoneyInput(field.value)}
+                  onValueChange={(value) => field.onChange(parseMoneyInput(value))}
+                  label="Aporte mensal (R$)"
+                  placeholder="500,00"
+                  error={errors.monthlyContribution?.message}
+                />
+              )}
             />
             <Input
               label="Rentabilidade anual (%)"

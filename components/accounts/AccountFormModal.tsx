@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Dialog, DialogHeader, DialogTitle, DialogBody, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { CurrencyInput } from '@/components/ui/currency-input';
+import { formatMoneyInput, parseMoneyInput } from '@/lib/format/money';
 import { Select } from '@/components/ui/select';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { IconPicker } from '@/components/ui/icon-picker';
@@ -25,8 +27,7 @@ const schema = z.object({
     .optional()
     .refine((v) => {
       if (!v) return true;
-      const clean = v.replace(/\./g, '').replace(',', '.');
-      return !isNaN(parseFloat(clean));
+      return Number.isFinite(parseMoneyInput(v));
     }, 'Valor inválido'),
   color: z.string().min(1, 'Selecione uma cor'),
   icon: z.string().min(1, 'Selecione um ícone'),
@@ -47,6 +48,7 @@ export function AccountFormModal({ open, onClose, account }: AccountFormModalPro
 
   const {
     register,
+    control,
     handleSubmit,
     setValue,
     watch,
@@ -83,10 +85,7 @@ export function AccountFormModal({ open, onClose, account }: AccountFormModalPro
       reset({
         name: account.name,
         type: account.type,
-        initialBalance: account.balance.toLocaleString('pt-BR', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        }),
+        initialBalance: formatMoneyInput(account.balance),
         color: account.color,
         icon: account.icon,
       });
@@ -103,7 +102,7 @@ export function AccountFormModal({ open, onClose, account }: AccountFormModalPro
 
   async function onSubmit(data: FormData) {
     const cleanBalance = data.initialBalance
-      ? parseFloat(data.initialBalance.replace(/\./g, '').replace(',', '.'))
+      ? parseMoneyInput(data.initialBalance)
       : 0;
 
     try {
@@ -188,12 +187,21 @@ export function AccountFormModal({ open, onClose, account }: AccountFormModalPro
               <label htmlFor="account-balance" className="mb-1 block text-xs font-semibold text-text-muted">
                 {isEditing ? 'Saldo atual (R$)' : 'Saldo inicial (R$)'}
               </label>
-              <Input
-                id="account-balance"
-                placeholder="0,00"
-                className="tabular-nums"
-                {...register('initialBalance')}
-                error={errors.initialBalance?.message}
+              <Controller
+                name="initialBalance"
+                control={control}
+                render={({ field }) => (
+                  <CurrencyInput
+                    {...field}
+                    value={field.value ?? ''}
+                    onValueChange={field.onChange}
+                    allowNegative
+                    id="account-balance"
+                    placeholder="0,00"
+                    className="tabular-nums"
+                    error={errors.initialBalance?.message}
+                  />
+                )}
               />
             </div>
           </div>

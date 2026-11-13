@@ -1,17 +1,18 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Info } from 'lucide-react';
 import { Dialog, DialogHeader, DialogTitle, DialogBody, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import { Select } from '@/components/ui/select';
 import { useAccounts } from '@/hooks/use-accounts';
 import { usePayInvoice } from '@/hooks/use-credit-cards';
-import { formatMoney } from '@/lib/format/money';
+import { formatMoney, formatMoneyInput, parseMoneyInput } from '@/lib/format/money';
 import { getToday } from '@/lib/format/date';
 import { ApiError } from '@/lib/api/errors';
 import type { InvoiceDetail, InvoiceSummary } from '@/types';
@@ -35,13 +36,11 @@ export function InvoicePayModal({ open, onClose, cardId, invoice }: InvoicePayMo
       .string()
       .min(1, 'Informe o valor')
       .refine((v) => {
-        const clean = v.replace(/\./g, '').replace(',', '.');
-        const num = parseFloat(clean);
+        const num = parseMoneyInput(v);
         return !isNaN(num) && num > 0;
       }, 'O valor deve ser maior que zero')
       .refine((v) => {
-        const clean = v.replace(/\./g, '').replace(',', '.');
-        const num = parseFloat(clean);
+        const num = parseMoneyInput(v);
         return Math.round(num * 100) <= Math.round(remaining * 100);
       }, `O valor não pode ser superior ao restante (${formatMoney(remaining)})`),
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida'),
@@ -51,6 +50,7 @@ export function InvoicePayModal({ open, onClose, cardId, invoice }: InvoicePayMo
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     setError,
@@ -60,10 +60,7 @@ export function InvoicePayModal({ open, onClose, cardId, invoice }: InvoicePayMo
     resolver: zodResolver(schema),
     defaultValues: {
       accountId: '',
-      amount: remaining.toLocaleString('pt-BR', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }),
+      amount: formatMoneyInput(remaining),
       date: getToday(),
     },
   });
@@ -72,10 +69,7 @@ export function InvoicePayModal({ open, onClose, cardId, invoice }: InvoicePayMo
     if (open) {
       reset({
         accountId: '',
-        amount: remaining.toLocaleString('pt-BR', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        }),
+        amount: formatMoneyInput(remaining),
         date: getToday(),
       });
     }
@@ -83,7 +77,7 @@ export function InvoicePayModal({ open, onClose, cardId, invoice }: InvoicePayMo
 
   async function onSubmit(data: FormData) {
     clearErrors('root');
-    const value = parseFloat(data.amount.replace(/\./g, '').replace(',', '.'));
+    const value = parseMoneyInput(data.amount);
     try {
     await payMutation.mutateAsync({
       accountId: parseInt(data.accountId, 10),
@@ -150,12 +144,20 @@ export function InvoicePayModal({ open, onClose, cardId, invoice }: InvoicePayMo
             <label htmlFor="pay-amount" className="mb-1 block text-xs font-semibold text-text-muted">
               Valor do pagamento (R$) *
             </label>
-            <Input
-              id="pay-amount"
-              placeholder="0,00"
-              className="tabular-nums"
-              {...register('amount')}
-              error={errors.amount?.message}
+            <Controller
+              name="amount"
+              control={control}
+              render={({ field }) => (
+                <CurrencyInput
+                  {...field}
+                  value={field.value ?? ''}
+                  onValueChange={field.onChange}
+                  id="pay-amount"
+                  placeholder="0,00"
+                  className="tabular-nums"
+                  error={errors.amount?.message}
+                />
+              )}
             />
             <p className="mt-1 text-[11px] text-text-muted">
               Pagamentos parciais são permitidos até o limite restante.

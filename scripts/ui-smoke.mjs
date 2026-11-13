@@ -9,6 +9,7 @@ const origin = process.env.SMOKE_URL || 'http://localhost:3005';
 const authOnly = process.argv.includes('--auth-only');
 const transactionsOnly = process.argv.includes('--transactions-only');
 const invoicesOnly = process.argv.includes('--invoices-only');
+const currencyOnly = process.argv.includes('--currency-only');
 const dashboardOnly = process.argv.includes('--dashboard-only');
 const chromePath = process.env.CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 const profile = await mkdtemp(join(tmpdir(), 'fin-ui-'));
@@ -44,6 +45,8 @@ try {
   let refreshCalls = 0;
   let privateCalls = 0;
   const transactionRequests = [];
+  const monetaryRequests = [];
+  let currencyTesting = false;
   const resourceReads = new Map();
   let transactionScenario = { status: 201 };
   let invoiceFixture;
@@ -120,6 +123,9 @@ try {
         headers.push({ name: 'Set-Cookie', value: 'fin_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0' });
       }
       else if (request.method !== 'OPTIONS') {
+        if (request.postData && !url.pathname.startsWith('/api/v1/auth/')) {
+          monetaryRequests.push({ path: url.pathname, body: JSON.parse(request.postData) });
+        }
         if (request.method === 'GET') resourceReads.set(url.pathname, (resourceReads.get(url.pathname) || 0) + 1);
         if (!url.pathname.startsWith('/api/v1/auth/')) privateCalls++;
         const route = Object.keys(spec.paths).find(route => new RegExp(`^${route.replace(/\{[^}]+\}/g, '[^/]+')}$`).test(url.pathname));
@@ -156,6 +162,9 @@ try {
               body = undefined;
             } else body = { status, title: 'Unprocessable Content', detail: 'Saldo da fatura alterado. Confira o valor e tente novamente.' };
           }
+        }
+        if (currencyTesting && request.method === 'GET' && url.pathname === '/api/v1/accounts' && body?.accounts) {
+          body.accounts.push({ ...body.accounts[0], id: 2, name: 'Segunda conta de teste' });
         }
         if (url.pathname === '/api/v1/categories' && request.method === 'GET') {
           const category = sample(spec.components.schemas.CategoryResponse);
@@ -217,6 +226,31 @@ try {
   }
   async function clickButton(text) {
     assert.ok(await evaluate(`(() => { const button = Array.from(document.querySelectorAll('button')).find(button => button.textContent.trim() === ${JSON.stringify(text)}); button?.click(); return !!button; })()`), `Botão ausente: ${text}`);
+  }
+  async function selectInput(selector, start = 0, end) {
+    await waitFor(`!!document.querySelector(${JSON.stringify(selector)})`);
+    await evaluate(`(() => {
+      const input = document.querySelector(${JSON.stringify(selector)});
+      input.focus(); input.setSelectionRange(${start}, ${end ?? 'input.value.length'});
+    })()`);
+  }
+  async function typeMoney(selector, digits) {
+    await selectInput(selector);
+    await send('Input.insertText', { text: digits });
+  }
+  async function pressKey(key, code, virtualKey) {
+    await send('Input.dispatchKeyEvent', { type: 'keyDown', key, code, windowsVirtualKeyCode: virtualKey });
+    await send('Input.dispatchKeyEvent', { type: 'keyUp', key, code, windowsVirtualKeyCode: virtualKey });
+  }
+  async function pasteMoney(selector, text) {
+    await selectInput(selector);
+    await evaluate(`(() => {
+      const data = new DataTransfer(); data.setData('text', ${JSON.stringify(text)});
+      document.querySelector(${JSON.stringify(selector)}).dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true }));
+    })()`);
+  }
+  async function expectMoney(selector, expected) {
+    assert.equal(await evaluate(`document.querySelector(${JSON.stringify(selector)}).value`), expected, selector);
   }
   const loginVisible = `location.pathname === '/login' && document.body.innerText.includes('Suas finanças, num só lugar')`;
   const sessionError = `document.body.innerText.includes('Não foi possível validar sua sessão')`;
@@ -288,7 +322,7 @@ try {
     await waitFor(`document.body.innerText.includes('4.444,00')`);
     console.log(`OK ${width}px período: retenção, conjunto completo, foco, rolagem, corrida, histórico, erro, retry, personalizado, vazio e ?state=`);
   }
-  if (!dashboardOnly && !transactionsOnly && !invoicesOnly) for (const width of [390, 1440]) {
+  if (!currencyOnly && !dashboardOnly && !transactionsOnly && !invoicesOnly) for (const width of [390, 1440]) {
     await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: width < 1024 });
     await send('Network.deleteCookies', { name: 'fin_session', url: origin });
     refreshCalls = 0;
@@ -369,7 +403,130 @@ try {
     console.log(`OK ${width}px sessão: sem cookie, 401, 502, 503, retry, logout e recarga`);
   }
   await setSessionCookie();
-  if (!dashboardOnly && !authOnly && !transactionsOnly) for (const width of [390, 1440]) {
+  if (!dashboardOnly && !authOnly && !transactionsOnly && !invoicesOnly) for (const width of [390, 1440]) {
+    currencyTesting = true;
+    await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: width < 1024 });
+    await navigate('/transactions/new');
+    await selectInput('#amount');
+    for (const [digit, expected] of [['1', '0,01'], ['2', '0,12'], ['3', '1,23'], ['4', '12,34'], ['5', '123,45'], ['6', '1.234,56']]) {
+      await send('Input.insertText', { text: digit });
+      await expectMoney('#amount', expected);
+    }
+    await pressKey('a', 'KeyA', 65);
+    await send('Input.insertText', { text: 'abc' });
+    await expectMoney('#amount', '1.234,56');
+    await selectInput('#amount', 3, 4);
+    await send('Input.insertText', { text: '9' });
+    await expectMoney('#amount', '1.294,56');
+    assert.equal(await evaluate(`document.querySelector('#amount').selectionStart`), 4);
+    await selectInput('#amount', 6, 6);
+    await pressKey('Backspace', 'Backspace', 8);
+    await expectMoney('#amount', '129,56');
+    await selectInput('#amount', 3, 3);
+    await pressKey('Delete', 'Delete', 46);
+    await expectMoney('#amount', '12,96');
+    for (const text of ['123456', '1.234,56', 'R$ 1.234,56']) {
+      await pasteMoney('#amount', text);
+      await expectMoney('#amount', '1.234,56');
+    }
+    for (const text of ['abc123', '1.23,45', '-1.234,56']) {
+      await pasteMoney('#amount', text);
+      await expectMoney('#amount', '1.234,56');
+    }
+    // Virtual keyboard deletion can emit input without a keydown.
+    await evaluate(`(() => {
+      const input = document.querySelector('#amount');
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, '1.23456');
+      input.setSelectionRange(5, 5);
+      input.dispatchEvent(new InputEvent('input', { inputType: 'deleteContentBackward', bubbles: true }));
+    })()`);
+    await expectMoney('#amount', '123,56');
+    await selectInput('#amount');
+    await pressKey('Backspace', 'Backspace', 8);
+    await expectMoney('#amount', '');
+    assert.equal(await evaluate(`document.querySelector('#amount').placeholder`), '0,00');
+    await typeMoney('#amount', '000');
+    await expectMoney('#amount', '0,00');
+    await pressKey('Backspace', 'Backspace', 8);
+    await expectMoney('#amount', '');
+    console.log(`OK ${width}px máscara: centavos, letras, seleção, cursor, exclusão, colagem, vazio e zero`);
+
+    async function submitMoney(button, path, field, expected, dialog = true) {
+      assert.ok(await evaluate('document.documentElement.scrollWidth <= innerWidth'), `Overflow no formulário: ${path}`);
+      const before = monetaryRequests.length;
+      await clickButton(button);
+      await waitFor(dialog ? `!document.querySelector('[role="dialog"]')` : `document.body.innerText.includes('Resultado da Simulação')`);
+      const request = monetaryRequests.slice(before).find(request => request.path === path);
+      assert.ok(request, `Envio ausente: ${path}`);
+      assert.equal(request.body[field], expected, `${path}: ${field}`);
+    }
+    await navigate('/accounts');
+    await clickButton('Nova conta');
+    await expectMoney('#account-balance', '0,00');
+    await typeMoney('#account-name', 'Conta de teste');
+    await typeMoney('#account-balance', '123456');
+    await evaluate(`document.querySelector('[aria-label="Alternar sinal do saldo"]').click()`);
+    await expectMoney('#account-balance', '-1.234,56');
+    await submitMoney('Criar Conta', '/api/v1/accounts', 'initialBalance', -1234.56);
+    await clickButton('Nova conta');
+    await expectMoney('#account-balance', '0,00');
+    await clickButton('Cancelar');
+
+    await navigate('/cards');
+    await clickButton('Novo cartão');
+    await expectMoney('#card-limit', '1.000,00');
+    await typeMoney('#card-name', 'Cartão de teste');
+    await typeMoney('#card-limit', '123456');
+    await submitMoney('Criar Cartão', '/api/v1/credit-cards', 'creditLimit', 1234.56);
+    await clickButton('Editar');
+    await expectMoney('#card-limit', '12,34');
+    await clickButton('Cancelar');
+
+    await navigate('/goals/1');
+    await clickButton('Editar');
+    await expectMoney('#goal-target', '12,34');
+    await typeMoney('#goal-target', '123456');
+    await submitMoney('Salvar Alterações', '/api/v1/goals/1', 'targetAmount', 1234.56);
+    for (const withdrawal of [false, true]) {
+      await clickButton('Adicionar depósito/retirada');
+      await expectMoney('#contrib-amount', '');
+      if (withdrawal) await clickButton('Resgate / Retirada');
+      await typeMoney('#contrib-amount', '123');
+      await submitMoney(withdrawal ? 'Confirmar Resgate' : 'Confirmar Depósito', '/api/v1/goals/1/contributions', 'amount', withdrawal ? -1.23 : 1.23);
+    }
+
+    await navigate('/transfers');
+    await clickButton('Nova transferência');
+    await waitFor(`!!document.querySelector('#toAccountId option[value="2"]')`);
+    await evaluate(`(() => { for (const [id, value] of [['fromAccountId', '1'], ['toAccountId', '2']]) {
+      const select = document.getElementById(id); select.value = value; select.dispatchEvent(new Event('change', { bubbles: true }));
+    } })()`);
+    await typeMoney('#transfer-amount', '123456');
+    await submitMoney('Transferir', '/api/v1/transfers', 'amount', 1234.56);
+
+    for (const [route, field, second, path, initial] of [
+      ['/simulations/investment', 'initialAmount', 'monthlyContribution', '/api/v1/simulations/investment', '1.000,00'],
+      ['/simulations/debt', 'debtAmount', 'monthlyPayment', '/api/v1/simulations/debt-payoff', '10.000,00'],
+    ]) {
+      await navigate(route);
+      const selector = `[name="${field}"]`;
+      await expectMoney(selector, initial);
+      await typeMoney(selector, '123456');
+      await typeMoney(`[name="${second}"]`, '12300');
+      await selectInput(selector);
+      await pressKey('Backspace', 'Backspace', 8);
+      await clickButton('Calcular');
+      await waitFor(`document.querySelector(${JSON.stringify(selector)}).getAttribute('aria-invalid') === 'true'`);
+      await expectMoney(selector, '');
+      await typeMoney(selector, '123456');
+      await submitMoney('Calcular', path, field, 1234.56, false);
+      assert.equal(monetaryRequests.at(-1).body[second], 123);
+    }
+    assert.ok(await evaluate('document.documentElement.scrollWidth <= innerWidth'), 'Overflow nos formulários monetários');
+    console.log(`OK ${width}px valores numéricos em contas, cartões, metas, resgates, transferências e simulações`);
+    currencyTesting = false;
+  }
+  if (!currencyOnly && !dashboardOnly && !authOnly && !transactionsOnly) for (const width of [390, 1440]) {
     await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: width < 1024 });
     invoiceFixture = { reference, closingDate: '2099-01-25', dueDate: '2099-02-02', total: 1000, paid: 0, status: 'OPEN' };
     invoicePaymentStatus = 201;
@@ -377,7 +534,8 @@ try {
     const payButton = `Array.from(document.querySelectorAll('button')).find(b => b.textContent.trim() === 'Pagar fatura')`;
     async function fillPayment(amount) {
       await waitFor(`!!document.querySelector('#pay-account option[value="1"]')`);
-      for (const [selector, value] of [['#pay-account', '1'], ['#pay-amount', amount]]) {
+      await typeMoney('#pay-amount', amount.replace(/\D/g, ''));
+      for (const [selector, value] of [['#pay-account', '1']]) {
         await evaluate(`(() => {
           const element = document.querySelector(${JSON.stringify(selector)});
           const prototype = element.tagName === 'SELECT' ? HTMLSelectElement.prototype : HTMLInputElement.prototype;
@@ -389,7 +547,7 @@ try {
     }
     await navigate(route);
     await waitFor(`!!(${payButton}) && !(${payButton}).disabled`);
-    assert.ok(await evaluate(`document.body.innerText.includes('Você pode antecipar o pagamento')`));
+    assert.ok(await evaluate(`document.body.innerText.includes('Você pode antecipar sua fatura.')`));
     await clickButton('Pagar fatura');
     await fillPayment('1000,01');
     const beforeInvalid = invoicePaymentRequests.length;
@@ -429,7 +587,7 @@ try {
     console.log(`OK ${width}px antecipação parcial/total, excesso, erro, recarga e estados de fatura`);
     invoiceFixture = undefined;
   }
-  if (!dashboardOnly && !authOnly && !invoicesOnly) for (const width of [390, 1440]) {
+  if (!currencyOnly && !dashboardOnly && !authOnly && !invoicesOnly) for (const width of [390, 1440]) {
     await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: width < 1024 });
     async function setField(selector, value) {
       assert.ok(await evaluate(`(() => {
@@ -445,7 +603,7 @@ try {
     async function fillCard() {
       await navigate('/transactions/new');
       await waitFor(`!!document.querySelector('#accountId option[value="1"]')`);
-      await setField('#amount', '600,00');
+      await typeMoney('#amount', '60000');
       await setField('#description', 'Compra de regressão');
       await clickButton('Cartão de crédito');
       await waitFor(`!!document.querySelector('#categoryId option[value="2"]') && !!document.querySelector('#creditCardId option[value="1"]')`);
@@ -560,7 +718,7 @@ try {
           const root = document.documentElement;
           const originalTheme = root.getAttribute('data-theme');
           const hadDarkClass = root.classList.contains('dark');
-          const card = document.querySelector('section[aria-label="Saldo e ações rápidas"]').firstElementChild;
+          const card = document.querySelector('section[aria-label="Saldo e resumo financeiro"]').firstElementChild;
           const fab = document.querySelector('nav[aria-label="Navegação mobile"] button[aria-label="Criar novo lançamento"]');
           function read() {
             const button = fab && getComputedStyle(fab);
@@ -595,14 +753,15 @@ try {
           await writeFile(join(profile, 'dashboard-dark-390.png'), Buffer.from(darkShot.data, 'base64'));
           await evaluate(`document.documentElement.removeAttribute('data-theme')`);
         }
-        assert.deepEqual(await evaluate(`Array.from(document.querySelectorAll('main button[aria-pressed]'), button => button.textContent.trim())`), ['Dia', 'Semana', 'Mês', 'Ano', 'Personalizado']);
+        assert.deepEqual(await evaluate(`Array.from(document.querySelectorAll('main button[aria-pressed]'), button => button.textContent.trim()).filter(Boolean)`), ['Dia', 'Semana', 'Mês', 'Ano', 'Personalizado']);
         assert.ok(await evaluate(`(() => {
-          const section = document.querySelector('section[aria-label="Saldo e ações rápidas"]');
-          const [balance, actions] = section.children;
+          const section = document.querySelector('section[aria-label="Saldo e resumo financeiro"]');
+          const balance = section.parentElement;
+          const actions = document.querySelector('nav[aria-label="Ações rápidas"]');
           return Math.abs(actions.getBoundingClientRect().top - balance.getBoundingClientRect().bottom - 16) <= 1;
         })()`), 'Os atalhos devem ficar 16px abaixo do saldo');
         assert.ok(await evaluate(`document.body.innerText.includes('1.234,56')`), 'Saldo da resposta não foi exibido');
-        assert.equal(await evaluate(`Array.from(document.querySelectorAll('header')).filter(element => getComputedStyle(element).display !== 'none').length`), 1);
+        assert.equal(await evaluate(`Array.from(document.querySelectorAll('header')).filter(element => !element.closest('main') && getComputedStyle(element).display !== 'none').length`), 1);
         assert.ok(await evaluate(`document.querySelectorAll('.recharts-sector').length > 0`), 'Gráfico de categorias não foi desenhado');
         const shot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true });
         await writeFile(join(profile, `dashboard-${width}.png`), Buffer.from(shot.data, 'base64'));
@@ -611,7 +770,7 @@ try {
         assert.deepEqual(await evaluate(`Array.from(document.querySelector('select[aria-label="Período"]').options, option => option.value)`), ['DAY', 'WEEK', 'MONTH', 'YEAR', 'CUSTOM']);
       }
       if (route === '/reports') {
-        assert.deepEqual(await evaluate(`Array.from(document.querySelectorAll('main button[aria-pressed]'), button => button.textContent.trim())`), ['Dia', 'Semana', 'Mês', 'Ano', 'Personalizado']);
+        assert.deepEqual(await evaluate(`Array.from(document.querySelectorAll('main button[aria-pressed]'), button => button.textContent.trim()).filter(Boolean)`), ['Dia', 'Semana', 'Mês', 'Ano', 'Personalizado']);
       }
       console.log(`OK ${width}px ${route}`);
     }
@@ -624,12 +783,12 @@ try {
       if (expected === 'CUSTOM') assert.equal(await evaluate(`document.querySelectorAll('main input[type="date"]').length`), 2);
       console.log(`OK ${width}px período ${period} => ${expected}`);
     }
-    for (const [state, expected] of [['loading', 'Carregando início'], ['empty', 'Nenhuma movimentação neste período'], ['error', 'Não foi possível carregar seus dados']]) {
+    for (const [state, expected] of [['loading', 'Carregando início'], ['empty', 'Seu próximo passo começa aqui'], ['error', 'Não foi possível carregar seus dados']]) {
       await navigate(`/dashboard?state=${state}`);
       assert.ok(await evaluate(`document.body.innerText.includes(${JSON.stringify(expected)}) || !!document.querySelector('[aria-label=' + ${JSON.stringify(JSON.stringify(expected))} + ']')`), `Estado inválido: ${state}`);
       console.log(`OK ${width}px dashboard ${state}`);
     }
-    for (const route of ['/transactions', '/accounts', '/cards', '/goals', '/reports', '/categories']) {
+    for (const route of ['/transactions', '/transfers', '/accounts', '/cards', '/goals', '/reports', '/categories']) {
       for (const state of ['loading', 'empty', 'error']) {
         await navigate(`${route}?state=${state}`);
         const valid = state === 'loading'

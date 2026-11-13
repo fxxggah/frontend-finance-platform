@@ -8,6 +8,8 @@ import { Minus, Plus } from 'lucide-react';
 import { Sheet } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { CurrencyInput } from '@/components/ui/currency-input';
+import { formatMoneyInput, parseMoneyInput } from '@/lib/format/money';
 import { Select } from '@/components/ui/select';
 import { getToday } from '@/lib/format/date';
 import { useCategories } from '@/hooks/use-categories';
@@ -24,8 +26,7 @@ const schema = z
       .string()
       .min(1, 'Informe o valor')
       .refine((v) => {
-        const clean = v.replace(/\./g, '').replace(',', '.');
-        const n = parseFloat(clean);
+        const n = parseMoneyInput(v);
         return !isNaN(n) && n > 0;
       }, 'O valor deve ser maior que zero'),
     description: z.string().min(1, 'Informe a descrição').max(255),
@@ -66,10 +67,6 @@ interface TransactionFormProps {
   onOpenChange: (open: boolean) => void;
   defaultType?: TransactionType;
   editing?: Transaction | null;
-}
-
-function parseBRLAmount(value: string): number {
-  return parseFloat(value.replace(/\./g, '').replace(',', '.')) || 0;
 }
 
 export function TransactionForm({
@@ -118,7 +115,7 @@ export function TransactionForm({
     if (editing) {
       reset({
         type: editing.type,
-        amount: editing.amount.toFixed(2).replace('.', ','),
+        amount: formatMoneyInput(editing.amount),
         description: editing.description,
         date: editing.date,
         categoryId: String(editing.category.id),
@@ -167,7 +164,7 @@ export function TransactionForm({
   async function onSubmit(data: FormData) {
     const payload: TransactionRequest = {
       type: data.type,
-      amount: parseBRLAmount(data.amount),
+      amount: parseMoneyInput(data.amount),
       categoryId: parseInt(data.categoryId),
       date: data.date,
       description: data.description,
@@ -253,13 +250,20 @@ export function TransactionForm({
           <label className="mb-1.5 block text-xs font-semibold text-text-muted" htmlFor="amount">
             Valor (R$)
           </label>
-          <Input
-            id="amount"
-            inputMode="decimal"
-            placeholder="0,00"
-            {...register('amount')}
-            className="tabular-nums text-lg font-bold"
-            aria-invalid={!!errors.amount}
+          <Controller
+            name="amount"
+            control={control}
+            render={({ field }) => (
+              <CurrencyInput
+                {...field}
+                value={field.value ?? ''}
+                onValueChange={field.onChange}
+                id="amount"
+                placeholder="0,00"
+                className="tabular-nums text-lg font-bold"
+                aria-invalid={!!errors.amount}
+              />
+            )}
           />
           {errors.amount && <p className="mt-1 text-xs text-expense">{errors.amount.message}</p>}
         </div>
