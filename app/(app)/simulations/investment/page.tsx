@@ -1,6 +1,7 @@
 'use client';
 
 import { PageContainer, PageHeader } from '@/components/ui/page';
+import { SimulationsNav } from '@/components/simulations/SimulationsNav';
 import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -197,6 +198,7 @@ export default function InvestmentSimulatorPage() {
     <PageContainer className="space-y-6">
       {/* Cabeçalho */}
       <PageHeader title="Simulador de Investimentos" description={<>Projete o crescimento do seu Saldo</>} />
+      <SimulationsNav />
 
       <DisclaimerBanner />
 

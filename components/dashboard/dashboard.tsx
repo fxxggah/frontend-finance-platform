@@ -69,7 +69,7 @@ export function Dashboard() {
 
   return (
     <PageContainer>
-      <PageHeader className="mb-7" title="Início" eyebrow="Visão geral" />
+      <PageHeader className="mb-7" title="Início" description="Visão geral" />
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1.7fr)_minmax(300px,1fr)]">
         <section aria-label="Saldo e resumo financeiro" className="min-w-0">
           <HeroBalanceCard summary={summary} period={period} totalBalance={accounts.data.totalBalance} creditCardDebt={accounts.data.creditCardDebt} />

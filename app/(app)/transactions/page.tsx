@@ -93,7 +93,7 @@ export default function TransactionsPage() {
   const params = useSearchParams();
   const transfers = params.get('tab') === 'transfers';
   return <PageContainer className="space-y-6">
-    <PageHeader title="Transações" action={<><Link href="/transactions/new" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-white"><Plus className="size-4" aria-hidden="true" />Nova transação</Link></>} />
+    <PageHeader title="Transações" description="Acompanhe suas receitas, despesas e transferências" action={<><Link href="/transactions/new" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-white"><Plus className="size-4" aria-hidden="true" />Nova transação</Link></>} />
     <nav aria-label="Tipo de movimentação" className="flex w-fit max-w-full flex-wrap gap-1 rounded-2xl bg-surface-soft p-1">
       <Link href="/transactions" aria-current={!transfers ? 'page' : undefined} className={`inline-flex min-h-11 items-center rounded-xl px-4 text-sm font-semibold ${!transfers ? 'bg-primary text-white' : 'text-text-muted hover:text-text'}`}>Transações</Link>
       <Link href="/transactions?tab=transfers" aria-current={transfers ? 'page' : undefined} className={`inline-flex min-h-11 items-center rounded-xl px-4 text-sm font-semibold ${transfers ? 'bg-primary text-white' : 'text-text-muted hover:text-text'}`}>Transferências</Link>

@@ -13,15 +13,13 @@ export function PageContainer({ width = 'wide', className, ...props }: PageConta
 interface PageHeaderProps {
   title: ReactNode;
   description?: ReactNode;
-  eyebrow?: string;
   action?: ReactNode;
   className?: string;
 }
 
-export function PageHeader({ title, description, eyebrow, action, className }: PageHeaderProps) {
+export function PageHeader({ title, description, action, className }: PageHeaderProps) {
   return <header className={cn('flex flex-wrap items-end justify-between gap-4', className)}>
     <div className="min-w-0">
-      {eyebrow && <p className={cn(styles.eyebrow, 'mb-2 text-text-muted')}>{eyebrow}</p>}
       <h1 className="text-3xl font-semibold tracking-tight text-text sm:text-4xl">{title}</h1>
       {description && <p className="mt-2 max-w-2xl text-sm leading-relaxed text-text-muted">{description}</p>}
     </div>
@@ -29,7 +27,7 @@ export function PageHeader({ title, description, eyebrow, action, className }: P
   </header>;
 }
 
-export function SectionHeader({ title, description, action }: Omit<PageHeaderProps, 'eyebrow' | 'className'>) {
+export function SectionHeader({ title, description, action }: Omit<PageHeaderProps, 'className'>) {
   return <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
     <div>
       <h2 className="text-lg font-semibold tracking-tight text-text">{title}</h2>

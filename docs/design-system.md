@@ -69,6 +69,8 @@ A linguagem aprovada na dashboard é a referência global. A implementação com
 
 `PageContainer`, `PageHeader`, `SectionHeader` e `MetricCard` padronizam a composição. Páginas usam largura máxima de 1440px; formulários independentes e Configurações, 768px. O shell fornece o padding externo, evitando espaçamento duplicado nas páginas. A sidebar permanece escura nos dois temas.
 
+Os cabeçalhos de página exibem sempre o nome da seção como título (`h1`) acima da descrição, com a mesma tipografia e espaçamento em todas as telas. No Início, a descrição é “Visão geral”; em Transações, “Acompanhe suas receitas, despesas e transferências”.
+
 Os tokens derivados `--glass-edge`, `--surface-reflection` e `--shadow-panel` referenciam a paleta existente. Cores base, fonte e raios não foram alterados. Regras universais de borda e foco ficam em `@layer base`, permitindo sobrescrita local sem `!important`.
 
 Somente barras compactas e a BottomNav usam `backdrop-filter`. Barras de ações ficam sólidas abaixo de 640px; a BottomNav mantém o vidro e respeita a área segura do dispositivo. Ambas oferecem fallback sólido sem suporte ao filtro ou com `prefers-reduced-transparency: reduce`. Não aplicar blur em sidebar, Topbar, gráficos, formulários ou overlays de tela inteira. Reflexos e arcos usam gradientes e sombras estáticos, sem eventos de mouse ou filtros SVG.

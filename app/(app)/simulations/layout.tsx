@@ -1,5 +1,4 @@
 import { type ReactNode } from 'react';
-import { SimulationsNav } from '@/components/simulations/SimulationsNav';
 import { SimulationState } from '@/components/simulations/SimulationState';
 
 interface SimulationsLayoutProps {
@@ -8,12 +7,11 @@ interface SimulationsLayoutProps {
 
 /**
  * Layout compartilhado do módulo de Simulações.
- * Renderiza a navegação por abas entre os simuladores.
+ * Aplica os estados de desenvolvimento aos simuladores.
  */
 export default function SimulationsLayout({ children }: SimulationsLayoutProps) {
   return (
     <div className="flex flex-col gap-4">
-      <SimulationsNav />
       <SimulationState>{children}</SimulationState>
     </div>
   );
