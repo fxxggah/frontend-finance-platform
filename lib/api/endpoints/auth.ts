@@ -1,4 +1,4 @@
-import { apiFetch, setAccessToken } from "@/lib/api/client";
+import { apiFetch, endSession } from "@/lib/api/client";
 import { simulateNetworkDelay, USE_MOCK } from "@/lib/config";
 import { currentUser } from "@/lib/mock-data";
 import type { AuthResponse, GoogleLoginRequest, User } from "@/types";
@@ -16,7 +16,6 @@ export async function loginWithGoogle(data: GoogleLoginRequest): Promise<AuthRes
       expiresIn: 900,
       user: currentUser,
     };
-    setAccessToken(mockAuth.accessToken);
     return mockAuth;
   }
 
@@ -24,10 +23,6 @@ export async function loginWithGoogle(data: GoogleLoginRequest): Promise<AuthRes
     method: "POST",
     body: JSON.stringify(data),
   });
-
-  if (response.accessToken) {
-    setAccessToken(response.accessToken);
-  }
 
   return response;
 }
@@ -37,14 +32,7 @@ export async function loginWithGoogle(data: GoogleLoginRequest): Promise<AuthRes
  * O Route Handler lê o refresh token httpOnly e revoga a sessão no backend.
  */
 export async function logout(): Promise<void> {
-  // Invalida imediatamente qualquer renovação que ainda esteja em andamento.
-  setAccessToken(null);
-  try {
-    const response = await fetch("/api/auth/logout", { method: "POST" });
-    if (!response.ok) throw new Error("Não foi possível encerrar a sessão.");
-  } finally {
-    setAccessToken(null);
-  }
+  await endSession();
 }
 
 /**

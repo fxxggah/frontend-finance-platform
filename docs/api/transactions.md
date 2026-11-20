@@ -339,3 +339,7 @@ Não há conteúdo no corpo da resposta (`null`/vazio).
 - **`401 Unauthorized`**: Não autenticado.
 - **`404 Not Found`**: Transação não encontrada.
 
+
+## Atualização V2 / revisão de voz
+
+A resposta de POST /transactions é um objeto; no parcelamento, a primeira parcela, conforme comportamento real preservado por Gabriel. Rascunho de voz vem de /ai/transaction-drafts e só preenche o formulário. Revisar todos os campos, preencher pendências e descrição, marcar revisão e confirmar antes de chamar a criação existente. Idempotency-Key protege a extração de IA, não cria idempotência financeira no POST /transactions. Não há criação automática nem reenvio financeiro automático após erro.

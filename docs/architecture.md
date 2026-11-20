@@ -106,7 +106,7 @@ sequenceDiagram
 1. **Access Token:** Mantido estritamente em memória do navegador (Zustand ou variável de módulo). Tem validade curta (15 minutos).
 2. **Refresh Token:** Armazenado isoladamente em cookie `httpOnly`, `secure` em produção e `sameSite=lax`. O navegador não lê o token.
 3. **Renovação Automática (Rotação de Tokens):** Quando falta o access token em memória ou uma requisição à API retorna `401 Unauthorized`, o cliente chama `POST /api/auth/refresh`. O Route Handler lê o cookie, chama `POST /api/v1/auth/refresh`, grava o refresh token rotacionado e devolve apenas o novo access token. O cliente repete a requisição original uma única vez.
-4. **Validação inicial:** `fin_session` presente é uma sessão candidata. `SessionBoundary` usa `ensureAccessToken`, compartilhando a promessa de refresh do cliente HTTP, antes de montar o shell e suas consultas. A recuperação inicial não navega por conta própria: a barreira libera a área privada, encaminha ao login em 401 ou oferece recuperação em falhas temporárias. Em `/login`, sem cookie não há refresh; com cookie válido, encaminha ao dashboard. Tokens não são rotacionados no middleware nem em Server Components.
+4. **Validação inicial:** `fin_session` presente é uma sessão candidata. `SessionBoundary` usa `ensureAccessToken`, compartilhando a promessa de refresh do cliente HTTP, antes de montar o shell e suas consultas. A recuperação inicial não navega por conta própria: a barreira libera a área privada, encaminha ao login em 401 ou oferece recuperação em falhas temporárias. Em `/login`, sem cookie não há refresh; com cookie válido, encaminha ao dashboard. Tokens não são rotacionados no middleware nem em Server Components. No navegador, um Web Lock por origem mantém login, refresh e logout em fila até o cookie ser atualizado. Se Web Locks não estiver disponível, a barreira pede um novo login quando a sessão precisa ser recuperada.
 
 ---
 
@@ -272,3 +272,16 @@ O OpenAPI do backend em execução prevalece sobre exemplos deste documento.
 Execute `pnpm api:types` para atualizar o snapshot e os tipos gerados. Consulte
 [api-integration.md](./api-integration.md) para o fluxo atual e as limitações do backend.
 
+
+## V2 — piloto de voz
+
+O backend continua responsável por PRO, cotas, formato/duração, extração e criação. Frontend envia Blob original via apiFetch com MIME real e Idempotency-Key, sem chave Google, userId, transcrição ou upload automático. Access token/refresh existentes são reutilizados; o único replay automático permitido é o 401 já existente, com a mesma chave e Blob. Demais falhas exigem ação humana.
+
+A flag pública NEXT_PUBLIC_VOICE_PILOT_ENABLED é centralizada e false por padrão; o modo USE_MOCK não aciona voz real. Entrada visual exige plan=PRO do perfil; o servidor continua sendo a autorização efetiva. Hooks de mídia e painel são client components, sem persistência em localStorage/URL/Zustand. Abort/fechamento libera microfone/preview; uma requisição já recebida pode finalizar no servidor e contar como sucesso, mesmo sem resposta no navegador.
+
+### Helper do piloto Safari (16/11/2026)
+
+scripts/safari-pilot-proxy.mjs/safari-pilot-proxy.test.mjs implementam e testam um proxy temporário, separado da aplicação de produção. Destinos fixos no loopback; whitelist de métodos/caminhos existentes; limite de corpo; origem HTTPS exata validada antes da tradução para localhost exigida por NextRequest. Sem dependências, novos contratos de API, mudança em cookies/cliente central ou enfraquecimento da autorização do backend. Não publicar o servidor de desenvolvimento do Next. Procedimento e autorização do túnel em docs/voice-pilot.md.
+## V2 / fase 5 — assinatura Stripe sandbox
+
+Painel components/billing/BillingPanel.tsx nas Configurações, atrás da flag central BILLING_PILOT_ENABLED/NEXT_PUBLIC_BILLING_ENABLED (false por padrão, inativa em mock). lib/api/endpoints/billing.ts valida plano/status e URL HTTPS com host exato checkout.stripe.com ou billing.stripe.com. Nunca envia preço, userId ou IDs de cliente/assinatura; JWT e recuperação 401 existentes. Hooks em hooks/use-billing.ts; mutation sem retry/gcTime=0 e guarda síncrona de clique duplo; consulta de status a cada 30 s com foco e atualização manual. Retorno do checkout só informa espera, não muda o plano. Perfil é invalidado quando validade efetiva do backend muda. Next 16.4.6; nenhuma nova biblioteca frontend. Roteiro manual no backend docs/stripe-sandbox.md.

@@ -191,3 +191,13 @@ Suporta 3 categorias de metas essenciais:
   - Validação: Erro imediato se a parcela não cobrir os juros mensais (`parcela <= divida * taxa`).
   - Resultados: Meses para quitação, total pago, total em juros e tabela de amortização.
 
+
+## V2 / fase 4 — registrar por voz
+
+No cadastro existente, exibir entrada de voz somente com a flag do piloto; BASIC/estado de perfil desconhecido não grava. Fluxo: gravar uma transação fictícia, parar (limite automático 29 s/2 MiB), ouvir prévia, enviar explicitamente, revisar/editar o formulário, marcar revisão e confirmar. Estado de gravação/envio bloqueia submissão financeira. Fechar/trocar página libera microfone, timers e URLs temporárias; permissão negada/navegador incompatível oferece formulário manual.
+
+Regra aprovada em 16/11/2026: rascunho aplica descrição curta da fala, tipo/categoria sugeridos pelo contexto, hoje em São Paulo quando data ausente e 1 parcela quando não houver indicação de parcelamento (inclusive cartão). O backend faz a normalização; frontend exibe e permite editar. Valor ausente e origem ambígua permanecem pendentes. Tipo ausente não vira EXPENSE só por vir cartão identificado; categoria conhecida pode permanecer selecionada com tipo pendente. O formulário manual e a edição preservam seu comportamento atual. A revisão de rascunho é obrigatória e alterações posteriores dos campos invalidam a marcação anterior. 403/409/429/503, rede/timeout e múltiplos eventos mostram erro controlado e alternativa manual, sem repetir automaticamente.
+
+## V2 / fase 5 — assinatura nas Configurações
+
+Com flag de teste e perfil carregado, exibir Card solid com preço mensal e status da API, aviso claro de sandbox, validade paga e manual separadas, cancelamento ao fim pago e revisão de parcial. Assinar e Gerenciar abrem a página da Stripe. O status é atualizado automaticamente. No retorno ?billing=return, a tela consulta o status a cada 2 segundos por até 1 minuto enquanto o pagamento não aparece e esconde Assinar PRO durante essa espera. Depois volta à consulta a cada 30 segundos. O acesso depende da confirmação do backend. Clique duplo protegido; mutações com erro não se repetem. ?state=loading|empty|error reutiliza os estados de QA. Cobrança false por padrão e ausente em mocks; não expor chaves/IDs técnicos nos fluxos do produto. Sem alteração de Design System.

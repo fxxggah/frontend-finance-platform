@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const origin = process.env.SMOKE_URL || 'http://localhost:3005';
+const apiOrigin = (process.env.SMOKE_API_URL || 'http://localhost:8080').replace(/\/+$/, '');
 const authOnly = process.argv.includes('--auth-only');
 const transactionsOnly = process.argv.includes('--transactions-only');
 const invoicesOnly = process.argv.includes('--invoices-only');
@@ -198,7 +199,7 @@ try {
   await send('Runtime.enable');
   await send('Network.enable');
   await send('Fetch.enable', { patterns: [
-    { urlPattern: 'http://localhost:8080/*' }, { urlPattern: `${origin}/api/auth/*` },
+    { urlPattern: `${apiOrigin}/*` }, { urlPattern: `${origin}/api/auth/*` },
     { urlPattern: 'https://accounts.google.com/gsi/client*' },
   ] });
   async function evaluate(expression) {
@@ -624,6 +625,7 @@ try {
         categoryId: 2, notes: null, creditCardId: 1, installments: count,
       });
       for (const resource of ['/api/v1/accounts', '/api/v1/credit-cards', '/api/v1/transactions']) {
+        for (let attempt = 0; attempt < 100 && !(resourceReads.get(resource) > (readsBefore.get(resource) || 0)); attempt++) await sleep(50);
         assert.ok(resourceReads.get(resource) > (readsBefore.get(resource) || 0), `Consulta não atualizada após cadastro: ${resource}`);
       }
       console.log(`OK ${width}px cadastro ${count}x (${mode})`);

@@ -1,0 +1,9 @@
+# Voz para rascunho — contrato V2
+
+Fonte: backend docs/api-spec.md, fases 2–4, alinhado com Gabriel. POST /api/v1/ai/transaction-drafts, JWT do FIN e Idempotency-Key (UUID por intenção). Corpo binário original, Content-Type audio/webm ou audio/mp4 (WAV também aceito), até 2 MiB/30 s; nenhum multipart/JSON/userId/chave Gemini. Dev/opt-in no backend, PRO ativo obrigatório.
+
+Atualização aprovada em 16/11/2026: 200 inclui description (string de 1–255 caracteres), date e installments preenchidos; type, amount (total), categoryId, accountId e creditCardId continuam nullable. O backend gera descrição curta da fala, sugere tipo/categoria pelo contexto, usa hoje em São Paulo quando data ausente e 1 parcela sem indicação de parcelamento, inclusive no cartão. Preserva datas/parcelas explícitas válidas. Valor ausente e conta/cartão ambíguos permanecem pendentes em missingFields; não escolher primeiro/único recurso. Notas opcionais continuam manuais. Revisar e confirmar por POST /transactions; requiresConfirmation=true. Atualizar backend antes do frontend.
+
+ProblemDetail.code: 400 INVALID_IDEMPOTENCY_KEY; 403 PRO_REQUIRED; 409 AI_REQUEST_IN_PROGRESS/AI_REQUEST_ALREADY_USED/IDEMPOTENCY_CONFLICT; 422 INVALID_AUDIO/MULTIPLE_TRANSACTIONS/UNCLEAR_AUDIO/CATALOG_TOO_LARGE; 429 USER_AI_QUOTA_EXCEEDED/GLOBAL_AI_CAPACITY_EXCEEDED; 502 INVALID_AI_RESPONSE; 503 AI_UNAVAILABLE/AI_RATE_LIMITED/AUDIO_VALIDATION_UNAVAILABLE/AI_REQUEST_EXPIRED. 404 pode indicar rota desabilitada ou recurso removido. Preservar Retry-After. Mesma chave não chama novamente nem recupera rascunho: receber 409 leva à alternativa manual; outra intenção exige nova chave. Não fazer retries automáticos em falhas.
+
+GET /users/me e usuário do login incluem plan BASIC/PRO e proExpiresAt UTC nullable. Plan ausente/desconhecido não autoriza voz. POST /transactions continua retornando um objeto (primeira parcela em compra parcelada), como o backend atual; não uma lista.

@@ -4,26 +4,26 @@
 export const TIMEZONE = "America/Sao_Paulo";
 
 /** Data civil atual em São Paulo, para valores iniciais de formulários e filtros. */
-export function getToday(): string {
+export function getToday(now = new Date()): string {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: TIMEZONE, year: 'numeric', month: '2-digit', day: '2-digit',
-  }).formatToParts(new Date());
+  }).formatToParts(now);
   const part = (type: Intl.DateTimeFormatPartTypes) => parts.find(p => p.type === type)!.value;
   return `${part('year')}-${part('month')}-${part('day')}`;
 }
 
 /**
  * Converte de forma segura uma string 'YYYY-MM-DD' ou objeto Date para Date
- * fixando ao meio-dia para evitar deslocamento de fuso horário (-3h UTC).
+ * usando meio-dia UTC para representar datas civis durante a formatação.
  */
 export function parseDateSafe(value: string | Date): Date {
   if (value instanceof Date) {
     return value;
   }
 
-  // Se estiver no formato YYYY-MM-DD simples, acrescenta horário do meio-dia local
+  // Se estiver no formato YYYY-MM-DD simples, usa meio-dia UTC, que preserva o dia em São Paulo
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return new Date(`${value}T12:00:00`);
+    return new Date(`${value}T12:00:00Z`);
   }
 
   return new Date(value);
@@ -98,8 +98,11 @@ export const formatFullDate = formatDate;
  */
 export function formatInvoiceReference(value: string | Date): string {
   const date = parseDateSafe(value);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  return `${year}-${month}`;
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: TIMEZONE, year: "numeric", month: "2-digit",
+  }).formatToParts(date);
+  const year = parts.find(p => p.type === "year")?.value;
+  const month = parts.find(p => p.type === "month")?.value;
+  return year + "-" + month;
 }
 

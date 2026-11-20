@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
+import Link from "next/link";
 import { Loader2, Wallet, ArrowUpRight, Target } from "lucide-react";
 import { Card } from '@/components/ui/card';
 import styles from '@/components/layout/auth.module.css';
 import { loginWithGoogle } from "@/lib/api/endpoints/auth";
-import { setAccessToken } from "@/lib/api/client";
+import { publishSessionCookieChange, setAccessToken, withSessionCookieLock } from "@/lib/api/client";
 import { USE_MOCK } from "@/lib/config";
 import { ApiError } from "@/lib/api/errors";
 import { useQueryClient } from "@tanstack/react-query";
@@ -41,27 +42,34 @@ export default function LoginPage() {
     setIsLoading(true);
     setErrorMessage(null);
     try {
-      const auth = await loginWithGoogle({ idToken });
-      const response = await fetch("/api/auth/session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken: auth.refreshToken }),
+      await withSessionCookieLock(async () => {
+        const auth = await loginWithGoogle({ idToken });
+        const response = await fetch("/api/auth/session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refreshToken: auth.refreshToken }),
+        });
+        if (!response.ok) throw new Error("Não foi possível criar sua sessão. Tente novamente.");
+        const session: { accessToken?: string } = await response.json();
+        if (!session.accessToken) throw new Error("A sessão retornou dados incompletos.");
+        publishSessionCookieChange();
+        setAccessToken(session.accessToken);
       });
-      if (!response.ok) throw new Error("Não foi possível criar sua sessão. Tente novamente.");
-      const session: { accessToken?: string } = await response.json();
-      if (!session.accessToken) throw new Error("A sessão retornou dados incompletos.");
-      setAccessToken(session.accessToken);
       await queryClient.cancelQueries();
       queryClient.clear();
       router.replace("/dashboard");
       router.refresh();
     } catch (error) {
       setAccessToken(null);
-      setErrorMessage(error instanceof ApiError && error.status === 401
-        ? "Sua autenticação com o Google expirou. Tente novamente."
-        : error instanceof Error && !(error instanceof ApiError)
+      if (error instanceof ApiError && error.status === 422) {
+        setErrorMessage("Sua credencial do Google é inválida ou expirou. Tente novamente.");
+      } else if (error instanceof ApiError && error.status === 503) {
+        setErrorMessage("Não foi possível validar sua credencial do Google agora. Tente novamente.");
+      } else {
+        setErrorMessage(error instanceof Error && !(error instanceof ApiError)
           ? error.message
           : "Não foi possível entrar agora. Tente novamente.");
+      }
       setIsLoading(false);
       pendingRef.current = false;
     }
@@ -143,7 +151,7 @@ export default function LoginPage() {
           </div>
         )}
 
-        <p className="mt-8 text-center text-xs leading-relaxed text-text-muted">Ao continuar, você concorda com os termos de uso e a política de privacidade do FIN.</p>
+        <p className="mt-8 text-center text-xs leading-relaxed text-text-muted">Ao continuar, você concorda com os <Link className="underline" href="/termos">termos de uso</Link> e a <Link className="underline" href="/privacidade">política de privacidade</Link> do FIN. <Link className="underline" href="/sobre">Sobre o FIN</Link></p>
       </Card>
       {!USE_MOCK && GOOGLE_CLIENT_ID && <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive"
         onReady={() => setScriptReady(true)} onError={() => setErrorMessage("Não foi possível carregar o login do Google. Recarregue a página.")} />}

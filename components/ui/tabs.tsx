@@ -117,7 +117,7 @@ export function TabsTrigger({
         // pill variant
         variant === 'pill' && [
           isActive
-            ? 'bg-surface text-text shadow-sm'
+            ? 'bg-primary font-semibold text-white'
             : 'text-text-muted hover:text-text',
         ],
         // underline variant

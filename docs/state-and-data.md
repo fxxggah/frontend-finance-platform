@@ -173,3 +173,11 @@ export const transactionFormSchema = z.object({
 });
 ```
 
+
+## V2 — estado transitório da gravação
+
+Blob/chunks e chave por envio permanecem só no hook/painel montado. useVoiceDraft usa useMutation com retry=false e gcTime=0; reset após consumir a resposta elimina referência às variáveis da mutation. Nenhum áudio ou rascunho é persistido. Validar resposta na borda; descrição sugerida é aplicada ao formulário, data e parcelas usam os valores normalizados no backend (hoje São Paulo/1 quando ausentes). Campos null de tipo/valor/categoria/origem continuam em branco; não escolher primeiro recurso. Campos explícitos válidos são preservados. Somente confirmação explícita dispara useCreateTransaction e suas invalidações existentes. Erros da extração mantêm a alternativa manual; nenhuma mutation financeira é chamada no sucesso da IA.
+
+### Estado da cobrança Stripe
+
+queryKeys.billing.plan/status e useBilling isolam estado remoto. Plano/status validados por Zod, sem inferir PRO pelo redirect ou apenas status ACTIVE. paidUntil/effectiveProExpiresAt/canCheckout/canManage vêm do servidor. Chave do checkout fica somente em ref, preservada em falha incerta e renovada após CHECKOUT_EXPIRED; backend retoma checkout pronto sem criar outro. Nenhuma mutation financeira é repetida automaticamente (somente replay 401 já existente, com mesma chave). URLs hospedadas são transitórias e validadas; não salvar em localStorage/Zustand nem logar credenciais. 404/409/422/502/503 exibem erro e atualização manual. USE_MOCK não aciona cobrança real.
