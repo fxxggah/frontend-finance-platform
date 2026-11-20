@@ -6,6 +6,9 @@
 // Somente o valor literal "true" habilita mocks; ausente ou "false" usa a API real.
 export const USE_MOCK: boolean = process.env.NEXT_PUBLIC_USE_MOCK === "true";
 
+// Piloto opt-in; modo mock nunca envia áudio ao backend real.
+export const VOICE_PILOT_ENABLED = process.env.NEXT_PUBLIC_VOICE_PILOT_ENABLED === "true" && !USE_MOCK;
+
 // URL base da API REST backend (Spring Boot)
 const rawApiUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080").replace(/\/+$/, "");
 export const API_BASE_URL: string = rawApiUrl.endsWith("/api/v1")
@@ -20,3 +23,6 @@ export async function simulateNetworkDelay(minMs = 300, maxMs = 600): Promise<vo
   const delay = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
   return new Promise((resolve) => setTimeout(resolve, delay));
 }
+
+// Stripe sandbox é opt-in; mocks não criam checkout real.
+export const BILLING_PILOT_ENABLED = process.env.NEXT_PUBLIC_BILLING_ENABLED === "true" && !USE_MOCK;

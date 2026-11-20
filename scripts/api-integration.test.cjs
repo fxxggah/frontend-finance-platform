@@ -9,6 +9,7 @@ const root = path.resolve(__dirname, '..');
 const originalResolve = Module._resolveFilename;
 const originalFetch = global.fetch;
 const originalWindow = global.window;
+const originalNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
 const originalEnv = { mock: process.env.NEXT_PUBLIC_USE_MOCK, url: process.env.NEXT_PUBLIC_API_URL };
 Module._resolveFilename = function (request, ...args) {
   return originalResolve.call(this, request.startsWith('@/') ? path.join(root, request.slice(2)) : request, ...args);
@@ -19,12 +20,28 @@ require.extensions['.ts'] = (module, filename) => {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
   }).outputText, filename);
 };
-function reset() {
+function sessionLocks() {
+  let queued;
+  return {
+    request(name, { mode }, action) {
+      assert.equal(name, 'fin:auth-session');
+      assert.equal(mode, 'exclusive');
+      const result = queued ? queued.then(action) : action();
+      const tail = result.catch(() => {});
+      queued = tail;
+      tail.then(() => { if (queued === tail) queued = undefined; });
+      return result;
+    },
+  };
+}
+
+function reset({ locks = true } = {}) {
   for (const key of Object.keys(require.cache)) {
     if (['lib', 'app'].some(directory => key.startsWith(path.join(root, directory)))) delete require.cache[key];
   }
   process.env.NEXT_PUBLIC_USE_MOCK = 'false';
   process.env.NEXT_PUBLIC_API_URL = 'http://localhost:8080';
+  Object.defineProperty(globalThis, 'navigator', { configurable: true, value: locks ? { locks: sessionLocks() } : {} });
   const redirects = [];
   global.window = { location: { pathname: '/dashboard', assign: value => redirects.push(value) } };
   return { client: require('../lib/api/client.ts'), redirects };
@@ -166,6 +183,61 @@ test('renovação pendente não restaura o token depois do logout', async () => 
   finish(json({ accessToken: 'late-access' }));
   await assert.rejects(request, error => error.status === 401);
   assert.equal(client.getAccessToken(), null);
+});
+
+test('navegador sem Web Locks pede novo login sem tentar renovar o cookie', async () => {
+  const { client } = reset({ locks: false });
+  const requests = [];
+  global.fetch = async input => { requests.push(String(input)); return json({ success: true }); };
+  await assert.rejects(client.ensureAccessToken(), error =>
+    error.status === 401 && error.code === client.SESSION_REAUTH_REQUIRED);
+  assert.deepEqual(requests, []);
+  await require('../lib/api/endpoints/auth.ts').logout();
+  assert.deepEqual(requests, ['/api/auth/logout']);
+});
+
+const fixtureJwt = sub => "fixture." + Buffer.from(JSON.stringify({sub})).toString("base64url") + ".signed";
+
+test("refresh com outro subject bloqueia o replay de uma mutação", async () => {
+  const { client, redirects } = reset();
+  const sessions = [];
+  client.setAccessToken(fixtureJwt("10"));
+  global.fetch = async (input, init) => {
+    if (String(input) === "/api/auth/refresh") return json({ accessToken: fixtureJwt("20") });
+    sessions.push(init.headers.get("Authorization"));
+    return json({}, 401);
+  };
+  await assert.rejects(client.apiFetch("/transactions", {method:"POST", body:"{}"}),
+    error => error.code === client.SESSION_CHANGED);
+  assert.deepEqual(sessions, ["Bearer " + fixtureJwt("10")]);
+  assert.equal(client.getAccessToken(), null);
+  assert.deepEqual(redirects, []);
+});
+
+test("uma resposta antiga é descartada após mudança de sessão em outra aba", async () => {
+  const { client } = reset();
+  let epoch = "first";
+  let reply;
+  global.window.localStorage = { getItem: () => epoch };
+  client.setAccessToken(fixtureJwt("10"));
+  global.fetch = async () => new Promise(resolve => { reply = resolve; });
+  const pending = client.apiFetch("/users/me");
+  epoch = "second";
+  reply(json({id:10}));
+  await assert.rejects(pending, error => error.code === client.SESSION_CHANGED);
+  assert.equal(client.getAccessToken(), null);
+});
+
+test("uma aba desatualizada não revoga a sessão da outra", async () => {
+  const { client } = reset();
+  let epoch = "first";
+  global.window.localStorage = {getItem: () => epoch};
+  client.setAccessToken(fixtureJwt("10"));
+  epoch = "second";
+  let calls = 0;
+  global.fetch = async () => { calls++; return json({success:true}); };
+  await assert.rejects(client.endSession(), error => error.code === client.SESSION_CHANGED);
+  assert.equal(calls, 0);
 });
 
 test('ProblemDetail mantém erros de campo e mutações aceitam 200/201 sem corpo', async () => {
@@ -405,9 +477,11 @@ test('logout invalida refresh pendente antes de concluir a chamada remota', asyn
   });
   const pending = client.ensureAccessToken();
   const ending = auth.logout();
+  assert.equal(completeLogout, undefined);
   completeRefresh(json({ accessToken: 'late-access' }));
   await assert.rejects(pending, error => error.status === 401);
   assert.equal(client.getAccessToken(), null);
+  await Promise.resolve();
   completeLogout(json({ success: true }));
   await ending;
 });
@@ -415,8 +489,168 @@ test('logout invalida refresh pendente antes de concluir a chamada remota', asyn
 after(() => {
   global.fetch = originalFetch;
   global.window = originalWindow;
+  if (originalNavigator) Object.defineProperty(globalThis, 'navigator', originalNavigator);
+  else delete globalThis.navigator;
   Module._resolveFilename = originalResolve;
   for (const [key, value] of [['NEXT_PUBLIC_USE_MOCK', originalEnv.mock], ['NEXT_PUBLIC_API_URL', originalEnv.url]]) {
     if (value === undefined) delete process.env[key]; else process.env[key] = value;
   }
+});
+
+test('voz envia bytes originais, JWT e chave sem criar transação', async () => {
+  const { client } = reset(); client.setAccessToken('voice-access');
+  const voice = require('../lib/api/endpoints/voice.ts');
+  const audio = new Blob([new Uint8Array([1, 2, 3, 4])], { type: 'audio/webm;codecs=opus' });
+  const expected = { description: 'Compra na padaria', type: null, amount: 45.01, date: '2026-11-16', categoryId: 2, accountId: null,
+    creditCardId: 1, installments: 1, missingFields: ['type'], requiresConfirmation: true };
+  let calls = 0;
+  global.fetch = async (input, init) => {
+    calls++;
+    assert.equal(String(input), 'http://localhost:8080/api/v1/ai/transaction-drafts');
+    assert.equal(init.method, 'POST'); assert.equal(init.body, audio);
+    assert.equal(init.headers.get('Content-Type'), 'audio/webm');
+    assert.equal(init.headers.get('Idempotency-Key'), 'voice-test-key-1');
+    assert.equal(init.headers.get('Authorization'), 'Bearer voice-access');
+    assert.deepEqual(Array.from(new Uint8Array(await init.body.arrayBuffer())), [1, 2, 3, 4]);
+    return json(expected);
+  };
+  assert.deepEqual(await voice.createVoiceDraft(audio, 'voice-test-key-1'), expected);
+  assert.equal(calls, 1);
+});
+
+test('voz preserva códigos e Retry-After sem repetir falhas', async () => {
+  const { client } = reset(); client.setAccessToken('voice-errors');
+  const voice = require('../lib/api/endpoints/voice.ts');
+  const audio = new Blob(['synthetic'], { type: 'audio/mp4' });
+  for (const [status, code] of [[403, 'PRO_REQUIRED'], [409, 'AI_REQUEST_ALREADY_USED'],
+    [422, 'MULTIPLE_TRANSACTIONS'], [429, 'USER_AI_QUOTA_EXCEEDED'], [503, 'AI_RATE_LIMITED']]) {
+    let calls = 0;
+    global.fetch = async () => { calls++; return new Response(JSON.stringify({ status, title: 'Teste', detail: 'Falha controlada', code }),
+      { status, headers: { 'Content-Type': 'application/problem+json', 'Retry-After': '30' } }); };
+    await assert.rejects(voice.createVoiceDraft(audio, 'voice-test-key-2'), error =>
+      error.status === status && error.code === code && error.retryAfterSeconds === 30);
+    assert.equal(calls, 1);
+  }
+  const { parseRetryAfter } = require('../lib/api/errors.ts');
+  assert.equal(parseRetryAfter('Mon, 16 Nov 2026 12:00:30 GMT', Date.parse('2026-11-16T12:00:00Z')), 30);
+  assert.equal(parseRetryAfter('invalid'), undefined);
+});
+
+test('refresh 401 da voz reutiliza o mesmo Blob e a mesma chave', async () => {
+  const { client } = reset(); client.setAccessToken('old-voice-token');
+  const voice = require('../lib/api/endpoints/voice.ts');
+  const audio = new Blob(['synthetic'], { type: 'audio/webm' });
+  let voiceCalls = 0, refreshCalls = 0;
+  global.fetch = async (input, init) => {
+    if (String(input) === '/api/auth/refresh') { refreshCalls++; return json({ accessToken: 'new-voice-token' }); }
+    voiceCalls++;
+    assert.equal(init.body, audio); assert.equal(init.headers.get('Idempotency-Key'), 'voice-test-key-3');
+    if (voiceCalls === 1) return json({ status: 401, title: 'Unauthorized', detail: 'Expire' }, 401);
+    assert.equal(init.headers.get('Authorization'), 'Bearer new-voice-token');
+    return json({ description: 'Compra na padaria', type: 'EXPENSE', amount: 45.01, date: '2026-11-16', categoryId: 2, accountId: 1,
+      creditCardId: null, installments: 1, missingFields: [], requiresConfirmation: true });
+  };
+  await voice.createVoiceDraft(audio, 'voice-test-key-3');
+  assert.equal(voiceCalls, 2); assert.equal(refreshCalls, 1);
+});
+
+test('voz recusa resposta inválida e formatos/tamanho locais sem fallback para dados inventados', async () => {
+  const { client } = reset(); client.setAccessToken('voice-validation');
+  const voice = require('../lib/api/endpoints/voice.ts');
+  let calls = 0;
+  global.fetch = async () => { calls++; return json({ requiresConfirmation: false, private: 'fixture' }); };
+  await assert.rejects(voice.createVoiceDraft(new Blob(['x'], { type: 'audio/webm' }), 'voice-test-key-4'),
+    error => error.status === 502 && !error.detail.includes('fixture'));
+  assert.equal(calls, 1); calls = 0;
+  for (const audio of [new Blob([]), new Blob(['x'], { type: 'audio/ogg' }),
+    new Blob([new Uint8Array(2 * 1024 * 1024 + 1)], { type: 'audio/webm' })]) {
+    await assert.rejects(voice.createVoiceDraft(audio, 'voice-test-key-5'), error => error.status === 422);
+  }
+  assert.equal(calls, 0);
+});
+
+test('flag de voz é opt-in e não ativa voz real no modo mock', () => {
+  reset();
+  const original = process.env.NEXT_PUBLIC_VOICE_PILOT_ENABLED;
+  const config = () => { delete require.cache[require.resolve('../lib/config.ts')]; return require('../lib/config.ts'); };
+  try {
+    delete process.env.NEXT_PUBLIC_VOICE_PILOT_ENABLED; assert.equal(config().VOICE_PILOT_ENABLED, false);
+    process.env.NEXT_PUBLIC_VOICE_PILOT_ENABLED = 'true'; assert.equal(config().VOICE_PILOT_ENABLED, true);
+    process.env.NEXT_PUBLIC_USE_MOCK = 'true'; assert.equal(config().VOICE_PILOT_ENABLED, false);
+  } finally {
+    if (original === undefined) delete process.env.NEXT_PUBLIC_VOICE_PILOT_ENABLED;
+    else process.env.NEXT_PUBLIC_VOICE_PILOT_ENABLED = original;
+    process.env.NEXT_PUBLIC_USE_MOCK = 'false'; config();
+  }
+});
+
+test('checkout e portal enviam só JWT/chave e aceitam apenas URLs hospedadas na Stripe', async () => {
+  const { client } = reset(); client.setAccessToken('billing-fixture');
+  const billing = require('../lib/api/endpoints/billing.ts');
+  const requests = [];
+  global.fetch = async (input, init) => {
+    requests.push({ url: String(input), init });
+    assert.equal(init.method, 'POST'); assert.equal(init.body, undefined);
+    assert.equal(init.headers.get('Authorization'), 'Bearer billing-fixture');
+    return json({ url: String(input).endsWith('checkout-sessions') ? 'https://checkout.stripe.com/c/pay/fixture' : 'https://billing.stripe.com/p/fixture' });
+  };
+  assert.equal(await billing.createCheckout('billing-test-key'), 'https://checkout.stripe.com/c/pay/fixture');
+  assert.equal(await billing.createBillingPortal(), 'https://billing.stripe.com/p/fixture');
+  assert.equal(requests[0].init.headers.get('Idempotency-Key'), 'billing-test-key');
+  assert.equal(requests[1].init.headers.has('Idempotency-Key'), false);
+  assert.ok(requests.every(r => !r.url.includes('?')));
+});
+
+test('assinatura valida plano e status do servidor sem derivar PRO do retorno do checkout', async () => {
+  const { client } = reset(); client.setAccessToken('billing-state');
+  const billing = require('../lib/api/endpoints/billing.ts');
+  global.fetch = async (input, init) => {
+    assert.equal(init.body, undefined);
+    return json(String(input).endsWith('/plan') ? { amount: 39.9, currency: 'BRL', interval: 'MONTH', testMode: true }
+      : { status: 'NONE', paidUntil: null, manualProExpiresAt: null, effectiveProExpiresAt: null,
+          cancelAtPeriodEnd: false, canCheckout: true, canManage: false, reviewRequired: false, testMode: true });
+  };
+  assert.equal((await billing.getBillingPlan()).amount, 39.9);
+  assert.equal((await billing.getBillingStatus()).paidUntil, null);
+  global.fetch = async () => json({ amount: 0.01, currency: 'USD', interval: 'MONTH', testMode: false });
+  await assert.rejects(billing.getBillingPlan(), e => e.status === 502);
+});
+
+test('billing recusa redirecionamentos externos, HTTP e credenciais na URL', async () => {
+  const { client } = reset(); client.setAccessToken('billing-redirect');
+  const billing = require('../lib/api/endpoints/billing.ts');
+  for (const url of ['https://evil.example/checkout', 'http://checkout.stripe.com/c/pay/x', 'https://checkout.stripe.com.evil.example/x', 'https://user:pass@checkout.stripe.com/x', 'https://billing.stripe.com/p/x']) {
+    global.fetch = async () => json({ url });
+    await assert.rejects(billing.createCheckout('billing-key-url'), e => e.status === 502);
+  }
+});
+
+test('billing mantém chave no replay 401 e não repete erro de cobrança automaticamente', async () => {
+  const { client } = reset(); client.setAccessToken('billing-old');
+  const billing = require('../lib/api/endpoints/billing.ts');
+  let calls = 0;
+  global.fetch = async (input, init) => {
+    if (String(input) === '/api/auth/refresh') return json({ accessToken: 'billing-new' });
+    calls++; assert.equal(init.headers.get('Idempotency-Key'), 'billing-intent');
+    return calls === 1 ? json({ status: 401, title: 'Expired' }, 401) : json({ url: 'https://checkout.stripe.com/c/pay/fixture' });
+  };
+  await billing.createCheckout('billing-intent'); assert.equal(calls, 2);
+  calls = 0;
+  global.fetch = async () => { calls++; return json({ status: 409, title: 'Aguarde', detail: 'Operação em andamento', code: 'BILLING_OPERATION_IN_PROGRESS' }, 409); };
+  await assert.rejects(billing.createCheckout('billing-intent'), e => e.code === 'BILLING_OPERATION_IN_PROGRESS');
+  assert.equal(calls, 1);
+});
+
+test('billing é opt-in e mocks não criam sessões de pagamento', async () => {
+  reset(); const original = process.env.NEXT_PUBLIC_BILLING_ENABLED;
+  try {
+    delete process.env.NEXT_PUBLIC_BILLING_ENABLED; delete require.cache[require.resolve('../lib/config.ts')];
+    assert.equal(require('../lib/config.ts').BILLING_PILOT_ENABLED, false);
+    process.env.NEXT_PUBLIC_BILLING_ENABLED = 'true'; process.env.NEXT_PUBLIC_USE_MOCK = 'true';
+    delete require.cache[require.resolve('../lib/config.ts')];
+    assert.equal(require('../lib/config.ts').BILLING_PILOT_ENABLED, false);
+    let calls=0; global.fetch=async()=>{calls++;throw new Error('Não deve chamar');};
+    const billing=require('../lib/api/endpoints/billing.ts');
+    await assert.rejects(billing.createCheckout('billing-mock'),e=>e.status===503); assert.equal(calls,0);
+  } finally { if(original === undefined) delete process.env.NEXT_PUBLIC_BILLING_ENABLED; else process.env.NEXT_PUBLIC_BILLING_ENABLED=original; }
 });

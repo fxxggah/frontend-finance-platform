@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { CurrencyInput } from '@/components/ui/currency-input';
 import { useAddGoalContribution } from '@/hooks/use-goals';
 import { formatMoney, parseMoneyInput } from '@/lib/format/money';
+import { getToday } from '@/lib/format/date';
 import { cn } from '@/lib/utils';
 import type { Goal } from '@/types';
 
@@ -62,7 +63,7 @@ type FormData = z.infer<typeof schema>;
     resolver: zodResolver(schema),
     defaultValues: {
       amount: '',
-      date: new Date().toISOString().slice(0, 10),
+      date: getToday(),
       notes: '',
     },
   });
@@ -72,7 +73,7 @@ type FormData = z.infer<typeof schema>;
       setOperationType('DEPOSIT');
       reset({
         amount: '',
-        date: new Date().toISOString().slice(0, 10),
+        date: getToday(),
         notes: '',
       });
     }

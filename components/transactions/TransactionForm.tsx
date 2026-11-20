@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -18,10 +18,13 @@ import { useCreditCards } from '@/hooks/use-credit-cards';
 import { useCreateTransaction, useUpdateTransaction } from '@/hooks/use-transactions';
 import type { Transaction, TransactionRequest, TransactionType } from '@/types';
 import { ApiError } from '@/lib/api/errors';
+import { VOICE_PILOT_ENABLED } from '@/lib/config';
+import { VoiceTransactionPanel } from './VoiceTransactionPanel';
+import type { TransactionDraft } from '@/types';
 
 const schema = z
   .object({
-    type: z.enum(['INCOME', 'EXPENSE']),
+    type: z.enum(['', 'INCOME', 'EXPENSE']).refine(value => value !== '', 'Selecione o tipo'),
     amount: z
       .string()
       .min(1, 'Informe o valor')
@@ -33,7 +36,7 @@ const schema = z
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida'),
     categoryId: z.string().min(1, 'Selecione uma categoria'),
     notes: z.string().max(500).optional(),
-    destinationType: z.enum(['account', 'card']),
+    destinationType: z.enum(['', 'account', 'card']).refine(value => value !== '', 'Selecione conta ou cartão'),
     accountId: z.string().optional(),
     creditCardId: z.string().optional(),
     installments: z
@@ -60,7 +63,9 @@ const schema = z
     }
   });
 
-type FormData = z.infer<typeof schema>;
+type FormData = z.input<typeof schema>;
+type ValidatedFormData = z.output<typeof schema>;
+const missingLabels: Record<string, string> = { type: 'tipo', amount: 'valor', date: 'data', categoryId: 'categoria', paymentSource: 'conta ou cartão', installments: 'parcelas' };
 
 interface TransactionFormProps {
   open: boolean;
@@ -75,6 +80,10 @@ export function TransactionForm({
   defaultType = 'EXPENSE',
   editing,
 }: TransactionFormProps) {
+  const [voiceDraft, setVoiceDraft] = useState<TransactionDraft | null>(null);
+  const [reviewed, setReviewed] = useState(false);
+  const [voiceBusy, setVoiceBusy] = useState(false);
+  const saving = useRef(false);
   const { data: categoriesData } = useCategories();
   const { data: accountsData } = useAccounts();
   const { data: cardsData } = useCreditCards();
@@ -88,9 +97,10 @@ export function TransactionForm({
     watch,
     setValue,
     setError,
+    getValues,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<FormData>({
+  } = useForm<FormData, unknown, ValidatedFormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       type: defaultType,
@@ -112,6 +122,7 @@ export function TransactionForm({
 
   // Preenche formulário ao abrir para edição ou reset para novo
   useEffect(() => {
+    setVoiceDraft(null); setReviewed(false); setVoiceBusy(false);
     if (editing) {
       reset({
         type: editing.type,
@@ -143,25 +154,48 @@ export function TransactionForm({
 
   // Se trocar para cartão, força despesa
   useEffect(() => {
-    if (destinationType === 'card') {
+    if (destinationType === 'card' && !voiceDraft) {
       setValue('type', 'EXPENSE');
     }
-  }, [destinationType, setValue]);
+  }, [destinationType, setValue, voiceDraft]);
+
+  useEffect(() => {
+    const subscription = watch(() => setReviewed(false));
+    return () => subscription.unsubscribe();
+  }, [watch]);
 
   const filteredCategories = useMemo(
-    () => (categoriesData ?? []).filter((c) => c.type === type),
+    () => (categoriesData ?? []).filter((c) => !type || c.type === type),
     [categoriesData, type]
   );
 
   function changeInstallments(delta: number) {
-    const current = Number.isFinite(installments) ? Math.trunc(installments) : 1;
+    const current = Number.isFinite(installments) ? Math.trunc(installments) : delta > 0 ? 0 : 2;
     setValue('installments', Math.min(24, Math.max(1, current + delta)), {
       shouldDirty: true,
       shouldValidate: true,
     });
   }
 
-  async function onSubmit(data: FormData) {
+  function applyVoiceDraft(draft: TransactionDraft) {
+    setVoiceDraft(draft); setReviewed(false);
+    reset({
+      type: draft.type ?? '', amount: draft.amount === null ? '' : formatMoneyInput(draft.amount),
+      date: draft.date ?? '', categoryId: draft.categoryId === null ? '' : String(draft.categoryId),
+      description: draft.description, notes: getValues('notes') || '',
+      destinationType: draft.accountId !== null ? 'account' : draft.creditCardId !== null ? 'card' : '',
+      accountId: draft.accountId === null ? '' : String(draft.accountId),
+      creditCardId: draft.creditCardId === null ? '' : String(draft.creditCardId),
+      installments: draft.installments ?? Number.NaN,
+    });
+  }
+
+  async function onSubmit(data: ValidatedFormData) {
+    if (saving.current) return;
+    if (voiceBusy || (voiceDraft && !reviewed) || !data.type || !data.destinationType) {
+      setError('root.submit', { message: 'Complete e revise os campos antes de confirmar.' });
+      return;
+    }
     const payload: TransactionRequest = {
       type: data.type,
       amount: parseMoneyInput(data.amount),
@@ -174,6 +208,7 @@ export function TransactionForm({
       installments: data.destinationType === 'card' ? data.installments : undefined,
     };
 
+    saving.current = true;
     try {
       if (editing) {
         await updateMutation.mutateAsync({ id: editing.id, data: payload });
@@ -182,6 +217,7 @@ export function TransactionForm({
       }
       onOpenChange(false);
     } catch (error) {
+      if (voiceDraft) setReviewed(false);
       if (error instanceof ApiError && error.status === 400) {
         let shouldFocus = true;
         for (const fieldErr of error.errors) {
@@ -194,10 +230,14 @@ export function TransactionForm({
       }
       setError('root.submit', {
         type: 'server',
-        message: error instanceof ApiError
+        message: voiceDraft && error instanceof ApiError && (error.status === 0 || error.status >= 500)
+          ? 'Não foi possível confirmar o registro. Confira a lista de transações antes de tentar novamente.'
+          : error instanceof ApiError
           ? error.detail || 'Não foi possível salvar a transação. Revise os dados e tente novamente.'
           : 'Não foi possível salvar a transação. Tente novamente.',
       });
+    } finally {
+      saving.current = false;
     }
   }
 
@@ -217,6 +257,15 @@ export function TransactionForm({
         className="space-y-4"
         noValidate
       >
+        {open && !editing && VOICE_PILOT_ENABLED && <VoiceTransactionPanel onDraft={applyVoiceDraft} onBusyChange={setVoiceBusy} />}
+        {voiceDraft && (
+          <div role="status" className="rounded-2xl border border-border bg-primary-soft p-4 text-sm text-text">
+            <p className="font-semibold">Revise o rascunho antes de registrar</p>
+            <p className="mt-1">Confira as sugestões antes de registrar. Sem data informada, usamos hoje; sem indicação de parcelamento, usamos 1 parcela. Corrija o que precisar e complete as pendências.</p>
+            {voiceDraft.missingFields.length > 0 && <p className="mt-1 font-medium">Complete: {voiceDraft.missingFields.map(field => missingLabels[field] || field).join(', ')}.</p>}
+          </div>
+        )}
+        <fieldset disabled={voiceBusy} className="min-w-0 space-y-4">
         {/* Tipo: Despesa / Receita */}
         <div>
           <label className="mb-1.5 block text-xs font-semibold text-text-muted">Tipo</label>
@@ -226,9 +275,11 @@ export function TransactionForm({
                 key={t}
                 type="button"
                 disabled={destinationType === 'card' && t === 'INCOME'}
+                aria-pressed={type === t}
                 onClick={() => {
                   setValue('type', t);
-                  setValue('categoryId', '');
+                  const currentCategory = categoriesData?.find(category => String(category.id) === getValues('categoryId'));
+                  if (currentCategory && currentCategory.type !== t) setValue('categoryId', '');
                 }}
                 className={`rounded-2xl py-3 text-sm font-bold transition ${
                   type === t
@@ -351,7 +402,7 @@ export function TransactionForm({
                 </option>
               ))}
             </Select>
-          ) : (
+          ) : destinationType === 'card' ? (
             <div className="space-y-3">
               <Select id="creditCardId" {...register('creditCardId')} aria-invalid={!!errors.creditCardId}>
                 <option value="">Selecione um cartão</option>
@@ -364,7 +415,8 @@ export function TransactionForm({
 
 
             </div>
-          )}
+          ) : <p className="text-sm text-text-muted">Selecione conta ou cartão para continuar.</p>}
+          {errors.destinationType && <p className="mt-1 text-xs text-expense">{errors.destinationType.message}</p>}
 
           {errors.accountId && (
             <p className="mt-1 text-xs text-expense">{errors.accountId.message}</p>
@@ -450,6 +502,12 @@ export function TransactionForm({
         {errors.root?.submit && (
           <p role="alert" className="text-sm text-expense">{errors.root.submit.message}</p>
         )}
+        </fieldset>
+        {voiceDraft && <label className="flex min-h-11 cursor-pointer items-start gap-3 rounded-xl border border-border p-3 text-sm text-text">
+          <input id="voice-review" type="checkbox" className="mt-1 size-4 accent-primary" checked={reviewed}
+            onChange={event => setReviewed(event.target.checked)} disabled={voiceBusy || isPending} />
+          <span>Revisei todos os campos e quero registrar esta transação.</span>
+        </label>}
         <div className="flex gap-3 pt-2">
           <Button
             type="button"
@@ -463,7 +521,7 @@ export function TransactionForm({
             type="submit"
             variant="brand"
             className="flex-1"
-            disabled={isPending || isSubmitting}
+            disabled={isPending || isSubmitting || voiceBusy || (!!voiceDraft && !reviewed)}
           >
             {isPending || isSubmitting ? 'Salvando...' : editing ? 'Salvar alterações' : 'Registrar'}
           </Button>

@@ -79,19 +79,16 @@ Exemplo:
     ]
   }
   ```
-- **`401 Unauthorized`**: Token do Google inválido, expirado ou com audiência/emissor incorretos.
-  ```json
-  {
-    "type": "about:blank",
-    "title": "Unauthorized",
-    "status": 401,
-    "detail": "Token do Google inválido ou expirado"
-  }
-  ```
+- **`422 Unprocessable Content`**: credencial do Google inválida, expirada ou com audiência/emissor incorretos.
+- **`503 Service Unavailable`**: certificados públicos do Google indisponíveis para validação. A tela oferece nova tentativa.
 
 ---
 
 ## 2. Renovar Token de Acesso (`Refresh`)
+
+O cliente usa um Web Lock exclusivo por origem para serializar login, logout e renovação entre abas. Cada aba envia o cookie HttpOnly atual quando obtém o lock e recebe seu access token em memória. Em um navegador sem Web Locks, a recuperação automática de sessão pede um novo login. A tela permite nova tentativa manual quando a renovação falha temporariamente.
+
+Para validar duas abas com o mesmo cookie em um Chrome local, execute `node scripts/auth-multitab-smoke.mjs`. O teste usa um servidor de sessões fictícias em loopback.
 
 Gera um novo `accessToken` e um novo `refreshToken`. O refresh token anterior é imediatamente invalidado (estratégia de **rotação de tokens** para mitigar riscos de roubo de sessão).
 
@@ -180,3 +177,7 @@ Não há payload no corpo da resposta (`null`/vazio).
 - **`400 Bad Request`**: Campo `refreshToken` nulo ou vazio.
 - **`401 Unauthorized`**: Token inválido.
 
+
+## Atualização V2
+
+O objeto user do login inclui plan e proExpiresAt, como /users/me. Refresh, cookies, tokens e rotação permanecem iguais. A gravação usa o JWT do FIN; a chave Google/Gemini não é enviada ao client. Um 401 permite o replay já existente com o mesmo Blob e a mesma Idempotency-Key; não repetir automaticamente 403/409/429/503.

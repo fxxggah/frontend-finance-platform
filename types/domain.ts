@@ -8,7 +8,12 @@ type Nullable<T, Keys extends keyof T> = Omit<T, Keys> & { [K in Keys]: T[K] | n
 
 // Modelos de apresentação derivados do OpenAPI. Os DTOs do Spring não anotam
 // required/nullable nas respostas; campos opcionais de domínio podem vir null.
-export type User = Nullable<Model<'UserResponse'>, 'pictureUrl'>;
+export type User = Omit<Nullable<Model<'UserResponse'>, 'pictureUrl'>, 'plan' | 'proExpiresAt'> & {
+  plan?: 'BASIC' | 'PRO';
+  proExpiresAt?: string | null;
+};
+export type TransactionDraft = Nullable<Model<'TransactionDraftResponse'>,
+  'type' | 'amount' | 'categoryId' | 'accountId' | 'creditCardId'>;
 export type Account = Model<'AccountResponse'>;
 export type AccountType = Account['type'];
 export type AccountsResponse = Model<'AccountListResponse'>;

@@ -78,3 +78,7 @@ Não há conteúdo no corpo da resposta (`null`/vazio).
 - **`401 Unauthorized`**: Token ausente ou inválido.
 - **`404 Not Found`**: Usuário inexistente.
 
+
+## Atualização V2 / fase 3
+
+GET /users/me acrescenta plan (BASIC ou PRO efetivo) e proExpiresAt (Instant UTC ou null). A validade é verificada no backend, não no JWT ou relógio do frontend. Campo ausente/desconhecido não autoriza voz. Concessão/revogação é operação manual no banco, sem endpoint administrativo. O cadastro inicial continua BASIC.

@@ -10,6 +10,8 @@ export interface ProblemDetail {
   detail: string;
   instance?: string;
   errors?: ValidationError[];
+  code?: string;
+  retryAfterSeconds?: number;
 }
 
 export class ApiError extends Error {
@@ -19,6 +21,8 @@ export class ApiError extends Error {
   public readonly errors: ValidationError[];
   public readonly type?: string;
   public readonly instance?: string;
+  public readonly code?: string;
+  public readonly retryAfterSeconds?: number;
 
   constructor(problem: ProblemDetail) {
     super(problem.detail || problem.title);
@@ -29,6 +33,8 @@ export class ApiError extends Error {
     this.errors = problem.errors || [];
     this.type = problem.type;
     this.instance = problem.instance;
+    this.code = typeof problem.code === "string" ? problem.code : undefined;
+    this.retryAfterSeconds = problem.retryAfterSeconds;
 
     // Mantém compatibilidade adequada da cadeia de protótipos
     Object.setPrototypeOf(this, new.target.prototype);
@@ -42,3 +48,10 @@ export class ApiError extends Error {
   }
 }
 
+
+/** Retry-After em segundos ou data HTTP; não inicia repetição automaticamente. */
+export function parseRetryAfter(value: string | null, now = Date.now()): number | undefined {
+  if (!value) return undefined;
+  const seconds = /^\d+$/.test(value.trim()) ? Number(value) : Math.ceil((Date.parse(value) - now) / 1000);
+  return Number.isFinite(seconds) && seconds >= 0 ? Math.min(seconds, 7 * 24 * 60 * 60) : undefined;
+}

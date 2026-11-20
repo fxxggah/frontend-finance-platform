@@ -1,5 +1,7 @@
 'use client';
 
+import { BillingPanel } from '@/components/billing/BillingPanel';
+import { BILLING_PILOT_ENABLED } from '@/lib/config';
 import { PageContainer, PageHeader } from '@/components/ui/page';
 import { useState } from 'react';
 import {
@@ -132,10 +134,6 @@ export default function SettingsPage() {
   }
 
   function handleClearCache() {
-    // Limpa localStorage (exceto tema)
-    const theme = localStorage.getItem('fin-theme');
-    localStorage.clear();
-    if (theme) localStorage.setItem('fin-theme', theme);
     toast.success('Cache limpo com sucesso. A página será recarregada.');
     setTimeout(() => window.location.reload(), 1500);
   }
@@ -193,6 +191,8 @@ export default function SettingsPage() {
 
         </Card>
       </section>
+
+      {BILLING_PILOT_ENABLED && (currentUser || devState) && <BillingPanel />}
 
       {/* ── Seção: Aparência ── */}
       <section aria-labelledby="section-appearance">

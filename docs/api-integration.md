@@ -136,3 +136,9 @@ Confira Início em mobile e desktop e os estados `/dashboard?state=loading`,
 `?state=empty` e `?state=error`. Repita em `/transactions`, `/accounts`, `/cards`,
 `/goals`, `/categories` e `/reports`. Desligar o backend deve exibir erro,
 sem dados de demonstração. Teste cadastros e exclusões apenas com dados de teste.
+
+## V2 — integração de voz
+
+Fluxo e QA estão em [voice-pilot.md](./voice-pilot.md); contrato em [api/voice.md](./api/voice.md). O snapshot/tipos agora inclui rascunho por áudio, plano PRO/validade e Idempotency-Key. A geração aceita --file para usar o schema real exportado por um teste do backend, sem edição manual do arquivo gerado nem leitura de .env nessa execução direta. O QA existente aceita SMOKE_API_URL (padrão http://localhost:8080) para interceptar o endereço usado pelo build; a espera de invalidação aguarda as consultas assíncronas em vez de presumir que a mudança de rota já concluiu o fetch.
+
+Resultado V2: API/money/build e QA Chrome de voz/manual aprovados. O teste de flag desligada pode ser executado com node scripts/voice-smoke.mjs --disabled-only. O build final desta tarefa foi gerado com NEXT_PUBLIC_VOICE_PILOT_ENABLED=false, mantendo os demais valores de ambiente existentes e sem modificar .env*. Ativar o piloto exige reiniciar/recompilar com a flag true e preparar backend dev/PRO, conforme o roteiro. Safari real e Gemini real não estão cobertos pelos transportes controlados.

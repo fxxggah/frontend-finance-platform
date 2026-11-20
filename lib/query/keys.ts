@@ -3,6 +3,7 @@
  * Facilita a invalidação seletiva e tipada de caches remotos.
  */
 export const queryKeys = {
+  billing: { plan: ["billing", "plan"] as const, status: ["billing", "status"] as const },
   auth: {
     me: ["auth", "me"] as const,
   },
